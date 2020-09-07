@@ -1,0 +1,132 @@
+\def\noopsort#1{}\def\l{\char32l}\renewcommand\v[1]{\accent20 #1}
+  \let\^^_=\v\def\hbk{hardback}\def\pbk{paperback}
+\begin{thebibliography}{10}
+
+\bibitem{bla08}
+D.~{Blaauw}, K.~{Chopra}, A.~{Srivastava}, and L.~{Scheffer}.
+\newblock \href{https://doi.org/10.1109/TCAD.2007.907047}{Statistical timing
+  analysis: From basic principles to state of the art}.
+\newblock {\em IEEE Transactions on Computer-Aided Design of Integrated
+  Circuits and Systems}, 27\penalty0 (4):\penalty0 589--607, 2008.
+
+\bibitem{can10}
+L.~{Canon} and E.~{Jeannot}.
+\newblock \href{https://doi.org/10.1109/TPDS.2009.84}{Evaluation and
+  optimization of the robustness of {DAG} schedules in heterogeneous
+  environments}.
+\newblock {\em IEEE Transactions on Parallel and Distributed Systems},
+  21\penalty0 (4):\penalty0 532--546, 2010.
+
+\bibitem{can16}
+Louis-Claude Canon and Emmanuel Jeannot.
+\newblock \href{https://doi.org/10.1109/TPDS.2016.2528983}{Correlation-aware
+  heuristics for evaluating the distribution of the longest path length of a
+  {DAG} with random weights}.
+\newblock {\em IEEE Transactions on Parallel and Distributed Systems},
+  27\penalty0 (11):\penalty0 3158--3171, 2016.
+
+\bibitem{cla61}
+Charles~E. Clark.
+\newblock \href{https://doi.org/10.1287/opre.9.2.145}{The greatest of a finite
+  set of random variables}.
+\newblock {\em Operations Research}, 9\penalty0 (2):\penalty0 145--162, 1961.
+
+\bibitem{cli64}
+C.~T. Clingen.
+\newblock \href{http://www.jstor.org/stable/167709}{A modification of
+  {F}ulkerson's {PERT} algorithm}.
+\newblock {\em Operations Research}, 12\penalty0 (4):\penalty0 629--632, 1964.
+
+\bibitem{dod85}
+Bajis Dodin.
+\newblock \href{https://doi.org/10.1287/opre.33.4.862}{Bounding the project
+  completion time distribution in pert networks}.
+\newblock {\em Operations Research}, 33\penalty0 (4):\penalty0 862--881, 1985.
+
+\bibitem{elm67}
+Salah~E. Elmaghraby.
+\newblock \href{https://doi.org/10.1287/mnsc.13.5.299}{On the expected duration
+  of {PERT} type networks}.
+\newblock {\em Management Science}, 13\penalty0 (5):\penalty0 299--306, 1967.
+
+\bibitem{ful62}
+D.~R. Fulkerson.
+\newblock \href{https://doi.org/10.1287/opre.10.6.808}{Expected critical path
+  lengths in {PERT} networks}.
+\newblock {\em Operations Research}, 10\penalty0 (6):\penalty0 808--817, 1962.
+
+\bibitem{hag88}
+Jane~N. Hagstrom.
+\newblock \href{https://doi.org/10.1002/net.3230180206}{Computational
+  complexity of {PERT} problems}.
+\newblock {\em Networks}, 18\penalty0 (2):\penalty0 139--147.
+
+\bibitem{kam85}
+Jerzy Kamburowski.
+\newblock \href{https://doi.org/10.1057/jors.1985.184}{Normally distributed
+  activity durations in {PERT} networks}.
+\newblock {\em Journal of the Operational Research Society}, 36\penalty0
+  (11):\penalty0 1051--1057, 1985.
+
+\bibitem{kle71}
+George~B. Kleindorfer.
+\newblock \href{https://doi.org/10.1287/opre.19.7.1586}{Bounding distributions
+  for a stochastic acyclic network}.
+\newblock {\em Operations Research}, 19\penalty0 (7):\penalty0 1586--1601,
+  1971.
+
+\bibitem{lud01}
+Arfst Ludwig, Rolf~H. M{\"o}hring, and Frederik Stork.
+\newblock \href{https://doi.org/10.1023/A:1010945830113}{A computational study
+  on bounding the makespan distribution in stochastic project networks}.
+\newblock {\em Annals of Operations Research}, 102\penalty0 (1-4):\penalty0
+  49--64, 2001.
+
+\bibitem{mal59}
+D.~G. Malcolm, J.~H. Roseboom, C.~E. Clark, and W.~Fazar.
+\newblock \href{https://doi.org/10.1287/opre.7.5.646}{Application of a
+  technique for research and development program evaluation}.
+\newblock {\em Operations Research}, 7\penalty0 (5):\penalty0 646--669, 1959.
+
+\bibitem{mar65}
+J.~J. Martin.
+\newblock \href{https://doi.org/10.1287/opre.13.1.46}{Distribution of the time
+  through a directed, acyclic network}.
+\newblock {\em Operations Research}, 13\penalty0 (1):\penalty0 46--66, 1965.
+
+\bibitem{rob76}
+Pierre Robillard and Michel Trahan.
+\newblock \href{https://doi.org/10.1287/opre.24.1.177}{Technical
+  note{---}expected completion time in {PERT} networks}.
+\newblock {\em Operations Research}, 24\penalty0 (1):\penalty0 177--182, 1976.
+
+\bibitem{scu83}
+D.~Sculli.
+\newblock \href{https://doi.org/10.1057/jors.1983.27}{The completion time of
+  {PERT} networks}.
+\newblock {\em Journal of the Operational Research Society}, 34\penalty0
+  (2):\penalty0 155--158, 1983.
+
+\bibitem{van63}
+Richard~M. Van~Slyke.
+\newblock \href{https://doi.org/10.1287/opre.11.5.839}{Letter to the
+  editor{---}{M}onte {C}arlo methods and the {PERT} problem}.
+\newblock {\em Operations Research}, 11\penalty0 (5):\penalty0 839--860, 1963.
+
+\bibitem{vis06}
+C.~{Visweswariah}, K.~{Ravindran}, K.~{Kalafala}, S.~G. {Walker}, S.~{Narayan},
+  D.~K. {Beece}, J.~{Piaget}, N.~{Venkateswaran}, and J.~G. {Hemmett}.
+\newblock \href{https://doi.org/10.1109/TCAD.2005.862751}{First-order
+  incremental block-based statistical timing analysis}.
+\newblock {\em IEEE Transactions on Computer-Aided Design of Integrated
+  Circuits and Systems}, 25\penalty0 (10):\penalty0 2170--2180, 2006.
+
+\bibitem{zha06}
+L.~{Zhang}, W.~{Chen}, Y.~{Hu}, and C.~C. {Chen}.
+\newblock \href{https://doi.org/10.1109/TCAD.2005.855979}{Statistical static
+  timing analysis with conditional linear {MAX/MIN} approximation and extended
+  canonical timing model}.
+\newblock {\em IEEE Transactions on Computer-Aided Design of Integrated
+  Circuits and Systems}, 25\penalty0 (6):\penalty0 1183--1191, 2006.
+
+\end{thebibliography}

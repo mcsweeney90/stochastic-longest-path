@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: stochastic-longest-path.aux
+The style file: myplain2-doi.bst
+Database file #1: references.bib
+You're missing a field name---line 10 of file references.bib
+ :  abstract = {Abstract Computational complexity results for two PERT problems are presented. A project is specified by precedence relations among tasks. Task durations are independent random variables with discrete, finite ranges. The following results are obtained: (1) computing a value of the cumulative distribution function of project duration is \#P-complete, (2) computing the mean of the distribution is at least as hard, and (3) neither of the problems in (1) and (2) can be computed in time polynomial in the number of points in the range of the project duration unless P = NP.},
+ :                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,
+I'm skipping whatever remains of this entry
+Database file #2: strings.bib
+Warning--empty year in hag88
+You've used 19 entries,
+            2359 wiz_defined-function locations,
+            1314 strings with 18256 characters,
+and the built_in function-call counts, 6479 in all, are:
+= -- 626
+> -- 251
+< -- 0
++ -- 105
+- -- 82
+* -- 584
+:= -- 1066
+add.period$ -- 57
+call.type$ -- 19
+change.case$ -- 98
+chr.to.int$ -- 0
+cite$ -- 20
+duplicate$ -- 209
+empty$ -- 551
+format.name$ -- 82
+if$ -- 1328
+int.to.chr$ -- 0
+int.to.str$ -- 19
+missing$ -- 19
+newline$ -- 99
+num.names$ -- 38
+pop$ -- 62
+preamble$ -- 2
+purify$ -- 79
+quote$ -- 0
+skip$ -- 133
+stack$ -- 0
+substring$ -- 540
+swap$ -- 38
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 76
+warning$ -- 1
+while$ -- 63
+width$ -- 21
+write$ -- 211
+(There was 1 error message)

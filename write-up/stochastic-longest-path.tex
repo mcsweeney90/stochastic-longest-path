@@ -1,0 +1,263 @@
+% !TeX document-id = {54177b55-cdde-488b-90fe-107922d59049}
+\documentclass[12pt]{article}
+
+\usepackage{a4} 
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[]{xcolor}
+\usepackage{graphicx}
+\usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=hotpink]{hyperref}
+\usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{caption}
+\usepackage[british]{babel}
+\usepackage[linesnumbered, ruled]{algorithm2e}
+\usepackage{epstopdf}
+\usepackage{mathtools} % for :=
+\usepackage{subfig}
+\usepackage[most, minted]{tcolorbox}
+\usepackage{mdwlist}
+\tcbuselibrary{listings}
+%\usepackage[cache=false]{minted} % Need cache=false or leads to funny bug.
+% !TeX TXS-program:compile = txs:///pdflatex/[--shell-escape]
+
+\newtcblisting{myminted}{%
+	listing engine=minted,
+	minted language=python,
+	listing only,
+	breakable,
+	enhanced,
+	minted options = {
+		linenos, 
+		breaklines=true, 
+		breakanywhere, 
+		fontsize=\footnotesize, 
+		numbersep=2mm,
+		tabsize=2
+	},
+	overlay={%
+		\begin{tcbclipinterior}
+			\fill[gray!25] (frame.south west) rectangle ([xshift=4mm]frame.north west);
+		\end{tcbclipinterior}
+	}   
+}
+\BeforeBeginEnvironment{minted}{\begin{tcolorbox}[breakable, enhanced]}%
+	\AfterEndEnvironment{minted}{\end{tcolorbox}}%
+
+
+\graphicspath{{images/}}
+
+\title{Approximating the longest path distribution of a stochastic DAG} % Think of a better title...
+\author{Thomas McSweeney%
+	\thanks{%
+		School of Mathematics,
+		University of Manchester,
+		Manchester, M13 9PL, England
+		(\texttt{thomas.mcsweeney@postgrad.manchester.ac.uk}).
+	}
+}
+\date{\today}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\R{\mathbb{R}}
+\def\C{\mathbb{C}}
+\def\P{\mathbb{P}}
+\def\E{\mathbb{E}}
+\def\nbyn{n \times n}
+\def\mbyn{m \times n}
+\def\l{\lambda}
+\def\norm#1{\|#1\|}      
+\def\normi#1{\|#1\|_1}
+\def\normo#1{\|#1\|_{\infty}}
+\def\Chat{\widehat{C}}
+\def\e{eigenvalue}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% \DeclareMathOperator{\diag}{diag}   % Requires amsmath.
+\def\diag{\mathop{\mathrm{diag}}}     % If not using amsmath.
+\def\trace{\mathop{\mathrm{trace}}}   % If not using amsmath.
+
+\def\At{\widetilde{A}}
+\def\normt#1{\|#1\|_2}
+
+% Set up lemma environment and its numbering.
+\newtheorem{lemma}{Lemma}[section]
+
+\def\proof{{\bf Proof}. \ignorespaces}
+\def\qedsymbol{\vbox{\hrule\hbox{%
+			\vrule height1.3ex\hskip0.8ex\vrule}\hrule}}
+\def\endproof{\qquad\qedsymbol\medskip\par}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{prop}[theorem]{Proposition}
+
+\allowdisplaybreaks[1]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% For fine-tuning spacing in \sqrt etc=.  From \cite[p.~155]{knut99}.
+% In math mode, @ will act as a macro that adds 1 unit of space.
+% By comparison, \, skips 3mu.
+
+\mathcode`@="8000 % Make @ behave as per catcode 13 (active).  TeXbook p. 155.
+{\catcode`\@=\active\gdef@{\mkern1mu}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{mylineno}
+\makeatletter
+\let\oldtabcr\@tabcr
+\def\nonumberbreak{\oldtabcr\hspace{3.5pt}}
+\def\mynewline{\refstepcounter{mylineno}%
+	\llap{\footnotesize\arabic{mylineno}\hspace{5pt}}%
+}
+\def\lineref#1{\footnotesize\ref{#1}}
+% Next macro adapted from latex.ltx
+\gdef\@tabcr{\@stopline \@ifstar{\penalty%
+		\@M \@xtabcr}\@xtabcr\mynewline}
+\def\myvspace#1{\oldtabcr[#1]\mynewline}
+\newenvironment{code}{%
+	% Swap `:' and `colon'...
+	\mathcode`\:="603A  % TeXbook pp 134, 154, 359 (top)
+	% For original colon     \mathcode`\:="303A  % TeXbook p 344
+	\def\colon{\mathchar"303A}
+	\setcounter{mylineno}{0}
+	\par
+	\upshape
+	\begin{list} % To give indentation
+		{} {\leftmargin = 1cm}
+		\item[]
+		\begin{tabbing}
+			
+			% Default tab stops
+			\hspace*{.3in} \= \hspace*{.3in} \=
+			\hspace*{.3in} \= \hspace*{.3in} \= \kill
+			\mynewline
+		}{\end{tabbing}\end{list}}
+\makeatother
+
+
+\addto\captionsbritish{	\renewcommand{\bibname}%
+	{References}%TODO: make sure reference style is consistent.
+}
+
+\definecolor{hotpink}{rgb}{0.9,0,0.5}
+
+\begin{document}
+	\maketitle 	
+
+
+\section{Introduction}
+\label{sect.intro}
+
+For any optimization problem, in order to find an optimal solution we obviously need to be able to evaluate how good any given solution is with regards to the optimization criteria. In our case, this means that for a given schedule we need to know the first two moments of its makespan distribution. Unfortunately, Hagstrom \cite{hag88} proved that this is a $\#P$-complete problem for discrete RVs and there is no reason to assume it is any easier for continuous costs instead. Given that computing the true makespan distribution is practically impossible, efficiently approximating it---or at least its first two moments---is therefore of the utmost importance in any stochastic scheduling heuristic. In the following section we discuss several different approaches that have been proposed in the literature in order to make these approximations.
+
+Any schedule can be associated with a stochastic DAG such that the critical path of the DAG is equivalent to the schedule makespan: the topology is largely given by the original task graph, weights are determined by the schedule's processor selections, and task execution order on each of the processors can be respected by adding artificial zero-weight edges between the relevant nodes in the DAG. The problem of approximating the distribution of the critical path through a stochastic DAG has been studied in several contexts other than scheduling, initially in PERT network analysis \cite{mal59} and later digital circuit design \cite{bla08}, so there is quite a healthy literature altogether. 
+% better reference for critical paths in circuit design?  
+
+\subsection{Bounds on the moments}
+\label{subsect.stochastic_bounds}
+
+Formal bounds on the distribution of the critical path length have been proven; for example, Kleindorfer gives both upper and lower bounds \cite{kle71}, the first of which was improved on by Dodin \cite{dod85}. Often however we really want bounds on the moments of the distribution (which also tend to be cheaper to compute). We have already seen in Chapter \ref{chap.critical_path_estimation} that, if the costs are discrete, then a cheap lower bound on the expected value of the makespan can be computed using upward ranking with the expected values of all costs. Moreover, a tighter bound can be found through Fulkerson's \cite{ful62} alternative method, which was extended to continuous costs by Clingen \cite{cli64} and later improved by Elmaghraby \cite{elm67} and Robillard and Trahan \cite{rob76}. All of these methods provide lower bounds for the expected value alone; if we assume that all costs are normally distributed, then Kamburowski \cite{kam85} was able to prove both lower and upper bounds on the expected value, as well as a lower bound on the variance (and a conjectured upper bound). Kamburowksi's bounds are based on a powerful common technique for approximating the first two moments of the critical path distribution, which is described in the following section.
+
+\subsection{Assuming normality}
+\label{subsect.normality}
+
+Fundamentally, the critical path is computed through a series of summations and maximizations of the cost RVs. By the Central Limit Theorem, sums of random variables are asymptotically normally distributed so if we assume that the effect of the maximizations is minor, then the makespan distribution is likely to be approximately normal. Indeed, this has often been observed empirically, even when all costs follow very different distributions \cite{can10}. If we assume further that all of the cost RVs can be characterized by their mean and variance (i.e., effectively that they are also normal), then sums can be computed though the well-known rule for summing two normal RVs $\epsilon \sim N(\mu_\epsilon, \sigma_\epsilon^2)$ and $\eta \sim N(\mu_\eta, \sigma_\eta^2)$,
+\begin{align}
+\label{eq.sum_moments}
+\epsilon + \eta \sim N \big(\mu_\epsilon + \mu_\eta, \sigma_\epsilon^2 + \sigma_\eta^2 + 2 \rho_{\epsilon\eta}\sigma_\epsilon \sigma_\eta \big), 
+\end{align}
+where $\rho_{\epsilon\eta}$ is the linear correlation coefficient between the two distributions. Formulae for the first two moments of the maximization of two normal RVs---which is not itself normal---are less well known but were first provided by Clark in the early 1960s \cite{cla61}. Let 
+\begin{align*}
+\phi(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}, \qquad \Phi(x) = \int_{-\infty}^{x} \phi(t) dt
+\end{align*}
+be the unit normal probability density function and cumulative probability function, respectively, and define 
+\begin{align}
+\alpha = \sqrt{\sigma_\epsilon^2 + \sigma_\eta^2 - 2 \rho_{\epsilon\eta}\sigma_\epsilon \sigma_\eta}, \qquad \beta = \frac{\mu_\epsilon - \mu_\eta}{\alpha}. \label{eq.alpha_beta}
+\end{align}
+Then the first two moments $\mu_{\max}$ and $\sigma_{\max}$ of $\max(\epsilon, \eta)$ are given by
+\begin{align}
+\mu_{\max} &= \mu_\epsilon \Phi(\beta) + \mu_\eta \Phi(-\beta) + \alpha \phi(\beta), \label{eq.clark_max_mu}\\
+\sigma_{\max}^2 &= (\mu_\epsilon^2 + \sigma_\epsilon^2) \Phi(\beta) + (\mu_\eta^2 + \sigma_\eta^2) \Phi(-\beta) \label{eq.clark_max_sigma}\\
+&+ (\mu_\epsilon + \mu_\eta)\alpha\phi(\beta) -\mu_{\max}^2 \nonumber.
+\end{align}
+Using \eqref{eq.sum_moments} for summations, and \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} for maximizations (i.e., when we have multiple incident edges at a node), we can move forward through the DAG and compute approximations $\mu_{\text{cp}}$ and $\sigma_{\text{cp}}$ for the first two moments of the critical path distribution in a fairly standard dynamic programming manner.    
+
+This method appears to have first been proposed for estimating the completion time of PERT networks by Sculli \cite{scu83}. There he assumed that all correlations were zero, which is often unrealistic since common ancestors make critical path estimates at two nodes dependent, even if all costs themselves are independent. Computing the correlation coefficients efficiently is tricky. However Canon and Jeannot \cite{can16} proposed two different approaches which alternatively prioritize precision and speed. The first is a dynamic programming algorithm called Cordyn which makes use of the following formulae from Clark's original paper in order to recursively compute all relevant correlations:
+\begin{align}
+\rho_{\tau, \max(\epsilon, \eta)} &= \frac{\sigma_\epsilon \rho_{\tau \epsilon} \Phi(\beta) + \sigma_\eta \rho_{\tau \eta} \Phi(-\beta)}{\sigma_{\max}}, \label{eq.max_corr}\\
+\rho_{\tau, \text{sum}(\epsilon, \eta)} &= \frac{\sigma_\epsilon \rho_{\tau \epsilon} + \sigma_\eta \rho_{\tau \eta} }{\sigma_{\text{sum}}}, \label{eq.sum_corr}
+\end{align} 
+where $\tau$ is any normal random variable. Cordyn has time and space complexities $O(nv)$ and $O(n^2)$, respectively, so Canon and Jeannot propose an alternative called CorLCA which is based on the construction of a simplified version of the DAG called a {\em correlation tree} that has all the same vertices as the original but only retains a subset of the edges. In particular, where multiple edges are incident to a vertex---i.e., a maximization must be performed---only the edge which contributes most to the maximization is retained in the correlation tree. Then (approximate) correlations between any two RVs representing current finish time estimates at any two vertices can be computed easily by finding the lowest common ancestor (LCA) of the two in the correlation tree. The complexity of CorLCA depends on the cost of the method used for the lowest common ancestor queries, but Canon and Jeannot hypothesize this can be done with time and space complexities of $O(1)$ and $O(m)$, respectively, giving time and space complexity $O(m)$ and $O(n)$ for the entire algorithm. This is not proven, however extensive numerical simulations performed by the original authors suggest that CorLCA is more efficient than Cordyn with only a relatively small reduction in accuracy. 
+
+Although there are no theoretical guarantees, in practice the mean and variance estimates obtained using the Clark equation approach tend to be fairly good, even when correlations are disregarded (i.e., Sculli's method) \cite{kam85}; as a rule performance improves as the cost distributions move closer to normality and the number of tasks increases. Furthermore, Sculli's method in particular is typically much faster than alternative approaches, with CorLCA and Cordyn being slightly more expensive but still competitive in this regard (particularly CorLCA) \cite{can16}.
+
+Another method of estimating the critical path distribution also makes use of the relative ease of dealing with normal RVs. In the {\em canonical model} \cite{vis06,zha06}, all RVs are expressed as the sum of their expected value and a weighted sum of standard normal distributions that characterize the variance, 
+\begin{align*}
+\eta = \mu + \sum_i v_i \delta_i,
+\end{align*}  
+where all $\delta_i \sim N(0, 1)$ and are independent of one another. The advantage of this is that evaluating summations and maximizations becomes much more straightforward. Let $\eta = \mu_\eta + \sum_i v_{\eta, i} \delta_i$ and $\epsilon = \mu_\epsilon + \sum_i v_{\epsilon, i} \delta_i$. Then 
+\begin{align*}
+\omega = \eta + \epsilon = (\mu_\eta + \mu_\epsilon) + \sum_i (v_{\eta, i} + v_{\epsilon, i}) \delta_i.
+\end{align*}
+Suppose now that $\omega = \max(\eta, \epsilon)$. Let $\alpha$ and $\beta$ be defined as in \eqref{eq.alpha_beta}, and $\Phi(x) = \int_{-\infty}^{x} \phi(t) dt$ be the standard normal cdf. Note that computing $\beta$ requires the linear correlation coefficient $\rho_{\eta\epsilon}$ which can be efficiently calculated as:
+\begin{align*}
+\rho_{\eta\epsilon} = \frac{\sum_i v_{\eta, i} v_{\epsilon, i}}{\sqrt{\sum_i v_{\eta, i}^2} \cdot \sqrt{\sum_i v_{\epsilon, i}^2} }.
+\end{align*}
+By definition, $\P[\eta > \epsilon] = \Phi(\beta)$ and we can therefore approximate $\omega$ by 
+\begin{align*}
+\hat{\omega} &= \Phi(\beta)\eta + \Phi(-\beta) \\
+&= \Phi(\beta) \mu_\epsilon + \Phi(-\beta) \mu_\epsilon + \sum_i \big( \Phi(\beta) v_{\eta, i} + \Phi(-\beta) v_{\epsilon, i} \big) \delta_i.
+\end{align*}
+This is both similar and in some sense contrary to the Clark equation approach, in that the latter precisely computes the first two moments of the maximization of two normal RVs, whereas the canonical method approximates the distribution of the maximization of any two RVs using linear combinations of normal RVs. Canon and Jeannot found in an empirical study that the canonical representation approach tended to fall between Sculli's method and CorLCA in terms of both speed and approximation quality \cite{can16}. 
+
+\subsection{Monte Carlo}
+\label{subsect.stochastic_monte_carlo}
+
+Monte Carlo methods have a long history in approximating the completion time distribution of PERT networks, dating back to at least the early 1960s \cite{van63}. The idea is to simulate the realization of all RVs and evaluate the critical path of the resulting deterministic graph. This is done repeatedly, giving a set of critical path instances whose empirical distribution function is guaranteed to converge to the true distribution by the Glivenko-Cantelli theorem \cite{can16}. Furthermore, analytical results allow us to quantify the approximation error for any given the number of realizations---and therefore the number of realizations needed to reach a desired accuracy.
+
+The major disadvantage of Monte Carlo methods is their cost, particularly when the number of realizations required is large, although modern architectures are well-suited to MC methods because of their parallelism so this problem may no longer be as acute as it once was. Note also that this analysis is predicated on the notion that cost distributions are known precisely. In practice they are more likely to be estimated based on samples of previous experiences so that, despite the analytical guarantees, the uncertainty surrounding the cost distribution fits may mean that the critical path distribution which MC methods converge to is actually only an approximation of the true distribution. 
+
+\subsection{Series-parallel reductions}
+\label{subsect.stochastic_series_parallel} 
+
+If the graph is {\em series-parallel} then we can compute the exact distribution of the critical path length in polynomial-time through a series of reductions \cite{dod85,mar65}. If this isn't the case, similar methods have been proposed that give approximations to the distribution \cite{dod85,lud01}, however these tend to be less accurate than Monte Carlo-based methods and more expensive than approaches based on Clark's equations \cite{can16}. 
+
+\subsection{Updating makespan estimates}
+\label{subsect.other_updating}
+
+Suppose we are following a static schedule for which we have already computed an estimate of the makespan, how do we efficiently update the estimate dynamically at runtime, perhaps in response to a large delay? This is straightforward for deterministic static schedules since we can just recompute the critical path length of the schedule DAG using observed costs for those task that have already been processed and estimates for those that have not yet been processed. The same basic approach can also be used for stochastic schedules of course, but the picture is slightly more complex, as illustrated below.    
+
+For a given task DAG and target platform, suppose we have a static schedule that dictates what tasks each processor should execute and in what order, which they will do greedily (i.e., without artificial delays). Before runtime we work through the DAG and estimate the makespan distribution up to when each of the tasks has completed. These makespan estimates are modeled as normal RVs in accordance with the central limit theorem so that for each task $t_i$ we have an associated makespan estimate $F_i \sim N(\mu_i, \sigma_i^2)$, which is computed through  
+\begin{align}
+F_i = W_i + \max_{h \in P_i} \{ F_h + W_{hi} \}, \label{eq.finish_time}
+\end{align} 
+where $W_i$ and $W_{hi}$ here represent the relevant computation and communication costs (since the processors are fixed by the schedule). We make the standard assumption that all of the computation and communication costs are independent so the summations are done using the rule for normal RVs \eqref{eq.sum_moments} with the correlation coefficient assumed to be zero. We use Clark's equations \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} to estimate the distribution of the maximization. The terms within are not generally independent because the parent tasks they represent may have common ancestors, so we can either ignore all correlations (which corresponds to Sculli's method) or estimate the correlation coefficients (as in CorLCA and Cordyn). 
+
+We are concerned with the situation at any given point during runtime when some tasks may have completed execution while others are still to be done. Let $f_h$ be the realization of the makespan estimate $F_h$ once task $t_h$ has actually been completed. In order to update the makespan estimate we need to move through the DAG and make use of the realizations of previous task makespans. Consider a generic task $t_i$ and suppose that some of its parent tasks have been processed but others have not. The most straightforward way to update $F_i$ is to simply use $f_h$ instead of $F_h$ in equation \eqref{eq.finish_time} for all those parents that have been realized. However, it would perhaps be better if we could use the realized parent makespans to update the makespan estimates $F_h$ for those parents that haven't yet finished. Let $f_m = \max_{h \in P_i} f_h$ be the greatest makespan of those parent tasks that have been processed. For all other parent tasks $t_h$ that have {\em not} yet been executed we want to estimate the remaining cost, given that it has not been completed but $t_m$ has been---i.e., we want to estimate $F_h' = F_h - f_m$ given that we know $f_h > f_m$. This can be done by applying the following result. 
+
+\begin{prop}
+	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
+	\begin{align*}
+	(w \mid v) \sim N \big( \bar{w} + \Sigma_{wv}\Sigma_{vv}^{-1} (v - \bar{v}), \enspace  \Sigma_{ww} - \Sigma_{wv} \Sigma_{vv}^{-1} \Sigma_{vw} \big).
+	\end{align*}
+\end{prop}
+Note that if all of the linear correlation coefficients $\rho_{uv}$ are known (which would be the case if we used CorLCA or Cordyn), we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find $\Sigma_{uv}$. For compactness of notation let $\rho_{hm} = \rho_{mh}$ be the linear correlation coefficient between $F_h$ and $F_m$. Then we have 
+\begin{align*}
+F_h' &\sim N \bigg( \mu_{h} + \frac{\rho_{hm} \sigma_{h} \sigma_{m}}{\sigma_{m}^2} (f_m - \mu_{m}), \enspace \sigma_{h}^2 - \frac{\rho_{hm} \sigma_{h} \sigma_{m} \cdot \rho_{mh} \sigma_{m} \sigma_{h}}{\sigma_{m}^2} \bigg) \nonumber\\
+&\sim N \bigg(\mu_{h} + \frac{\rho_{hm} \sigma_{h}}{\sigma_{m}} (f_m - \mu_{m}), \enspace (1 - \rho_{hm}^2) \sigma_{h}^2 \bigg).
+\end{align*} 
+The idea is that by using $F_h'$ rather than $F_h$ for those parent tasks that have not yet completed we can make greater use of the data available and should therefore obtain a superior estimate of the new makespan.  
+% TODO: what if less than zero?
+
+Using the same software framework that we created in order to study the problem of approximating the makespan distribution of stochastic DAGs we investigated the performance of the proposed method (i.e., using $F_h'$ instead of $F_h$ for the unprocessed parents) compared to the more straightforward alternative (i.e., just using $F_h$ for all unprocessed parents) on randomly-generated schedules. Unfortunately, preliminary results have not been too promising and it appears to actually have a slightly detrimental effect. One possible explanation is that since we have been using CorLCA to estimate the correlation coefficients perhaps the approximation errors in $\rho_{hm}$ are significant enough that $F_h'$ is too inaccurate to be useful. Again, though, we should emphasize that this research is at a very early stage and we are actively investigating ways to overcome this issue. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Bibliography.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{myplain2-doi}
+\bibliography{references,strings}
+
+\end{document}
