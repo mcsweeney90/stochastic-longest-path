@@ -16,12 +16,15 @@ class RV:
     Notes:
         - Defined by only mean and variance so can in theory be from any distribution but some functions
           e.g., addition and multiplication assume (either explicitly or implicitly) RV is Gaussian.
+          (This is because addition/mult only done when RV represents a finish time estimate so is assumed to be
+          roughly normal anyway.)
+        - ID attribute isn't really necessary but occasionally makes things useful (e.g., for I/O).
     """
-    def __init__(self, mu=0.0, var=0.0, realization=None, ID=None): # TODO: is ID needed?
+    def __init__(self, mu=0.0, var=0.0, realization=None, ID=None): 
         self.mu = mu
         self.var = var
-        self.realization = realization
         self.ID = ID
+        self.realization = realization
     def __repr__(self):
         return "RV(mu = {}, var = {})".format(self.mu, self.var)
     def __add__(self, other): # Costs are typically independent so don't think there's any reason to ever consider correlations here.
@@ -45,24 +48,22 @@ class RV:
     __rfloordiv__ = __floordiv__ 
     
     def reset(self):
-        """Set almost all attributes to their defaults."""
+        """Set all attributes except ID to their defaults."""
         self.mu, self.var, self.realization = 0, 0, None
         
-    def realize(self, static=False, sample=None, dist="gamma"):
+    def realize(self, static=False, dist="NORMAL"):
         if static:
-            self.realization = self.mu
-        elif sample is not None:
-            self.realization = np.random.choice(sample)            
-        elif dist is not None:
-            if dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
-                self.realization = np.random.normal(self.mu, np.sqrt(self.var)) # TODO: what if negative?
-            elif dist == "GAMMA" or dist == "gamma":
-                if self.var == 0:
-                    self.realization = self.mu
-                else:
-                    self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)    # TODO: what if mean is 0?            
-            elif dist == "uniform":
-                self.realization = np.random.uniform(0, 2 * self.mu)
+            self.realization = self.mu 
+        elif dist == "NORMAL" or dist == "normal" or dist == "Normal" or dist == "Gaussian":             
+            r = np.random.normal(self.mu, np.sqrt(self.var))
+            if r < 0.0:
+                r *= -1            
+            self.realization = r
+        elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
+            self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)
+            # TODO: need to be careful to make sure mu and var aren't zero (shouldn't be for a Gamma dist ofc but programmatically sometimes tempting.) 
+        elif dist == "uniform":
+            self.realization = np.random.uniform(0, 2 * self.mu)
     
     def clark_max(self, other, rho=0):
         """
@@ -73,9 +74,7 @@ class RV:
         'The greatest of a finite set of random variables,'
         Charles E. Clark (1983).
         """
-        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)
-        if a == 0:# TODO: why is this here?
-            print(self, other)
+        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)        
         b = (self.mu - other.mu) / a
             
         Phi_b = norm.cdf(b)
@@ -177,93 +176,84 @@ class CRV:
         return new_crv
     
 class SDAG:
+    """Represents a stochastic graph."""
     def __init__(self, graph):
         self.graph = graph
-        self.top_sort = list(nx.topological_sort(self.graph))        
+        self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.     
         
-    def realize(self, subset=None, static=False, src=None, sampling_info=None, dist="gamma"):  
+    def realize(self, start=0, finish=-1, static=False, dist="NORMAL"):  
         """
         Realize all costs.
         Notes:
             1. Doesn't allow costs to be realized from different distribution types but may extend in future.
         """
         
-        if src is not None:
-            if isinstance(src, str):   
-                with open(src, 'rb') as file:
-                    comp_samples, comm_samples = dill.load(file) 
-            elif isinstance(src, list):
-                comp_samples, comm_samples = src
-            for task in self.graph:
-                if subset is not None and task.ID not in subset:
-                    continue
-                task_where, task_proc, task_type = sampling_info[task.ID]
-                task.realize(sample=comp_samples[task_proc][task_type]) 
-                for p in self.graph.predecessors(task):
-                    p_where, p_proc, p_type = sampling_info[p.ID]
-                    if p_where == task_where:
-                        self.graph[p][task]['weight'].realization = 0
-                    else:            
-                        self.graph[p][task]['weight'].realize(sample=comm_samples["{}".format(p_proc + task_proc)][task_type]) 
-        else:
-            for task in self.graph:
-                if subset is not None and task.ID not in subset:
-                    continue
-                task.realize(static=static, sample=None, dist=dist)
-                for p in self.graph.predecessors(task):
-                    self.graph[p][task]['weight'].realize(static=static, sample=None, dist=dist) 
-                    
-    def realize_remainder(self, dist=None):
-        """
-        Assuming that a subset of the tasks have been realized, realize the remainder and compute the 
-        new makespan.
-        TODO: only works with a specified distribution atm.
-        """
-        # New finish time function.
-        real_F = {}
+        if finish == -1: # TODO.
+            finish = len(self.top_sort)
         
-        # Find the "current" time. 
-        time = 0.0        
-        # Consider tasks in topological order.
-        for task in self.top_sort:
-            if task.realization is not None:
-                real_F[task.ID] = task.realization 
-                try:                        
-                    st = max(real_F[p.ID] + self.graph[p][task]['weight'].realization for p in self.graph.predecessors(task))
-                    real_F[task.ID] += st 
-                except ValueError:
-                    pass
-                time = max(time, real_F[task.ID])
+        for i, t in enumerate(self.top_sort):
+            if i > finish:
+                break
+            if i < start:
                 continue
-            # Realize task costs and incident edge costs until task finish time exceeds the current time.
-            parents = list(self.graph.predecessors(task))
-            st = 0.0
-            # Realize the incident edge costs.
-            for p in parents:
-                edge_mu, edge_var = self.graph[p][task]['weight'].mu, self.graph[p][task]['weight'].var
-                if edge_var == 0.0:
-                    edge_realization = 0.0
-                elif dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
-                    edge_realization = np.random.normal(edge_mu, np.sqrt(edge_var)) # TODO: what if negative?
-                elif dist == "GAMMA" or dist == "gamma":
-                    edge_realization = np.random.gamma(shape=(edge_mu**2 / edge_var), scale=edge_var/edge_mu)                    
-                st = max(st, real_F[p.ID] + edge_realization)
-            # Realize the task cost.            
-            if task.var == 0.0:
-                task_realization = 0.0
-            elif dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
-                task_realization = np.random.normal(task.mu, np.sqrt(task.var)) # TODO: what if negative?
-            elif dist == "GAMMA" or dist == "gamma":
-                task_realization = np.random.gamma(shape=(task.mu**2 / task.var), scale=task.var/task.mu)
-            # Compute the possible finish time.
-            ft = st + task_realization
-            if ft < time:
-                ft = time + np.random.uniform(0, 1) * np.sqrt(task.var)                
-            # Once an acceptable finish time is found, set real_F. 
-            real_F[task.ID] = ft
+            t.realize(static=static, dist=dist)
+            for p in self.graph.predecessors(t):
+                try:
+                    self.graph[p][t]['weight'].realize(static=static, dist=dist) 
+                except AttributeError:
+                    pass
+                    
+    # def realize_remainder(self, dist=None):
+    #     """
+    #     Assuming that a subset of the tasks have been realized, realize the remainder and compute the 
+    #     new makespan.
+    #     TODO: only works with a specified distribution atm.
+    #     """
+    #     # New finish time function.
+    #     real_F = {}
+        
+    #     # Find the "current" time. 
+    #     time = 0.0        
+    #     # Consider tasks in topological order.
+    #     for task in self.top_sort:
+    #         if task.realization is not None:
+    #             real_F[task.ID] = task.realization 
+    #             try:                        
+    #                 st = max(real_F[p.ID] + self.graph[p][task]['weight'].realization for p in self.graph.predecessors(task))
+    #                 real_F[task.ID] += st 
+    #             except ValueError:
+    #                 pass
+    #             time = max(time, real_F[task.ID])
+    #             continue
+    #         # Realize task costs and incident edge costs until task finish time exceeds the current time.
+    #         parents = list(self.graph.predecessors(task))
+    #         st = 0.0
+    #         # Realize the incident edge costs.
+    #         for p in parents:
+    #             edge_mu, edge_var = self.graph[p][task]['weight'].mu, self.graph[p][task]['weight'].var
+    #             if edge_var == 0.0:
+    #                 edge_realization = 0.0
+    #             elif dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
+    #                 edge_realization = np.random.normal(edge_mu, np.sqrt(edge_var)) # TODO: what if negative?
+    #             elif dist == "GAMMA" or dist == "gamma":
+    #                 edge_realization = np.random.gamma(shape=(edge_mu**2 / edge_var), scale=edge_var/edge_mu)                    
+    #             st = max(st, real_F[p.ID] + edge_realization)
+    #         # Realize the task cost.            
+    #         if task.var == 0.0:
+    #             task_realization = 0.0
+    #         elif dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
+    #             task_realization = np.random.normal(task.mu, np.sqrt(task.var)) # TODO: what if negative?
+    #         elif dist == "GAMMA" or dist == "gamma":
+    #             task_realization = np.random.gamma(shape=(task.mu**2 / task.var), scale=task.var/task.mu)
+    #         # Compute the possible finish time.
+    #         ft = st + task_realization
+    #         if ft < time:
+    #             ft = time + np.random.uniform(0, 1) * np.sqrt(task.var)                
+    #         # Once an acceptable finish time is found, set real_F. 
+    #         real_F[task.ID] = ft
                 
-        # Compute and return the makespan.
-        return real_F[self.top_sort[-1].ID]     # Assumes single exit task.
+    #     # Compute and return the makespan.
+    #     return real_F[self.top_sort[-1].ID]     # Assumes single exit task.
                     
     def remove_edge_weights(self):
         """
@@ -350,26 +340,34 @@ class SDAG:
             
         finish_times = {}       
         for task in self.top_sort:
-            if expected:
+            task_cost = task.mu if expected else task.realization
+            edge_cost = 0.0
+            for p in self.graph.predecessors(task):
+                m = finish_times[p.ID]
                 try:
-                    m = max(self.graph[p][task]['weight'].mu + finish_times[p.ID] for p in self.graph.predecessors(task))
-                    finish_times[task.ID] = m + task.mu 
-                except KeyError:    # Graph has no edge weights.
-                    m = max(finish_times[p.ID] for p in self.graph.predecessors(task))
-                    finish_times[task.ID] = m + task.mu
-                except ValueError:
-                    finish_times[task.ID] = task.mu  
-            else:            
-                try:
-                    m = max(self.graph[p][task]['weight'].realization + finish_times[p.ID] for p in self.graph.predecessors(task))
-                    finish_times[task.ID] = m + task.realization 
-                except KeyError:
-                    m = max(finish_times[p.ID] for p in self.graph.predecessors(task))
-                    finish_times[task.ID] = m + task.realization
-                except ValueError:
-                    finish_times[task.ID] = task.realization                        
+                    if expected:
+                        m += self.graph[p][task]['weight'].mu 
+                    else:
+                        m += self.graph[p][task]['weight'].realization
+                except AttributeError:
+                    pass
+                edge_cost = max(edge_cost, m)
+            finish_times[task.ID] = task_cost + edge_cost
+                                           
         lp = finish_times[self.top_sort[-1].ID] # Assumes single exit task.    
         return lp 
+    
+    def monte_carlo(self, samples=10, dist="NORMAL"):
+        """TODO"""
+        
+        lps = []        
+        for _ in range(samples):
+            self.realize(dist=dist)
+            lp = self.longest_path()
+            lps.append(lp)
+        mu = np.mean(lps)
+        var = np.var(lps)
+        return RV(mu, var)
 
     def sculli(self):
         """
@@ -379,18 +377,18 @@ class SDAG:
         """
         
         finish_times = {}
-        for task in self.top_sort:
-            parents = list(self.graph.predecessors(task))
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
             try:
                 p = parents[0]
-                m = self.graph[p][task]['weight'] + finish_times[p.ID] 
+                m = self.graph[p][t]['weight'] + finish_times[p.ID] 
                 for p in parents[1:]:
-                    m1 = self.graph[p][task]['weight'] + finish_times[p.ID]
+                    m1 = self.graph[p][t]['weight'] + finish_times[p.ID]
                     m = m.clark_max(m1, rho=0)
-                finish_times[task.ID] = m + task 
+                finish_times[t.ID] = m + t 
             except IndexError:
-                finish_times[task.ID] = task        
-        return finish_times    
+                finish_times[t.ID] = t        
+        return finish_times[self.top_sort[-1].ID]    
 
     def corLCA(self):
         """

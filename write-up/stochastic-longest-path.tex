@@ -150,15 +150,24 @@
 \section{Introduction}
 \label{sect.intro}
 
+In this section we focus on the problem of efficiently estimating the longest path distribution of a stochastic DAG. This problem occurs in many contexts, although we're most concerned with the case when the DAG represents a schedule with stochastic costs. We assume also that the longest path corresponds to the makespan, so that there are artificial zero-cost edges that express ordering constraints on the same processor....
+
 For any optimization problem, in order to find an optimal solution we obviously need to be able to evaluate how good any given solution is with regards to the optimization criteria. In our case, this means that for a given schedule we need to know the first two moments of its makespan distribution. Unfortunately, Hagstrom \cite{hag88} proved that this is a $\#P$-complete problem for discrete RVs and there is no reason to assume it is any easier for continuous costs instead. Given that computing the true makespan distribution is practically impossible, efficiently approximating it---or at least its first two moments---is therefore of the utmost importance in any stochastic scheduling heuristic. In the following section we discuss several different approaches that have been proposed in the literature in order to make these approximations.
 
 Any schedule can be associated with a stochastic DAG such that the critical path of the DAG is equivalent to the schedule makespan: the topology is largely given by the original task graph, weights are determined by the schedule's processor selections, and task execution order on each of the processors can be respected by adding artificial zero-weight edges between the relevant nodes in the DAG. The problem of approximating the distribution of the critical path through a stochastic DAG has been studied in several contexts other than scheduling, initially in PERT network analysis \cite{mal59} and later digital circuit design \cite{bla08}, so there is quite a healthy literature altogether. 
 % better reference for critical paths in circuit design?  
 
-\subsection{Bounds on the moments}
-\label{subsect.stochastic_bounds}
+\section{Bounds on the moments}
+\label{sect.stochastic_bounds}
+
+We already saw examples of these for discrete RVs in the previous chapter... Extend this and go into details...
 
 Formal bounds on the distribution of the critical path length have been proven; for example, Kleindorfer gives both upper and lower bounds \cite{kle71}, the first of which was improved on by Dodin \cite{dod85}. Often however we really want bounds on the moments of the distribution (which also tend to be cheaper to compute). We have already seen in Chapter \ref{chap.critical_path_estimation} that, if the costs are discrete, then a cheap lower bound on the expected value of the makespan can be computed using upward ranking with the expected values of all costs. Moreover, a tighter bound can be found through Fulkerson's \cite{ful62} alternative method, which was extended to continuous costs by Clingen \cite{cli64} and later improved by Elmaghraby \cite{elm67} and Robillard and Trahan \cite{rob76}. All of these methods provide lower bounds for the expected value alone; if we assume that all costs are normally distributed, then Kamburowski \cite{kam85} was able to prove both lower and upper bounds on the expected value, as well as a lower bound on the variance (and a conjectured upper bound). Kamburowksi's bounds are based on a powerful common technique for approximating the first two moments of the critical path distribution, which is described in the following section.
+
+\section{Approximating the moments}
+\label{sect.approximating_moments}
+
+Rather than a bound, it may be more useful to have estimates of the moments (or ideally the exact distribution). These are heuristic solutions which offer no guarantees but may be more useful in practice....
 
 \subsection{Assuming normality}
 \label{subsect.normality}
@@ -224,8 +233,10 @@ The major disadvantage of Monte Carlo methods is their cost, particularly when t
 
 If the graph is {\em series-parallel} then we can compute the exact distribution of the critical path length in polynomial-time through a series of reductions \cite{dod85,mar65}. If this isn't the case, similar methods have been proposed that give approximations to the distribution \cite{dod85,lud01}, however these tend to be less accurate than Monte Carlo-based methods and more expensive than approaches based on Clark's equations \cite{can16}. 
 
-\subsection{Updating makespan estimates}
-\label{subsect.other_updating}
+\section{Updating current makespan estimates}
+\label{sect.other_updating}
+
+%TODO: rewrite all this, no longer using this approach (see slides for viva presentation). "A big advantage of the correlation based approach is that we can quickly update the makespan/longest path estimate in response to realized data..."
 
 Suppose we are following a static schedule for which we have already computed an estimate of the makespan, how do we efficiently update the estimate dynamically at runtime, perhaps in response to a large delay? This is straightforward for deterministic static schedules since we can just recompute the critical path length of the schedule DAG using observed costs for those task that have already been processed and estimates for those that have not yet been processed. The same basic approach can also be used for stochastic schedules of course, but the picture is slightly more complex, as illustrated below.    
 
@@ -251,8 +262,26 @@ F_h' &\sim N \bigg( \mu_{h} + \frac{\rho_{hm} \sigma_{h} \sigma_{m}}{\sigma_{m}^
 The idea is that by using $F_h'$ rather than $F_h$ for those parent tasks that have not yet completed we can make greater use of the data available and should therefore obtain a superior estimate of the new makespan.  
 % TODO: what if less than zero?
 
-Using the same software framework that we created in order to study the problem of approximating the makespan distribution of stochastic DAGs we investigated the performance of the proposed method (i.e., using $F_h'$ instead of $F_h$ for the unprocessed parents) compared to the more straightforward alternative (i.e., just using $F_h$ for all unprocessed parents) on randomly-generated schedules. Unfortunately, preliminary results have not been too promising and it appears to actually have a slightly detrimental effect. One possible explanation is that since we have been using CorLCA to estimate the correlation coefficients perhaps the approximation errors in $\rho_{hm}$ are significant enough that $F_h'$ is too inaccurate to be useful. Again, though, we should emphasize that this research is at a very early stage and we are actively investigating ways to overcome this issue. 
 
+\section{Results}
+\label{sect.results}
+
+We created a software framework to study the problem of approximating the makespan distribution of stochastic DAGs...
+
+\subsection{Benchmarking}
+\label{subsect.benchmarking}
+
+We don't spend too much time on this since it was done much more thoroughly by Canon and Jeannot but we consider Sculli, CorLCA, possibly canonical and Cordyn for the Cholesky DAGs sets (i.e., we focus on a single example)...
+
+\subsection{Update rule}
+\label{subsect.results_update_rule}
+
+Consider different permutations (fraction of tasks initially realized, distributions of the costs, etc) in a systematic manner and compare with MC estimates... 
+
+\section{Conclusions}
+\label{sect.conclusions}
+
+What we really want to know: is there enough justification for considering the correlations in the context of a stochastic scheduling heuristic? 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bibliography.
