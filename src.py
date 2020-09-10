@@ -63,7 +63,11 @@ class RV:
             self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)
             # TODO: need to be careful to make sure mu and var aren't zero (shouldn't be for a Gamma dist ofc but programmatically sometimes tempting.) 
         elif dist == "uniform":
-            self.realization = np.random.uniform(0, 2 * self.mu)
+            u = np.sqrt(3 * self.var)
+            r = np.random.uniform(-u, u)
+            if r + self.mu < 0:
+                r *= -1
+            self.realization = self.mu + r
     
     def clark_max(self, other, rho=0):
         """
@@ -179,22 +183,23 @@ class SDAG:
     """Represents a stochastic graph."""
     def __init__(self, graph):
         self.graph = graph
-        self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.     
+        self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.  
+        self.size = len(self.top_sort)
         
-    def realize(self, start=0, finish=-1, static=False, dist="NORMAL"):  
+    def realize(self, first=0, last=None, static=False, dist="NORMAL"):  
         """
-        Realize all costs.
+        Realize costs.
         Notes:
             1. Doesn't allow costs to be realized from different distribution types but may extend in future.
         """
         
-        if finish == -1: # TODO.
-            finish = len(self.top_sort)
+        if last is None: # TODO: better way to do this?
+            last = self.size
         
         for i, t in enumerate(self.top_sort):
-            if i > finish:
+            if i == last:
                 break
-            if i < start:
+            if i < first:
                 continue
             t.realize(static=static, dist=dist)
             for p in self.graph.predecessors(t):
@@ -202,58 +207,6 @@ class SDAG:
                     self.graph[p][t]['weight'].realize(static=static, dist=dist) 
                 except AttributeError:
                     pass
-                    
-    # def realize_remainder(self, dist=None):
-    #     """
-    #     Assuming that a subset of the tasks have been realized, realize the remainder and compute the 
-    #     new makespan.
-    #     TODO: only works with a specified distribution atm.
-    #     """
-    #     # New finish time function.
-    #     real_F = {}
-        
-    #     # Find the "current" time. 
-    #     time = 0.0        
-    #     # Consider tasks in topological order.
-    #     for task in self.top_sort:
-    #         if task.realization is not None:
-    #             real_F[task.ID] = task.realization 
-    #             try:                        
-    #                 st = max(real_F[p.ID] + self.graph[p][task]['weight'].realization for p in self.graph.predecessors(task))
-    #                 real_F[task.ID] += st 
-    #             except ValueError:
-    #                 pass
-    #             time = max(time, real_F[task.ID])
-    #             continue
-    #         # Realize task costs and incident edge costs until task finish time exceeds the current time.
-    #         parents = list(self.graph.predecessors(task))
-    #         st = 0.0
-    #         # Realize the incident edge costs.
-    #         for p in parents:
-    #             edge_mu, edge_var = self.graph[p][task]['weight'].mu, self.graph[p][task]['weight'].var
-    #             if edge_var == 0.0:
-    #                 edge_realization = 0.0
-    #             elif dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
-    #                 edge_realization = np.random.normal(edge_mu, np.sqrt(edge_var)) # TODO: what if negative?
-    #             elif dist == "GAMMA" or dist == "gamma":
-    #                 edge_realization = np.random.gamma(shape=(edge_mu**2 / edge_var), scale=edge_var/edge_mu)                    
-    #             st = max(st, real_F[p.ID] + edge_realization)
-    #         # Realize the task cost.            
-    #         if task.var == 0.0:
-    #             task_realization = 0.0
-    #         elif dist == "NORMAL" or dist == "normal" or dist == "Gaussian": 
-    #             task_realization = np.random.normal(task.mu, np.sqrt(task.var)) # TODO: what if negative?
-    #         elif dist == "GAMMA" or dist == "gamma":
-    #             task_realization = np.random.gamma(shape=(task.mu**2 / task.var), scale=task.var/task.mu)
-    #         # Compute the possible finish time.
-    #         ft = st + task_realization
-    #         if ft < time:
-    #             ft = time + np.random.uniform(0, 1) * np.sqrt(task.var)                
-    #         # Once an acceptable finish time is found, set real_F. 
-    #         real_F[task.ID] = ft
-                
-    #     # Compute and return the makespan.
-    #     return real_F[self.top_sort[-1].ID]     # Assumes single exit task.
                     
     def remove_edge_weights(self):
         """
@@ -331,34 +284,36 @@ class SDAG:
         self.graph = G
         self.top_sort = new_top_sort    
                     
-    def longest_path(self, expected=False):
+    def longest_path(self, pert_bound=False):
         """
         Computes either the realized longest path of the DAG, assuming all costs have been realized, or
-        if expected == False, computes an estimate of the makespan expected value by summing/maximizing 
-        all expected values in the same way.
+        estimates the expected value of the longest path if pert_bound == True (or not all costs have been realized) 
+        in the usual PERT/upward rank/CPM way (i.e., use expected values in place of realizations).
         """
             
         finish_times = {}       
         for task in self.top_sort:
-            task_cost = task.mu if expected else task.realization
-            edge_cost = 0.0
+            task_cost = task.mu if (pert_bound or task.realization is None) else task.realization
+            max_parent_cost = 0.0
             for p in self.graph.predecessors(task):
                 m = finish_times[p.ID]
                 try:
-                    if expected:
+                    if pert_bound or self.graph[p][task]['weight'].realization is None: 
                         m += self.graph[p][task]['weight'].mu 
                     else:
                         m += self.graph[p][task]['weight'].realization
                 except AttributeError:
                     pass
-                edge_cost = max(edge_cost, m)
-            finish_times[task.ID] = task_cost + edge_cost
-                                           
+                max_parent_cost = max(max_parent_cost, m)
+            finish_times[task.ID] = task_cost + max_parent_cost                                           
         lp = finish_times[self.top_sort[-1].ID] # Assumes single exit task.    
         return lp 
     
-    def monte_carlo(self, samples=10, dist="NORMAL"):
-        """TODO"""
+    def monte_carlo_longest_path(self, samples=10, dist="NORMAL"):
+        """
+        Monte Carlo sampling method to estimate the makespan distribution (well, it's first two moments, since it is assumed to be 
+        normal by the CLT) of the longest path. 
+        """
         
         lps = []        
         for _ in range(samples):
