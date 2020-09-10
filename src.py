@@ -375,8 +375,7 @@ class SDAG:
                 # Only one parent.
                 if dom_parent is None:
                     dom_parent = parent 
-                    eta = F_ij
-                    
+                    eta = F_ij                    
                 # At least two parents, so need to use Clark's equations to compute eta.
                 else:                    
                     # Find the lowest common ancestor of the dominant parent and the current parent.
@@ -401,9 +400,8 @@ class SDAG:
                 F[task.ID] = task + eta 
                 C[task.ID] = task + self.graph[dom_parent][task]['weight'] + C[dom_parent.ID]
                 # Add edge in correlation tree from the dominant parent to the current task.
-                correlation_tree.add_edge(dom_parent.ID, task.ID)
-                
-        return F
+                correlation_tree.add_edge(dom_parent.ID, task.ID)                
+        return F[self.top_sort[-1].ID]
     
     def lite_corLCA(self):
         """
