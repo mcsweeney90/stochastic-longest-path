@@ -1,11 +1,12 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Bounds on the moments}{}% 2
-\BOOKMARK [1][-]{section.3}{Approximating the moments}{}% 3
-\BOOKMARK [2][-]{subsection.3.1}{Assuming normality}{section.3}% 4
-\BOOKMARK [2][-]{subsection.3.2}{Monte Carlo}{section.3}% 5
-\BOOKMARK [2][-]{subsection.3.3}{Series-parallel reductions}{section.3}% 6
-\BOOKMARK [1][-]{section.4}{Updating longest path estimates}{}% 7
-\BOOKMARK [1][-]{section.5}{Results}{}% 8
-\BOOKMARK [2][-]{subsection.5.1}{Benchmarking}{section.5}% 9
-\BOOKMARK [2][-]{subsection.5.2}{Update rule}{section.5}% 10
-\BOOKMARK [1][-]{section.6}{Conclusions}{}% 11
+\BOOKMARK [1][-]{section.2}{Bounds}{}% 2
+\BOOKMARK [1][-]{section.3}{Monte Carlo methods}{}% 3
+\BOOKMARK [1][-]{section.4}{Series-parallel reductions}{}% 4
+\BOOKMARK [1][-]{section.5}{Assuming normality}{}% 5
+\BOOKMARK [2][-]{subsection.5.1}{Including correlations}{section.5}% 6
+\BOOKMARK [2][-]{subsection.5.2}{Kamburowski's bounds}{section.5}% 7
+\BOOKMARK [1][-]{section.6}{Updating longest path estimates}{}% 8
+\BOOKMARK [1][-]{section.7}{Results}{}% 9
+\BOOKMARK [2][-]{subsection.7.1}{Benchmarking}{section.7}% 10
+\BOOKMARK [2][-]{subsection.7.2}{Update rule}{section.7}% 11
+\BOOKMARK [1][-]{section.8}{Conclusions}{}% 12
