@@ -5,13 +5,13 @@
                      '(("article" "12pt")))
    (TeX-add-to-alist 'LaTeX-provided-package-options
                      '(("hyperref" "colorlinks" "urlcolor=blue" "linkcolor=blue" "citecolor=hotpink") ("babel" "british") ("algorithm2e" "linesnumbered" "ruled") ("tcolorbox" "most" "minted")))
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "url")
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "path")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "url")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
    (add-to-list 'LaTeX-verbatim-macros-with-delims-local "path")
    (TeX-run-style-hooks
     "latex2e"
@@ -62,18 +62,15 @@
     "eq.Li"
     "sect.bounds"
     "eq.ui"
-    "sect.stochastic_monte_carlo"
-    "sect.stochastic_series_parallel"
     "sect.normality"
     "eq.sum_moments"
     "eq.alpha_beta"
     "eq.clark_max_mu"
     "eq.clark_max_sigma"
     "subsect.correlation_aware"
-    "eq.max_corr"
-    "eq.sum_corr"
     "subsect.kamburowski"
-    "sect.other_updating"
+    "sect.other_methods"
+    "sect.updating"
     "eq.finish_time"
     "sect.results"
     "subsect.benchmarking"
