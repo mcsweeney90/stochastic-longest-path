@@ -4,7 +4,7 @@
 \BOOKMARK [2][-]{subsection.3.1}{Including correlations}{section.3}% 4
 \BOOKMARK [2][-]{subsection.3.2}{Kamburowski's bounds}{section.3}% 5
 \BOOKMARK [1][-]{section.4}{Other approximation methods}{}% 6
-\BOOKMARK [1][-]{section.5}{Updating longest path estimates}{}% 7
+\BOOKMARK [1][-]{section.5}{Updating makespan estimates}{}% 7
 \BOOKMARK [1][-]{section.6}{Results}{}% 8
 \BOOKMARK [2][-]{subsection.6.1}{Benchmarking}{section.6}% 9
 \BOOKMARK [2][-]{subsection.6.2}{Update rule}{section.6}% 10
