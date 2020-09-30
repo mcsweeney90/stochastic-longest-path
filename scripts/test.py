@@ -15,7 +15,7 @@ chol_dag_path = '../graphs/cholesky_heft_accelerated'
 
 nb = 128
 
-n_tasks = [35, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
+n_tasks = [35]#, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
 
 for nt in n_tasks:
     start = timer()
