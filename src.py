@@ -220,29 +220,40 @@ class SDAG:
                 except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
                     pass 
                     
-    def longest_path(self, pert_bound=False):
+    def real_longest_path(self):
         """
-        Computes either the realized longest path of the DAG, assuming all costs have been realized, or
-        estimates the expected value of the longest path if pert_bound == True (or not all costs have been realized) 
-        in the usual PERT/upward rank/CPM way (i.e., use expected values in place of realizations).
+        Computes the realized longest path of the DAG.
         """
             
-        L = {}       
+        Z = {}       
         for node in self.top_sort:
-            node_cost = node.mu if (pert_bound or node.realization is None) else node.realization
-            max_parent_cost = 0.0
+            if node.realization is None: # Useful when DAG is partially realized (since this is done in top sorted order).
+                break
+            start_length = 0.0
             for p in self.graph.predecessors(node):
-                m = L[p.ID]
+                m = Z[p.ID]
                 try:
-                    if pert_bound or self.graph[p][node]['weight'].realization is None: 
-                        m += self.graph[p][node]['weight'].mu 
-                    else:
-                        m += self.graph[p][node]['weight'].realization
-                except AttributeError:
+                    m += self.graph[p][node]['weight'].realization
+                except AttributeError: # Disjunctive edge.
                     pass
-                max_parent_cost = max(max_parent_cost, m)
-            L[node.ID] = node_cost + max_parent_cost                                           
-        return L[self.top_sort[-1].ID] # Assumes single exit task.    
+                start_length = max(start_length, m)
+            Z[node.ID] = node.realization + start_length                                           
+        return Z    
+    
+    def pert_cpm(self):
+        """Classic lower bound on the expected value from PERT analysis."""
+        B = {}       
+        for node in self.top_sort:
+            start_bound = 0.0
+            for p in self.graph.predecessors(node):
+                m = B[p.ID]
+                try:
+                    m += self.graph[p][node]['weight'].mu
+                except AttributeError:  # Disjunctive edge.
+                    pass
+                start_bound = max(start_bound, m)
+            B[node.ID] = node.mu + start_bound                                           
+        return B[self.top_sort[-1].ID] # Assumes single exit task.        
     
     def monte_carlo(self, samples=10, dist="NORMAL"):
         """
@@ -253,18 +264,35 @@ class SDAG:
         lps = []        
         for _ in range(samples):
             self.realize(dist=dist)
-            lp = self.longest_path()
+            Z = self.real_longest_path()
+            lp = Z[self.top_sort[-1].ID]     # Assumes single exit task.
             lps.append(lp)
         mu = np.mean(lps)
         var = np.var(lps)
         return RV(mu, var)
 
-    def sculli(self):
+    def sculli(self, remaining=False):
         """
         Sculli's method for estimating the makespan of a fixed-cost stochastic DAG.
         'The completion time of PERT networks,'
         Sculli (1983).    
         """
+        
+        if remaining:
+            R = {}
+            backward_traversal = list(reversed(self.top_sort)) 
+            for t in backward_traversal:
+                children = list(self.graph.successors(t))
+                try:
+                    c = children[0]
+                    m = self.graph[t][c]['weight'] + c + R[c.ID] 
+                    for c in children[1:]:
+                        m1 = self.graph[t][c]['weight'] + c + R[c.ID]
+                        m = m.clark_max(m1, rho=0)
+                    R[t.ID] = m  
+                except IndexError:  # Entry task.
+                    R[t.ID] = 0.0        
+            return R            
         
         L = {}
         for t in self.top_sort:
@@ -278,9 +306,9 @@ class SDAG:
                 L[t.ID] = m + t 
             except IndexError:  # Entry task.
                 L[t.ID] = t        
-        return L[self.top_sort[-1].ID]    
+        return L   
 
-    def corLCA(self):
+    def corLCA(self, remaining=False, return_correlation_tree=False):
         """
         CorLCA heuristic for estimating the makespan of a fixed-cost stochastic DAG.
         'Correlation-aware heuristics for evaluating the distribution of the longest path length of a DAG with random weights,' 
@@ -290,8 +318,36 @@ class SDAG:
             - alternative method of computing LCA using dominant_ancestors dict isn't technically always the LCA, although it 
               does compute a "recent" common ancestor. However it is significantly faster.
         """   
+        
+        if remaining:
+            correlation_tree = nx.DiGraph()     
+            R, C = {}, {} 
+            backward_traversal = list(reversed(self.top_sort)) 
+            for t in backward_traversal:
+                dom_child = None
+                for child in self.graph.successors(t):
+                    R_ij = self.graph[t][child]['weight'] + R[child.ID] + child
+                    C[(child.ID, t.ID)] = self.graph[t][child]['weight'] + C[child.ID] + child
+                    if dom_child is None:
+                        dom_child = child
+                        eta = R_ij
+                    else:
+                        get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_child.ID, child.ID)])
+                        lca = list(get_lca)[0][1]
+                        r = C[lca].var / (np.sqrt(C[(dom_child.ID, t.ID)].var) * np.sqrt(C[(child.ID, t.ID)].var))
+                        if R_ij.mu > eta.mu: 
+                            dom_child = child
+                        eta = eta.clark_max(R_ij, rho=r) 
+                if dom_child is None:
+                    R[t.ID], C[t.ID] = 0.0, 0.0
+                else:
+                    R[t.ID] = eta
+                    C[t.ID] = self.graph[t][dom_child]['weight'] + C[dom_child.ID] + dom_child
+                    correlation_tree.add_edge(dom_child.ID, t.ID)
+            return R, correlation_tree, C if return_correlation_tree else R
                     
-        # Correlation tree is a Networkx DiGraph, like self.graph.
+                    
+        # Correlation tree.
         correlation_tree = nx.DiGraph()        
         # F represents finish times (called Y in 2016 paper). C is an approximation to F for estimating rho values. 
         L, C = {}, {} 
@@ -336,7 +392,7 @@ class SDAG:
                 C[t.ID] = t + self.graph[dom_parent][t]['weight'] + C[dom_parent.ID]
                 # Add edge in correlation tree from the dominant parent to the current task.
                 correlation_tree.add_edge(dom_parent.ID, t.ID)                
-        return L[self.top_sort[-1].ID]  # Assumes single exit task.
+        return L, correlation_tree, C if return_correlation_tree else L
     
     def corLCA_lite(self):
         """
@@ -388,7 +444,7 @@ class SDAG:
                 L[t.ID] = t + eta 
                 dominant_ancestors[t.ID] = dominant_ancestors[dom_parent.ID] + [dom_parent.ID] 
                 
-        return L[self.top_sort[-1].ID]     # Assumes single exit task.
+        return L #L[self.top_sort[-1].ID]     # Assumes single exit task.
     
     def canonical(self):
         """
@@ -440,4 +496,35 @@ class SDAG:
             except IndexError:
                 L[t.ID] = t
                     
-        return L[self.top_sort[-1].ID]     # Assumes single exit task.        
+        return L #L[self.top_sort[-1].ID]     # Assumes single exit task.     
+    
+    def update_rule(self, L, correlation_tree, C):
+        """
+        Assumes using CorLCA to estimate correlations.
+        TODO: apply to final task directly or work through DAG?
+        """
+        # Calculate the realized longest paths.
+        lp, updated_lps = L[self.top_sort[-1].ID], []
+        for t in self.top_sort:
+            if t.realization is None:
+                break
+            lp_start = 0.0
+            for p in self.graph.predecessors(t):
+                m = L[p.ID].realization
+                try:
+                    m += self.graph[p][t]['weight'].realization
+                except AttributeError:
+                    pass
+                lp_start = max(m, lp_start)
+            L[t.ID].realization = t.realization + lp_start
+            # Check if no children are realized and save estimate.
+            if all(c.realization is None for c in self.graph.successors(t)):
+                # Calculate rho.
+                get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(self.top_sort[-1].ID, t.ID)])
+                lca = list(get_lca)[0][1]
+                rho = C[lca].var / (np.sqrt(C[self.top_sort[-1].ID].var) * np.sqrt(C[t.ID].var))
+                var_dash = (1 - rho^2) * lp.var
+                mu_add = ((rho * np.sqrt(lp.var)) / np.sqrt(L[t.ID].var)) * (L[t.ID].realization - L[t.ID].mu)
+                updated_lps.append(RV(lp.mu + mu_add, var_dash))
+        return updated_lps
+    
