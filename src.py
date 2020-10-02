@@ -55,18 +55,22 @@ class RV:
         """Set all attributes except ID to their defaults."""
         self.mu, self.var, self.realization = 0.0, 0.0, None
         
-    def realize(self, static=False, dist="NORMAL"):
+    def realize(self, static=False, dist="NORMAL", percentile=None):
         """
         Realize the RV from the specified distribution, according to the mean and expected value.
         If static, set realization to the mean.
         TODO: may add more distribution choices if they will be useful anywhere.
+        Notes: percentile parameter assumes normal distribution. 
         """
         if static:
             self.realization = self.mu 
-        elif dist == "NORMAL" or dist == "normal" or dist == "Normal" or dist == "Gaussian":             
-            r = np.random.normal(self.mu, np.sqrt(self.var))
-            if r < 0.0:
-                r *= -1            
+        elif dist == "NORMAL" or dist == "normal" or dist == "Normal" or dist == "Gaussian":    
+            if percentile is None:
+                r = np.random.normal(self.mu, np.sqrt(self.var))
+                if r < 0.0:
+                    r *= -1       
+            else:
+                r = norm.ppf(percentile, loc=self.mu, scale=np.sqrt(self.var))
             self.realization = r
         elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
             self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)
@@ -198,9 +202,9 @@ class SDAG:
         self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.  
         self.size = len(self.top_sort)
         
-    def realize(self, first=0, last=None, static=False, dist="NORMAL"):  
+    def realize(self, first=0, last=None, static=False, dist="NORMAL", percentile=None):  
         """
-        Realize all cost RVs between node with index first and node with index last (not inclusive).
+        Realize all cost RVs between node with index first and node with index last (inclusive).
         Notes:
             1. Doesn't allow costs to be realized from different distribution types but may extend in future.
         """
@@ -209,16 +213,37 @@ class SDAG:
             last = self.size
         
         for i, t in enumerate(self.top_sort):
-            if i == last:
+            if i > last:
                 break
             if i < first:
                 continue
-            t.realize(static=static, dist=dist)
+            t.realize(static=static, dist=dist, percentile=percentile)
             for p in self.graph.predecessors(t):
                 try:
-                    self.graph[p][t]['weight'].realize(static=static, dist=dist) 
+                    self.graph[p][t]['weight'].realize(static=static, dist=dist, percentile=percentile) 
                 except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
                     pass 
+    def reset(self, first=0, last=None):  
+        """
+        Realize all cost RVs between node with index first and node with index last (inclusive).
+        Notes:
+            1. Doesn't allow costs to be realized from different distribution types but may extend in future.
+        """
+        
+        if last is None: # TODO: better way to do this?
+            last = self.size
+        
+        for i, t in enumerate(self.top_sort):
+            if i > last:
+                break
+            if i < first:
+                continue
+            t.realization = None
+            for p in self.graph.predecessors(t):
+                try:
+                    self.graph[p][t]['weight'].realization = None 
+                except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
+                    pass
                     
     def real_longest_path(self):
         """
@@ -240,7 +265,7 @@ class SDAG:
             Z[node.ID] = node.realization + start_length                                           
         return Z    
     
-    def pert_cpm(self):
+    def pert_bound(self):
         """Classic lower bound on the expected value from PERT analysis."""
         B = {}       
         for node in self.top_sort:
@@ -253,7 +278,11 @@ class SDAG:
                     pass
                 start_bound = max(start_bound, m)
             B[node.ID] = node.mu + start_bound                                           
-        return B[self.top_sort[-1].ID] # Assumes single exit task.        
+        return B[self.top_sort[-1].ID] # Assumes single exit task.   
+
+    def kamburowski(self):
+        """TODO."""
+        return
     
     def monte_carlo(self, samples=10, dist="NORMAL"):
         """
@@ -269,6 +298,7 @@ class SDAG:
             lps.append(lp)
         mu = np.mean(lps)
         var = np.var(lps)
+        self.reset()
         return RV(mu, var)
 
     def sculli(self, remaining=False):
@@ -327,24 +357,27 @@ class SDAG:
                 dom_child = None
                 for child in self.graph.successors(t):
                     R_ij = self.graph[t][child]['weight'] + R[child.ID] + child
-                    C[(child.ID, t.ID)] = self.graph[t][child]['weight'] + C[child.ID] + child
+                    C[(child.ID, t.ID)] = self.graph[t][child]['weight'] + C[child.ID] 
                     if dom_child is None:
                         dom_child = child
                         eta = R_ij
                     else:
                         get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_child.ID, child.ID)])
-                        lca = list(get_lca)[0][1]
+                        lca = list(get_lca)[0][1] 
                         r = C[lca].var / (np.sqrt(C[(dom_child.ID, t.ID)].var) * np.sqrt(C[(child.ID, t.ID)].var))
                         if R_ij.mu > eta.mu: 
                             dom_child = child
                         eta = eta.clark_max(R_ij, rho=r) 
                 if dom_child is None:
-                    R[t.ID], C[t.ID] = 0.0, 0.0
+                    R[t.ID] = 0.0
+                    C[t.ID] = RV(t.mu, t.var)
                 else:
                     R[t.ID] = eta
-                    C[t.ID] = self.graph[t][dom_child]['weight'] + C[dom_child.ID] + dom_child
+                    C[t.ID] = self.graph[t][dom_child]['weight'] + C[dom_child.ID] 
                     correlation_tree.add_edge(dom_child.ID, t.ID)
-            return R, correlation_tree, C if return_correlation_tree else R
+            if return_correlation_tree:
+                return R, correlation_tree, C
+            return R
                     
                     
         # Correlation tree.
@@ -391,8 +424,10 @@ class SDAG:
                 L[t.ID] = t + eta 
                 C[t.ID] = t + self.graph[dom_parent][t]['weight'] + C[dom_parent.ID]
                 # Add edge in correlation tree from the dominant parent to the current task.
-                correlation_tree.add_edge(dom_parent.ID, t.ID)                
-        return L, correlation_tree, C if return_correlation_tree else L
+                correlation_tree.add_edge(dom_parent.ID, t.ID) 
+        if return_correlation_tree:
+            return L, correlation_tree, C
+        return L
     
     def corLCA_lite(self):
         """
@@ -496,7 +531,7 @@ class SDAG:
             except IndexError:
                 L[t.ID] = t
                     
-        return L #L[self.top_sort[-1].ID]     # Assumes single exit task.     
+        return L    
     
     def update_rule(self, L, correlation_tree, C):
         """
