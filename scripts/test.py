@@ -46,7 +46,7 @@ for nt in n_tasks:
     for t in H.top_sort:
         if t.realization is None:
             break
-        if all(c.realization is None for c in H.graph.successors(t)):
+        if any(c.realization is None for c in H.graph.successors(t)):
             nw = RZ[t.ID] + SR[t.ID]
             new_scullis.append(nw)
     print(new_scullis)
