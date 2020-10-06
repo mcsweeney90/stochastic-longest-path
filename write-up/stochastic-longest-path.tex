@@ -324,12 +324,12 @@ If the graph is {\em series-parallel} then we can compute the exact distribution
 % TODO: rewrite all this, no longer using this approach (see slides for viva presentation). "A big advantage of the correlation based approach is that we can quickly update the makespan/longest path estimate in response to realized data..."
 % Mention emapse somewhere - e.g., we don't repeat the work of Canon, who did the best empirical comparison of different methods for computing the longest path distribution... Many of the methods discussed here were implemented in their emapse package... We chose to implement our own smaller-scale simulator for continuity with earlier work in this thesis...
 
-Estimating the length of a schedule with stochastic costs before its execution has been widely-studied, as the examples in previous sections illustrate. We therefore focus here on a different but related problem: how can schedule makespan estimates be quickly updated {\em during} execution? This would be particularly useful in situations such as when a large unexpected delay occurs. More precisely, the scenario we consider is as follows. Given a schedule $\pi$, we computed a complete set of task finish times estimates $L_i$ for all $i = 1, \dots, n$ before runtime using one of the Clark equation-based methods discussed in Section \ref{sect.normality}. At some point in time $T$ during the schedule execution we want to compute a new, more accurate estimate of the makespan based on the costs which have been observed thus far. How do we do this as quickly and accurately as possible?
+Estimating the length of a schedule with stochastic costs before its execution has been widely-studied, as the examples in previous sections illustrate. We therefore focus here on a different but related problem: how can schedule makespan estimates be quickly updated {\em during} execution? This would be particularly useful in situations such as when a large unexpected delay occurs. More precisely, the scenario we consider is as follows. Given a schedule $\pi$, we computed a complete set of task finish times estimates $L_i \sim N(\mu_i, \sigma_i^2)$ for all $i = 1, \dots, n$ before runtime using one of the Clark equation-based methods discussed in Section \ref{sect.normality}. At some point in time $T$ during the schedule execution we want to compute a new, more accurate estimate of the makespan based on the costs which have been observed thus far. How do we do this as quickly and accurately as possible?
 
-Effectively, at time $T$ the schedule graph $G_s$ can be divided into two distinct subgraphs: one corresponding to those tasks that have been completed and the other to those that have not. Define $C_T$ to be the set of indices corresponding to tasks that have completed by time $T$ and $U_T$ to be the set of indices corresponding to tasks that are still not done. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of tasks which have been completed but at least one of their parents has not---i.e., the boundary of the realized and unrealized sections of the graph.
+Effectively, at time $T$ the schedule graph $G_s$ can be divided into two distinct subgraphs: one corresponding to those tasks that have been completed and the other to those that have not. Define $C_T$ to be the set of indices corresponding to tasks that have completed by time $T$ and $U_T$ to be the set of indices corresponding to tasks that are still not done. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of tasks which have been completed but at least one of their parents has not---i.e., in some sense the boundary of the realized and unrealized sections of the graph.
 % something about the first having multiple exit tasks and the second multiple entry tasks?
 
-Since all cost RVs corresponding to tasks indexed by $C_T$---and the edges between them---have been realized, we can compute the realized finish times $\ell_i$ for the corresponding tasks in the usual manner for scalar costs. The question then remains of how we compute an updated set of longest path estimates $L_k'$ for all $k \in U_T$, including a new final makespan estimate $L_n'$. We describe possible methods in the following three sections.
+Since all cost RVs corresponding to tasks indexed by $C_T$---and the edges between them---have been realized, we can compute the realized finish times $\ell_i$ for the corresponding tasks in the usual manner for scalar costs. The question then remains of how we compute an updated set of longest path estimates $L_k'$ for all $k \in U_T$, including a new final makespan estimate $L_n'$. We outline different possible approaches to this problem in the following three sections.
 
 \subsection{Estimating the remaining time}
 \label{subsect.remaining}
@@ -348,10 +348,10 @@ The advantage of this approach is that at time $T$ the estimated longest path wh
   \end{align*}
 This maximization can be done in the same manner as the calculation of the $R_i$, using the same set of correlation coefficients (or not, if using Sculli's method).
 
-\subsection{Correlation-based updates}
+\subsection{Updating the makespan directly}
 \label{subsect.corr_update}
 
-Another possible method makes use of the following result.
+Another possible method for updating the final makespan estimate makes use of the following result.
 \begin{prop}
 	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
 	\begin{align*}
@@ -360,42 +360,42 @@ Another possible method makes use of the following result.
 \end{prop}
 Note that if all of the linear correlation coefficients $\rho_{uv}$ are known, we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find $\Sigma_{uv}$.
 
-This is useful because the approach of CorLCA and CorDyn implicitly assumes that there is a joint normal distribution across the entire set of finish times $L_i$ so we can therefore update the final makespan estimate using only the observed finish times of the tasks indexed by $C_T^*$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Suppose that task $t_i$ has finished at time $\ell_i$. Then we can compute a new estimate $L_n'$ of the final makespan by applying the above result as follows,
+This proposition is useful because we have been implicitly assuming that there is a joint normal distribution across the entire set of finish times $L_i$ due to their dependencies. Furthermore, we can estimate the correlation coefficients between finish times at any two tasks using, for example, the correlation tree approach of CorLCA. This means that we can update the final makespan estimate using only the observed finish times of the tasks indexed by $C_T^*$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Suppose that task $t_i$ has finished at time $\ell_i$. Then we can compute a new estimate $L_n^i$ of the final makespan by applying the above result as follows,
 \begin{align*}
-L_n' &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
+L_n^i &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
 &\sim N \bigg(\mu_{n} + \frac{\rho_{ni} \sigma_{n}}{\sigma_{i}} (\ell_i - \mu_{i}), \enspace (1 - \rho_{ni}^2) \sigma_{n}^2 \bigg).
 \end{align*}
-We do this for each of the boundary tasks and then compute the maximum...
+We do this for all $i \in C_T^*$ and then compute their maximum (using the same method as before to estimate the correlation coefficients, if they are not already known) in order to obtain a new estimated final makespan $L_n'$, 
+\begin{align*}
+  L_n' = \max_{i \in C_T^*} \{ L_n^i  \}.
+  \end{align*}
 
-%$L_i \sim N(\mu_i, \sigma_i)$ of the finish times of all tasks.
+\subsection{Propagating updates forward}
+\label{subsect.propagating}
 
-\subsection{Truncated normal updates}
-\label{subsect.truncated_updates}
+Rather than updating the finish time of the exit task---and therefore the makespan---directly, we can instead move forward through the DAG and update the finish time estimates for all unrealized tasks. This is slightly more expensive of course but potentially more accurate. Now, in principle the updated finish times can be computed for each task $t_i$, where $i \in U_T$, using equation \eqref{eq.Li} in the usual manner. However, there are essentially three different cases that we need to consider, depending on the status of the terms in the maximization.
+\begin{enumerate}
+\item Both $\pi_{hi}$ and $L_h$ have been realized for all $h \in P_i$.
+\item Both $\pi_{hi}$ and $L_h$ have been realized for some $h \in P_i$ but not others. 
+  \item Both $\pi_{hi}$ and $L_h$ have been realized for none of the parents.
+  \end{enumerate}
+  In the first instance, the sums of $\pi_{hi}$ and $L_h$ are now deterministic so the maximization is just done over a set of scalars and is therefore straightforward. Similarly, in the third case, all of the sums are unrealized RVs so we can just use Clark's equations again to compute the new finish time estimate.
 
+The second case is more interesting. The problem basically reduces to how we compute the maximum of a set of RVs, some of which have been realized and others which have not. For notational ease, let $Z_h = \pi_{hi} + L_h$ and $M_i = \max_{h \in P_i} \{ Z_h  \}$.  Let $X_i$ be the maximum over the subset of parents for which $Z_h$ has been realized. Now, we know that $M_i > X_i$ since at least some of the $Z_h$ have not been realized yet. Furthermore, we have already computed an estimate of $L_i = \pi_i + M_i$, where $M_i$ is assumed to be roughly normal, so we can also explicitly form $M_i \sim N(\mu_{M_i}, \sigma_{M_i}^2)$. We want to find a new finish time estimate
+\begin{align}
+  \label{eq.dash_Li}
+  L_i' = \pi_i + (M_i | M_i > X_i). 
+\end{align}
+Given that $M_i$ is assumed to be Gaussian, we can model the term on the right as a truncated Gaussian. Let $a = (X_i - \mu_{M_i}) / \sigma_{M_i}$ and $b = 1 - \Phi(a)$, where $\Phi$ is the unit normal cdf as before. Then the first two moments of $(M_i | M_i > X_i)$ are given by
+\begin{align*}
+  \E[M_i \mid M_i > X_i] = \mu_{M_i} + \frac{\sigma_{M_i}\phi(a)}{b}
+\end{align*}
+and
+\begin{align*}
+  Var[M_i \mid M_i > X_i] = \sigma_{M_i}^2 \bigg[ 1 + \frac{a\phi(a)}{b} - \bigg( \frac{\phi(a)}{b} \bigg)^2    \bigg].
+\end{align*}
+Using these expressions, we can now compute \eqref{eq.dash_Li}, and therefore work through the remainder of the DAG updating the finish time estimates for all tasks that have not yet completed. 
 
-% Suppose we are following a static schedule for which we have already computed an estimate of the makespan, how do we efficiently update the estimate dynamically at runtime, perhaps in response to a large delay? This is straightforward for deterministic static schedules since we can just recompute the critical path length of the schedule DAG using observed costs for those task that have already been processed and estimates for those that have not yet been processed. The same basic approach can also be used for stochastic schedules of course, but the picture is slightly more complex, as illustrated below.    
-
-% For a given task DAG and target platform, suppose we have a static schedule that dictates what tasks each processor should execute and in what order, which they will do greedily (i.e., without artificial delays). Before runtime we work through the DAG and estimate the makespan distribution up to when each of the tasks has completed. These makespan estimates are modeled as normal RVs in accordance with the central limit theorem so that for each task $t_i$ we have an associated makespan estimate $F_i \sim N(\mu_i, \sigma_i^2)$, which is computed through  
-% \begin{align}
-% F_i = W_i + \max_{h \in P_i} \{ F_h + W_{hi} \}, \label{eq.finish_time}
-% \end{align} 
-% where $W_i$ and $W_{hi}$ here represent the relevant computation and communication costs (since the processors are fixed by the schedule). We make the standard assumption that all of the computation and communication costs are independent so the summations are done using the rule for normal RVs \eqref{eq.sum_moments} with the correlation coefficient assumed to be zero. We use Clark's equations \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} to estimate the distribution of the maximization. The terms within are not generally independent because the parent tasks they represent may have common ancestors, so we can either ignore all correlations (which corresponds to Sculli's method) or estimate the correlation coefficients (as in CorLCA and Cordyn). 
-
-% We are concerned with the situation at any given point during runtime when some tasks may have completed execution while others are still to be done. Let $f_h$ be the realization of the makespan estimate $F_h$ once task $t_h$ has actually been completed. In order to update the makespan estimate we need to move through the DAG and make use of the realizations of previous task makespans. Consider a generic task $t_i$ and suppose that some of its parent tasks have been processed but others have not. The most straightforward way to update $F_i$ is to simply use $f_h$ instead of $F_h$ in equation \eqref{eq.finish_time} for all those parents that have been realized. However, it would perhaps be better if we could use the realized parent makespans to update the makespan estimates $F_h$ for those parents that haven't yet finished. Let $f_m = \max_{h \in P_i} f_h$ be the greatest makespan of those parent tasks that have been processed. For all other parent tasks $t_h$ that have {\em not} yet been executed we want to estimate the remaining cost, given that it has not been completed but $t_m$ has been---i.e., we want to estimate $F_h' = F_h - f_m$ given that we know $f_h > f_m$. This can be done by applying the following result. 
-
-% \begin{prop}
-% 	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
-% 	\begin{align*}
-% 	(w \mid v) \sim N \big( \bar{w} + \Sigma_{wv}\Sigma_{vv}^{-1} (v - \bar{v}), \enspace  \Sigma_{ww} - \Sigma_{wv} \Sigma_{vv}^{-1} \Sigma_{vw} \big).
-% 	\end{align*}
-% \end{prop}
-% Note that if all of the linear correlation coefficients $\rho_{uv}$ are known (which would be the case if we used CorLCA or Cordyn), we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find $\Sigma_{uv}$. For compactness of notation let $\rho_{hm} = \rho_{mh}$ be the linear correlation coefficient between $F_h$ and $F_m$. Then we have 
-% \begin{align*}
-% F_h' &\sim N \bigg( \mu_{h} + \frac{\rho_{hm} \sigma_{h} \sigma_{m}}{\sigma_{m}^2} (f_m - \mu_{m}), \enspace \sigma_{h}^2 - \frac{\rho_{hm} \sigma_{h} \sigma_{m} \cdot \rho_{mh} \sigma_{m} \sigma_{h}}{\sigma_{m}^2} \bigg) \nonumber\\
-% &\sim N \bigg(\mu_{h} + \frac{\rho_{hm} \sigma_{h}}{\sigma_{m}} (f_m - \mu_{m}), \enspace (1 - \rho_{hm}^2) \sigma_{h}^2 \bigg).
-% \end{align*} 
-% The idea is that by using $F_h'$ rather than $F_h$ for those parent tasks that have not yet completed we can make greater use of the data available and should therefore obtain a superior estimate of the new makespan.  
-% TODO: what if less than zero?
 
 
 \section{Results}

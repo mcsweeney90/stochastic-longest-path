@@ -6,8 +6,8 @@
 \BOOKMARK [1][-]{section.4}{Other approximation methods}{}% 6
 \BOOKMARK [1][-]{section.5}{Updating makespan estimates}{}% 7
 \BOOKMARK [2][-]{subsection.5.1}{Estimating the remaining time}{section.5}% 8
-\BOOKMARK [2][-]{subsection.5.2}{Correlation-based updates}{section.5}% 9
-\BOOKMARK [2][-]{subsection.5.3}{Truncated normal updates}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.2}{Updating the makespan directly}{section.5}% 9
+\BOOKMARK [2][-]{subsection.5.3}{Propagating updates forward}{section.5}% 10
 \BOOKMARK [1][-]{section.6}{Results}{}% 11
 \BOOKMARK [2][-]{subsection.6.1}{Benchmarking}{section.6}% 12
 \BOOKMARK [2][-]{subsection.6.2}{Update rule}{section.6}% 13

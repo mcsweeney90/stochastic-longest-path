@@ -202,89 +202,74 @@ class SDAG:
         self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.  
         self.size = len(self.top_sort)
         
-    def realize(self, first=0, last=None, static=False, dist="NORMAL", percentile=None):  
+    def realize(self, static=False, dist="NORMAL", percentile=None, fixed={}):  
         """
         Realize all cost RVs between node with index first and node with index last (inclusive).
         Notes:
             1. Doesn't allow costs to be realized from different distribution types but may extend in future.
+        TODO: better way to partially realize the DAG?
         """
-        
-        if last is None: # TODO: better way to do this?
-            last = self.size
-        
-        for i, t in enumerate(self.top_sort):
-            if i > last:
-                break
-            if i < first:
-                continue
-            t.realize(static=static, dist=dist, percentile=percentile)
+                
+        for t in self.top_sort:
+            try:
+                t.realization = fixed[t.ID]
+            except KeyError:                
+                t.realize(static=static, dist=dist, percentile=percentile)
             for p in self.graph.predecessors(t):
-                try:
+                try:   
+                    self.graph[p][t]['weight'].realization = fixed[(p.ID, t.ID)]
+                except KeyError:
                     self.graph[p][t]['weight'].realize(static=static, dist=dist, percentile=percentile) 
                 except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
                     pass 
-    def reset(self, first=0, last=None):  
+                
+    def reset(self, fixed={}):  
         """
         Realize all cost RVs between node with index first and node with index last (inclusive).
         Notes:
             1. Doesn't allow costs to be realized from different distribution types but may extend in future.
         """
-        
-        if last is None: # TODO: better way to do this?
-            last = self.size
-        
-        for i, t in enumerate(self.top_sort):
-            if i > last:
-                break
-            if i < first:
-                continue
-            t.realization = None
+                
+        for t in self.top_sort:
+            try:
+                fixed[t.ID]
+            except KeyError:
+                t.realization = None
             for p in self.graph.predecessors(t):
                 try:
-                    self.graph[p][t]['weight'].realization = None 
-                except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
-                    pass
+                    fixed[(p.ID, t.ID)]
+                except KeyError:
+                    try:
+                        self.graph[p][t]['weight'].realization = None 
+                    except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
+                        pass
                     
-    def real_longest_path(self):
+    def longest_path(self, pert_bound=False):
         """
-        Computes the realized longest path of the DAG.
-        """
-            
+        Computes the (realized) longest path of the DAG. If pert_bound == True, returns the classic PERT-CPM bound on the 
+        expected value of the longest path instead.
+        """            
         Z = {}       
-        for node in self.top_sort:
-            if node.realization is None: # Useful when DAG is partially realized (since this is done in top sorted order).
-                break
+        for t in self.top_sort:
             start_length = 0.0
-            for p in self.graph.predecessors(node):
+            for p in self.graph.predecessors(t):
                 m = Z[p.ID]
                 try:
-                    m += self.graph[p][node]['weight'].realization
+                    if pert_bound:
+                        m += self.graph[p][t]['weight'].mu
+                    else:
+                        m += self.graph[p][t]['weight'].realization
                 except AttributeError: # Disjunctive edge.
                     pass
                 start_length = max(start_length, m)
-            Z[node.ID] = node.realization + start_length                                           
-        return Z    
-    
-    def pert_bound(self):
-        """Classic lower bound on the expected value from PERT analysis."""
-        B = {}       
-        for node in self.top_sort:
-            start_bound = 0.0
-            for p in self.graph.predecessors(node):
-                m = B[p.ID]
-                try:
-                    m += self.graph[p][node]['weight'].mu
-                except AttributeError:  # Disjunctive edge.
-                    pass
-                start_bound = max(start_bound, m)
-            B[node.ID] = node.mu + start_bound                                           
-        return B[self.top_sort[-1].ID] # Assumes single exit task.   
+            Z[t.ID] = t.realization + start_length                                           
+        return Z      
 
     def kamburowski(self):
         """TODO."""
         return
     
-    def monte_carlo(self, samples=10, dist="NORMAL"):
+    def monte_carlo(self, samples=10, dist="NORMAL", fixed={}):
         """
         Monte Carlo sampling method to estimate the makespan distribution (well, its first two moments, since it is assumed to be 
         normal by the CLT) of the longest path. 
@@ -292,13 +277,13 @@ class SDAG:
         
         lps = []        
         for _ in range(samples):
-            self.realize(dist=dist)
-            Z = self.real_longest_path()
+            self.realize(dist=dist, fixed=fixed)
+            Z = self.longest_path()
             lp = Z[self.top_sort[-1].ID]     # Assumes single exit task.
             lps.append(lp)
         mu = np.mean(lps)
         var = np.var(lps)
-        self.reset()
+        self.reset(fixed=fixed)
         return RV(mu, var)
 
     def sculli(self, remaining=False):
@@ -533,6 +518,30 @@ class SDAG:
                     
         return L    
     
+    def partially_realize(self, fraction, dist="NORMAL", percentile=None):
+        """TODO."""
+        # Realize entire DAG.
+        self.realize(dist=dist, percentile=percentile)
+        # Compute makespan.
+        L = self.real_longest_path()
+        # Find the "current" time.
+        T = fraction * L[self.top_sort[-1].ID]
+        # Determine which costs have been realized before time T.
+        for t in self.top_sort:
+            if L[t.ID] <= T:
+                continue
+            # Hasn't been realized...
+            t.realization = None
+            for p in self.graph.predecessors(t):
+                try:
+                    if L[p.ID] + self.graph[p][t]['weight'].realization > T:
+                        self.graph[p][t]['weight'].realization = None
+                except AttributeError:
+                    pass
+        # DAG is now partially realized... 
+        Z = {k : v for k, v in L.items() if v <= T} # TODO: what about realized edges?
+        return Z       
+                    
     def update_rule(self, L, correlation_tree, C):
         """
         Assumes using CorLCA to estimate correlations.

@@ -23,7 +23,7 @@ for nt in n_tasks:
     
     start = timer()
     
-    # Get a reference solution (may need more samples of course).
+    # Get a reference solution (may need more samples depending on size of course).
     m = H.monte_carlo(samples=100)
     # Sculli.
     SL = H.sculli()
@@ -37,29 +37,30 @@ for nt in n_tasks:
     corlca_backward = CR[H.top_sort[0].ID] + H.top_sort[0]
     
     # Realize half the tasks.
-    mid = H.size // 2
-    H.realize(last=mid, percentile=0.99999)
+    # TODO: better method of doing this?
+    # mid = H.size // 2
+    # H.realize(last=mid, percentile=0.99999)
     
-    RZ = H.real_longest_path()
+    # RZ = H.real_longest_path()
     
-    new_scullis = []
-    for t in H.top_sort:
-        if t.realization is None:
-            break
-        if any(c.realization is None for c in H.graph.successors(t)):
-            nw = RZ[t.ID] + SR[t.ID]
-            new_scullis.append(nw)
-    print(new_scullis)
+    # new_scullis = []
+    # for t in H.top_sort:
+    #     if t.realization is None:
+    #         break
+    #     if any(c.realization is None for c in H.graph.successors(t)):
+    #         nw = RZ[t.ID] + SR[t.ID]
+    #         new_scullis.append(nw)
+    # print(new_scullis)
     
-    # Get a new estimate of the makespan distribution.
-    # TODO: inefficient to do it this way, change real_longest_path function.
-    reals = []
-    for _ in range(100):
-        H.realize(first=mid+1)
-        Z = H.real_longest_path()
-        lp = Z[H.top_sort[-1].ID]     # Assumes single exit task.
-        reals.append(lp)
-    updated_m = RV(np.mean(reals), np.var(reals))
+    # # Get a new estimate of the makespan distribution.
+    # # TODO: inefficient to do it this way, change real_longest_path function.
+    # reals = []
+    # for _ in range(100):
+    #     H.realize(first=mid+1)
+    #     Z = H.real_longest_path()
+    #     lp = Z[H.top_sort[-1].ID]     # Assumes single exit task.
+    #     reals.append(lp)
+    # updated_m = RV(np.mean(reals), np.var(reals))
     
     
     
@@ -82,7 +83,7 @@ for nt in n_tasks:
     print("\n---------------------------------")
     print("HALFWAY THROUGH RUNTIME")
     print("---------------------------------")
-    print("MC-100: {}".format(updated_m))
+    # print("MC-100: {}".format(updated_m))
     
     
     print("\nTime taken: {}".format(elapsed))
