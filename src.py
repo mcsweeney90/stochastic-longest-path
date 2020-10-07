@@ -96,12 +96,12 @@ class RV:
             
         Phi_b = norm.cdf(b)
         Phi_minus = norm.cdf(-b)
-        Psi_b = norm.pdf(b) 
+        pdf_b = norm.pdf(b) 
         
-        mu = self.mu * Phi_b + other.mu * Phi_minus + a * Psi_b      
+        mu = self.mu * Phi_b + other.mu * Phi_minus + a * pdf_b      
         var = (self.mu**2 + self.var) * Phi_b
         var += (other.mu**2 + other.var) * Phi_minus
-        var += (self.mu + other.mu) * a * Psi_b
+        var += (self.mu + other.mu) * a * pdf_b
         var -= mu**2         
         return RV(mu, var)  # No ID set for new RV.
     
@@ -123,12 +123,12 @@ class RV:
             
         Phi_b = norm.cdf(b)
         Phi_minus = norm.cdf(-b)
-        Psi_b = norm.pdf(b) 
+        pdf_b = norm.pdf(b) 
         
-        mu = mu = self.mu * Phi_minus + other.mu * Phi_b - a * Psi_b     
+        mu = mu = self.mu * Phi_minus + other.mu * Phi_b - a * pdf_b     
         var = (self.mu**2 + self.var) * Phi_minus
         var += (other.mu**2 + other.var) * Phi_b
-        var -= (self.mu + other.mu) * a * Psi_b
+        var -= (self.mu + other.mu) * a * pdf_b
         var -= mu**2         
         return RV(mu, var)  
 
@@ -202,7 +202,7 @@ class SDAG:
         self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.  
         self.size = len(self.top_sort)
         
-    def realize(self, static=False, dist="NORMAL", percentile=None, fixed={}):  
+    def realize(self, static=False, dist="NORMAL", percentile=None, fixed=set()):  
         """
         Realize all cost RVs between node with index first and node with index last (inclusive).
         Notes:
@@ -211,19 +211,16 @@ class SDAG:
         """
                 
         for t in self.top_sort:
-            try:
-                t.realization = fixed[t.ID]
-            except KeyError:                
+            if t.ID not in fixed:               
                 t.realize(static=static, dist=dist, percentile=percentile)
             for p in self.graph.predecessors(t):
-                try:   
-                    self.graph[p][t]['weight'].realization = fixed[(p.ID, t.ID)]
-                except KeyError:
-                    self.graph[p][t]['weight'].realize(static=static, dist=dist, percentile=percentile) 
-                except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
-                    pass 
+                if (p.ID, t.ID) not in fixed:  
+                    try:
+                        self.graph[p][t]['weight'].realize(static=static, dist=dist, percentile=percentile) 
+                    except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
+                        pass 
                 
-    def reset(self, fixed={}):  
+    def reset(self, fixed=set()):  
         """
         Realize all cost RVs between node with index first and node with index last (inclusive).
         Notes:
@@ -231,14 +228,10 @@ class SDAG:
         """
                 
         for t in self.top_sort:
-            try:
-                fixed[t.ID]
-            except KeyError:
+            if t.ID not in fixed:
                 t.realization = None
             for p in self.graph.predecessors(t):
-                try:
-                    fixed[(p.ID, t.ID)]
-                except KeyError:
+                if (p.ID, t.ID) not in fixed:
                     try:
                         self.graph[p][t]['weight'].realization = None 
                     except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
@@ -262,7 +255,8 @@ class SDAG:
                 except AttributeError: # Disjunctive edge.
                     pass
                 start_length = max(start_length, m)
-            Z[t.ID] = t.realization + start_length                                           
+            task_cost = t.mu if pert_bound else t.realization                
+            Z[t.ID] = task_cost + start_length                                           
         return Z      
 
     def kamburowski(self):
@@ -329,9 +323,6 @@ class SDAG:
         'Correlation-aware heuristics for evaluating the distribution of the longest path length of a DAG with random weights,' 
         Canon and Jeannot (2016).     
         Assumes single entry and exit tasks.    
-        Notes:
-            - alternative method of computing LCA using dominant_ancestors dict isn't technically always the LCA, although it 
-              does compute a "recent" common ancestor. However it is significantly faster.
         """   
         
         if remaining:
@@ -518,57 +509,98 @@ class SDAG:
                     
         return L    
     
-    def partially_realize(self, fraction, dist="NORMAL", percentile=None):
+    def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """TODO."""
         # Realize entire DAG.
         self.realize(dist=dist, percentile=percentile)
         # Compute makespan.
-        L = self.real_longest_path()
+        L = self.longest_path()
         # Find the "current" time.
         T = fraction * L[self.top_sort[-1].ID]
         # Determine which costs have been realized before time T.
+        fixed = set()
         for t in self.top_sort:
             if L[t.ID] <= T:
-                continue
-            # Hasn't been realized...
-            t.realization = None
+                fixed.add(t.ID)
+            else:
+                t.realization = None
             for p in self.graph.predecessors(t):
                 try:
                     if L[p.ID] + self.graph[p][t]['weight'].realization > T:
                         self.graph[p][t]['weight'].realization = None
+                    else:
+                        fixed.add((p.ID, t.ID))
                 except AttributeError:
                     pass
         # DAG is now partially realized... 
-        Z = {k : v for k, v in L.items() if v <= T} # TODO: what about realized edges?
-        return Z       
-                    
-    def update_rule(self, L, correlation_tree, C):
+        # Return finish times for tasks completed before T and fixed.
+        if return_info:
+            Z = {k : v for k, v in L.items() if v <= T} 
+            return Z, fixed     
+        
+    def update_corLCA(self, L, correlation_tree, C):
         """
-        Assumes using CorLCA to estimate correlations.
-        TODO: apply to final task directly or work through DAG?
+        L is dict {t.ID : N(mu, sigma)} of longest path/finish time estimates before runtime.
+        correlation_tree is the correlation tree as defined by CorLCA.
+        C is a dict {t.ID : N(mu1, sigma1)} of approximations to L which are used to estimate the correlations.
         """
-        # Calculate the realized longest paths.
-        lp, updated_lps = L[self.top_sort[-1].ID], []
+        
+        F = {}
         for t in self.top_sort:
-            if t.realization is None:
-                break
-            lp_start = 0.0
-            for p in self.graph.predecessors(t):
-                m = L[p.ID].realization
+            parents = list(self.graph.predecessors(t))
+            if t.realization is not None:
+                st = 0
+                for p in parents:
+                    try:
+                        m = F[p.ID] + self.graph[p][t]['weight'].realization
+                    except AttributeError:
+                        m = F[p.ID]
+                    st = max(st, m)
+                F[t.ID] = t.realization + st
+                continue
+            # Task not realized, but parents may be...
+            real_p, rv_p = {}, {}
+            for p in parents:
+                m = F[p.ID] + self.graph[p][t]['weight']
                 try:
-                    m += self.graph[p][t]['weight'].realization
+                    m.mu
+                    rv_p[p.ID] = m
                 except AttributeError:
-                    pass
-                lp_start = max(m, lp_start)
-            L[t.ID].realization = t.realization + lp_start
-            # Check if no children are realized and save estimate.
-            if all(c.realization is None for c in self.graph.successors(t)):
-                # Calculate rho.
-                get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(self.top_sort[-1].ID, t.ID)])
-                lca = list(get_lca)[0][1]
-                rho = C[lca].var / (np.sqrt(C[self.top_sort[-1].ID].var) * np.sqrt(C[t.ID].var))
-                var_dash = (1 - rho^2) * lp.var
-                mu_add = ((rho * np.sqrt(lp.var)) / np.sqrt(L[t.ID].var)) * (L[t.ID].realization - L[t.ID].mu)
-                updated_lps.append(RV(lp.mu + mu_add, var_dash))
-        return updated_lps
-    
+                    real_p[p.ID] = m
+            if len(real_p) == len(parents):
+                F[t.ID] = t + max(real_p.values())
+            elif len(rv_p) == len(parents):
+                dom_parent = None
+                for parent in self.graph.predecessors(t):   
+                    F_ij = self.graph[parent][t]['weight'] + F[parent.ID]    
+                    if dom_parent is None:
+                        dom_parent = parent 
+                        st = F_ij  
+                    else:  # TODO: change correlation tree/C?
+                        get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_parent.ID, parent.ID)])
+                        lca = list(get_lca)[0][1]
+                        r = C[lca].var / (np.sqrt(C[(dom_parent.ID, t.ID)].var) * np.sqrt(C[(parent.ID, t.ID)].var))
+                        if F_ij.mu > st.mu: 
+                            dom_parent = parent
+                        st = st.clark_max(F_ij, rho=r) 
+                F[t.ID] = t if dom_parent is None else t + st
+                
+            else: # TODO: why is b sometimes 0?
+                X = max(real_p.values())
+                # Find original maximization.
+                M = L[t.ID] - t # TODO: should we recalculate L at this stage since some parents may have been updated?
+                # Update M.
+                a = (X - M.mu) / np.sqrt(M.var)
+                print(a)
+                pa = norm.pdf(a)
+                b = 1 - norm.cdf(a) 
+                print(b)
+                mu_add = (np.sqrt(M.var) * pa) / b
+                var_mult = 1 + (a * pa) / b - (pa/b)**2 
+                Mdash = RV(M.mu + mu_add, M.var * var_mult)
+                F[t.ID] = Mdash + t
+                
+        return F
+                
+                
+                    
