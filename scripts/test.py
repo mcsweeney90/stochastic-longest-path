@@ -27,6 +27,8 @@ for nt in n_tasks:
     mc = H.monte_carlo(samples=100)
     # PERT bound on the mean.
     pb = H.longest_path(pert_bound=True)[H.top_sort[-1].ID]
+    # Kamburowski.
+    lm, um, ls, us = H.kamburowski()
     # Sculli.
     SL = H.sculli()
     SR = H.sculli(remaining=True)    
@@ -39,7 +41,8 @@ for nt in n_tasks:
     corlca_backward = CR[H.top_sort[0].ID] + H.top_sort[0]
     
     # Realize half the tasks.    
-    Z, fixed = H.partially_realize(fraction=0.5, percentile=0.9999999, return_info=True)
+    # Z, fixed = H.partially_realize(fraction=0.5, percentile=0.9999999, return_info=True)
+    Z, fixed = H.partially_realize(fraction=0.5, percentile=None, return_info=True)
     
     # Get a new estimate of the makespan distribution.
     # TODO: really need a faster way to do this.
@@ -111,7 +114,8 @@ for nt in n_tasks:
                 corr_update = corr_update.clark_max(nw, rho=r)
     
     # Updated CorLCA.    
-    up_corlca = H.update_corLCA(L=CL, correlation_tree=forward_tree, C=FC)
+    UF = H.update_corLCA(L=CL, correlation_tree=forward_tree, C=FC)
+    up_corlca = UF[H.top_sort[-1].ID]
     
     
     
@@ -135,6 +139,7 @@ for nt in n_tasks:
     print("New Sculli: {}".format(new_sculli))
     print("New CorLCA: {}".format(new_corlca))
     print("Correlation-based update: {}".format(corr_update))
+    print("Update CorLCA: {}".format(up_corlca))
     
     print("\nTime taken: {}".format(elapsed))
     

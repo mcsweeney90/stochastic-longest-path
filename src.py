@@ -261,7 +261,62 @@ class SDAG:
 
     def kamburowski(self):
         """TODO."""
-        return
+         
+        lm, um, ls, us = {},{}, {}, {}
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
+            # Entry task(s).
+            if not parents:
+                lm[t.ID], um[t.ID] = t.mu, t.mu
+                ls[t.ID], us[t.ID] = t.var, t.var
+                continue
+            # Lower bound on variance.
+            if len(parents) == 1:
+                ls[t.ID] = ls[parents[0].ID] + t.var
+                try:
+                    ls[t.ID] += self.graph[parents[0]][t]['weight'].var
+                except AttributeError:
+                    pass
+            else:
+                ls[t.ID] = 0.0
+            # Upper bound on variance.
+            v = 0.0
+            for p in parents:
+                sv = us[p.ID] + t.var
+                try:
+                    sv += self.graph[p][t]['weight'].var
+                except AttributeError:
+                    pass
+                v = max(v, sv)
+            us[t.ID] = v
+            # Lower bound on mean.
+            Xunder = []
+            for p in parents:
+                pmu = lm[p.ID] + t.mu
+                pvar = ls[p.ID] + t.var
+                try:
+                    pmu += self.graph[p][t]['weight'].mu
+                    pvar += self.graph[p][t]['weight'].var
+                except AttributeError:
+                    pass
+                Xunder.append(RV(pmu, pvar))
+            Xunder = list(sorted(Xunder, key=lambda x:x.var))
+            lm[t.ID] = funder(Xunder)
+            # Upper bound on mean.
+            Xover = []
+            for p in parents:
+                pmu = um[p.ID] + t.mu
+                pvar = us[p.ID] + t.var
+                try:
+                    pmu += self.graph[p][t]['weight'].mu
+                    pvar += self.graph[p][t]['weight'].var
+                except AttributeError:
+                    pass
+                Xover.append(RV(pmu, pvar))
+            Xover = list(sorted(Xover, key=lambda x:x.var))
+            um[t.ID] = fover(Xover)
+        
+        return lm, um, ls, us
     
     def monte_carlo(self, samples=10, dist="NORMAL", fixed={}):
         """
@@ -567,9 +622,13 @@ class SDAG:
                     rv_p[p.ID] = m
                 except AttributeError:
                     real_p[p.ID] = m
-            if len(real_p) == len(parents):
+            if len(real_p) == len(parents): # All parents realized.
                 F[t.ID] = t + max(real_p.values())
-            elif len(rv_p) == len(parents):
+                # if t.ID == 143:
+                #     # print(dom_parent.ID)
+                #     print(L[t.ID])
+                #     print(F[t.ID])
+            elif len(rv_p) == len(parents): # No parents realized.
                 dom_parent = None
                 for parent in self.graph.predecessors(t):   
                     F_ij = self.graph[parent][t]['weight'] + F[parent.ID]    
@@ -584,23 +643,58 @@ class SDAG:
                             dom_parent = parent
                         st = st.clark_max(F_ij, rho=r) 
                 F[t.ID] = t if dom_parent is None else t + st
+                if t.ID == 143:
+                    print(dom_parent.ID)
+                    print(L[t.ID])
+                    print(F[t.ID])
                 
             else: # TODO: why is b sometimes 0?
                 X = max(real_p.values())
                 # Find original maximization.
-                M = L[t.ID] - t # TODO: should we recalculate L at this stage since some parents may have been updated?
+                M_mu = L[t.ID].mu - t.mu
+                M_var = L[t.ID].var - t.var
                 # Update M.
-                a = (X - M.mu) / np.sqrt(M.var)
-                print(a)
+                a = (X - M_mu) / np.sqrt(M_var)
+                # print("\n", a)
                 pa = norm.pdf(a)
                 b = 1 - norm.cdf(a) 
-                print(b)
-                mu_add = (np.sqrt(M.var) * pa) / b
+                # print(b)
+                mu_add = (np.sqrt(M_var) * pa) / b
                 var_mult = 1 + (a * pa) / b - (pa/b)**2 
-                Mdash = RV(M.mu + mu_add, M.var * var_mult)
+                Mdash = RV(M_mu + mu_add, M_var * var_mult)
+                # print(mu_add, var_mult)
                 F[t.ID] = Mdash + t
+                # if t.ID == 143:
+                #     # print(dom_parent.ID)
+                #     print(L[t.ID])
+                #     print(F[t.ID])
+                
                 
         return F
+    
+def h(mu1, var1, mu2, var2):
+    """Helper function for Kamburowski."""
+    alpha = var1 + var2
+    beta = (mu1 - mu2)/alpha
+    return mu1*norm.cdf(beta) + mu2*norm.cdf(-beta) + alpha*norm.pdf(beta)                
                 
-                
-                    
+def funder(X):
+    """
+    Helper function for Kamburowksi method.
+    X is any iterable of RVs, sorted in ascending order of their variance.
+    """
+    if len(X) == 1:
+        return X[0].mu
+    elif len(X) == 2:
+        return h(X[0].mu, X[0].var, X[1].mu, X[1].var)
+    else:
+        return h(funder(X[:-1]), 0, X[-1].mu, X[-1].var)
+
+def fover(X):
+    """Helper function for Kamburowksi method."""
+    if len(X) == 1:
+        return X[0].mu
+    elif len(X) == 2:
+        return h(X[0].mu, X[0].var, X[1].mu, X[1].var)
+    else:
+        return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)              
