@@ -260,8 +260,13 @@ class SDAG:
         return Z      
 
     def kamburowski(self):
-        """TODO."""
-         
+        """
+        Returns:
+            - lm, lower bounds on the mean. Dict in the form {task ID : m_underline}.
+            - um, upper bounds on the mean. Dict in the form {task ID : m_overline}.
+            - ls, lower bounds on the variance. Dict in the form {task ID : s_underline}.
+            - us, upper bounds on the variance. Dict in the form {task ID : s_overline}.
+        """
         lm, um, ls, us = {},{}, {}, {}
         for t in self.top_sort:
             parents = list(self.graph.predecessors(t))
@@ -598,6 +603,7 @@ class SDAG:
         L is dict {t.ID : N(mu, sigma)} of longest path/finish time estimates before runtime.
         correlation_tree is the correlation tree as defined by CorLCA.
         C is a dict {t.ID : N(mu1, sigma1)} of approximations to L which are used to estimate the correlations.
+        TODO: still working on this.
         """
         
         F = {}
@@ -624,10 +630,6 @@ class SDAG:
                     real_p[p.ID] = m
             if len(real_p) == len(parents): # All parents realized.
                 F[t.ID] = t + max(real_p.values())
-                # if t.ID == 143:
-                #     # print(dom_parent.ID)
-                #     print(L[t.ID])
-                #     print(F[t.ID])
             elif len(rv_p) == len(parents): # No parents realized.
                 dom_parent = None
                 for parent in self.graph.predecessors(t):   
@@ -643,12 +645,8 @@ class SDAG:
                             dom_parent = parent
                         st = st.clark_max(F_ij, rho=r) 
                 F[t.ID] = t if dom_parent is None else t + st
-                if t.ID == 143:
-                    print(dom_parent.ID)
-                    print(L[t.ID])
-                    print(F[t.ID])
                 
-            else: # TODO: why is b sometimes 0?
+            else: 
                 X = max(real_p.values())
                 # Find original maximization.
                 M_mu = L[t.ID].mu - t.mu
@@ -663,18 +661,13 @@ class SDAG:
                 var_mult = 1 + (a * pa) / b - (pa/b)**2 
                 Mdash = RV(M_mu + mu_add, M_var * var_mult)
                 # print(mu_add, var_mult)
-                F[t.ID] = Mdash + t
-                # if t.ID == 143:
-                #     # print(dom_parent.ID)
-                #     print(L[t.ID])
-                #     print(F[t.ID])
-                
+                F[t.ID] = Mdash + t               
                 
         return F
     
 def h(mu1, var1, mu2, var2):
-    """Helper function for Kamburowski."""
-    alpha = var1 + var2
+    """Helper function for Kamburowski method."""
+    alpha = np.sqrt(var1 + var2)
     beta = (mu1 - mu2)/alpha
     return mu1*norm.cdf(beta) + mu2*norm.cdf(-beta) + alpha*norm.pdf(beta)                
                 
@@ -691,7 +684,10 @@ def funder(X):
         return h(funder(X[:-1]), 0, X[-1].mu, X[-1].var)
 
 def fover(X):
-    """Helper function for Kamburowksi method."""
+    """
+    Helper function for Kamburowksi method.
+    X is any iterable of RVs, sorted in ascending order of their variance.
+    """
     if len(X) == 1:
         return X[0].mu
     elif len(X) == 2:

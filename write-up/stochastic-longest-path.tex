@@ -260,7 +260,7 @@ This is both similar and in some sense contrary to the Clark equation approach, 
 
 When all costs are independent Gaussian RVs, Kamburowski was able to prove both upper and lower bounds on the first two moments\footnote{As noted in Section \ref{sect.bounds}, the upper bound on the variance technically remains a conjecture.} of the longest path distribution. Since normally distributed costs occur in many applications and the method is both cheap and somewhat similar to the approaches discussed previously in this section, we describe it in depth here.
 
-The bounds are achieved by recursively computing four number sequences $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$ such that $\underline{m_i} \leq \mu_{L_i} \leq \overline{m_i}$ and $ \underline{s_i} \leq \sigma_{L_i} \leq \overline{s_i}$ for all $i = 1, \dots, n$. Clearly, by taking $\underline{m_1} = \overline{m_1} = \E[\pi_1]$ and $\underline{s_1} = \overline{s_1} = Var[\pi_1]$ we can achieve the desired bounds for $L_1$. (As ever, we can work backward instead in which case the analogous results hold for the index $n$.) Now we suppose that all of the upper and lower bounds have been computed for all of the parents of a given node $t_i$ and consider how we can construct  $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$. The variance bounds are relatively straightforward. The lower bound is given by
+The bounds are achieved by recursively computing four number sequences $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$ such that $\underline{m_i} \leq \mu_{L_i} \leq \overline{m_i}$ and $ \underline{s_i} \leq \sigma_{L_i} \leq \overline{s_i}$ for all $i = 1, \dots, n$. Clearly, by taking $\underline{m_1} = \overline{m_1} = \E[\pi_1]$ and $\underline{s_1}^2 = \overline{s_1}^2 = Var[\pi_1]$ we can achieve the desired bounds for $L_1$. (As ever, we can work backward instead in which case the analogous results hold for the index $n$.) Now we suppose that all of the upper and lower bounds have been computed for all of the parents of a given node $t_i$ and consider how we can construct  $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$. The variance bounds are relatively straightforward. The lower bound is given by
 \begin{equation}
 \underline{s_i^2} =\left\{
 \begin{array}{@{}ll@{}}
@@ -278,7 +278,7 @@ The bounds on the expected value are somewhat more complex. First, define a func
 \begin{align*}
   h(\mu_i, \sigma_i, \mu_k, \sigma_k) = \mu_i \Phi(\overline{\beta}) + \mu_k \Phi(-\overline{\beta}) + \overline{\alpha} \phi(\overline{\beta}),
 \end{align*}
-where $\overline{\alpha} = \sigma_i^2 + \sigma_k^2$ and $\beta = (\mu_i - \mu_k)/ \overline{\alpha}$. Per equation \eqref{eq.clark_max_mu}, $h$ is the expected value of the maximization of two {\em independent} normally distributed RVs $X_i \sim N(\mu_i, \sigma_i^2)$ and $X_k \sim N(\mu_k, \sigma_k^2)$. Now, suppose that we have a set of (not necessarily independent) normally distributed RVs $X_1, X_2, \dots, X_r$, where each $X_i \sim N(\mu_i, \sigma_i^2)$ and $\sigma_1 \leq \sigma_2 \leq \dots \leq \sigma_r$. Define two functions $\underline{f}$ and $\overline{f}$ by the recursions,
+where $\overline{\alpha} = \sqrt{\sigma_i^2 + \sigma_k^2}$ and $\beta = (\mu_i - \mu_k)/ \overline{\alpha}$. Per equation \eqref{eq.clark_max_mu}, $h$ is the expected value of the maximization of two {\em independent} normally distributed RVs $X_i \sim N(\mu_i, \sigma_i^2)$ and $X_k \sim N(\mu_k, \sigma_k^2)$. Now, suppose that we have a set of (not necessarily independent) normally distributed RVs $X_1, X_2, \dots, X_r$, where each $X_i \sim N(\mu_i, \sigma_i^2)$ and $\sigma_1 \leq \sigma_2 \leq \dots \leq \sigma_r$. Define two functions $\underline{f}$ and $\overline{f}$ by the recursions,
 \begin{align*}
   &\underline{f}(X_1) = \overline{f}(X_1) = \mu_1, \\
   &\underline{f}(X_1, X_2) = \overline{f}(X_1, X_2) = h(\mu_1, \sigma_1, \mu_2, \sigma_2), \\
@@ -395,6 +395,7 @@ and
   Var[M_i \mid M_i > X_i] = \sigma_{M_i}^2 \bigg[ 1 + \frac{a\phi(a)}{b} - \bigg( \frac{\phi(a)}{b} \bigg)^2    \bigg].
 \end{align*}
 Using these expressions, we can now compute \eqref{eq.dash_Li}, and therefore work through the remainder of the DAG updating the finish time estimates for all tasks that have not yet completed. 
+
 
 
 
