@@ -73,7 +73,7 @@ class RV:
                 r = norm.ppf(percentile, loc=self.mu, scale=np.sqrt(self.var))
             self.realization = r
         elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
-            self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)
+            self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu) # TODO: weird error.            
             # Need to be careful to make sure mu and var aren't zero (shouldn't be for a Gamma dist ofc but programmatically sometimes tempting.) 
         elif dist == "uniform":
             u = np.sqrt(3 * self.var)
@@ -91,7 +91,7 @@ class RV:
         'The greatest of a finite set of random variables,'
         Charles E. Clark (1983).
         """
-        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)        
+        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)     
         b = (self.mu - other.mu) / a
             
         Phi_b = norm.cdf(b)
@@ -329,16 +329,18 @@ class SDAG:
         normal by the CLT) of the longest path. 
         """
         
-        lps = []        
-        for _ in range(samples):
+        estimates, lps = [], []        
+        for i in range(samples):
             self.realize(dist=dist, fixed=fixed)
             Z = self.longest_path()
             lp = Z[self.top_sort[-1].ID]     # Assumes single exit task.
             lps.append(lp)
-        mu = np.mean(lps)
-        var = np.var(lps)
+            if i in [9, 99, 999, 9999, 99999]:
+                mu = np.mean(lps)
+                var = np.var(lps)
+                estimates.append(RV(mu, var))
         self.reset(fixed=fixed)
-        return RV(mu, var)
+        return estimates
 
     def sculli(self, remaining=False):
         """
@@ -376,152 +378,225 @@ class SDAG:
             except IndexError:  # Entry task.
                 L[t.ID] = t        
         return L   
-
-    def corLCA(self, remaining=False, return_correlation_tree=False):
+    
+    def corLCA(self, remaining=False, return_correlation_info=False):
         """
         CorLCA heuristic for estimating the makespan of a fixed-cost stochastic DAG.
         'Correlation-aware heuristics for evaluating the distribution of the longest path length of a DAG with random weights,' 
         Canon and Jeannot (2016).     
-        Assumes single entry and exit tasks.    
-        """   
+        Assumes single entry and exit tasks. 
+        This is a fast version that doesn't explicitly construct the correlation tree; see corLCA_with_tree for another version 
+        that does.
+        """    
         
-        if remaining:
-            correlation_tree = nx.DiGraph()     
-            R, C = {}, {} 
+        # Dominant ancestors dict used instead of DiGraph for the common ancestor queries. 
+        # L represents longest path estimates (called Y in 2016 paper). V[task ID] = variance of longest path of dominant ancestors.
+        dominant_ancestors, L, V = {}, {}, {}
+        
+        if not remaining:      
+            for t in self.top_sort:     # Traverse the DAG in topological order. 
+                dom_parent = None 
+                for parent in self.graph.predecessors(t):
+                    # L_ij = path length up to (but not including) node t.
+                    L_ij = self.graph[parent][t]['weight'] + L[parent.ID]   
+                                        
+                    # First parent.
+                    if dom_parent is None:
+                        dom_parent = parent 
+                        dom_parent_ancs = set(dominant_ancestors[dom_parent.ID])
+                        dom_parent_sd = V[dom_parent.ID]
+                        try:
+                            dom_parent_sd += self.graph[dom_parent][t]['weight'].var
+                        except AttributeError:
+                            pass
+                        dom_parent_sd = np.sqrt(dom_parent_sd) 
+                        eta = L_ij
+                        
+                    # At least two parents, so need to use Clark's equations to compute eta.
+                    else:                    
+                        # Find the lowest common ancestor of the dominant parent and the current parent.
+                        for a in reversed(dominant_ancestors[parent.ID]):
+                            if a in dom_parent_ancs:
+                                lca = a
+                                break
+                            
+                        # Estimate the relevant correlation.
+                        parent_sd = V[parent.ID]
+                        try:
+                            parent_sd += self.graph[parent][t]['weight'].var
+                        except AttributeError:
+                            pass
+                        parent_sd = np.sqrt(parent_sd) 
+                        r = V[lca] / (dom_parent_sd * parent_sd)
+                        if r > 1:
+                            print("\nr = {}".format(r))
+                            print("task ID = {}".format(t.ID))
+                            print("Dom parent ID = {}".format(dom_parent.ID))
+                            print("Dom parent sd : {}".format(dom_parent_sd))
+                            print("Parent ID = {}".format(parent.ID))
+                            print("Parent sd : {}".format(parent_sd))
+                            print("LCA ID = {}".format(lca))
+                            print("LCA var = {}".format(V[lca]))
+                            
+                        # Find dominant parent for the maximization.
+                        if L_ij.mu > eta.mu: 
+                            dom_parent = parent
+                            dom_parent_ancs = set(dominant_ancestors[parent.ID])
+                            dom_parent_sd = parent_sd
+                        
+                        # Compute eta.
+                        eta = eta.clark_max(L_ij, rho=r)  
+                
+                if dom_parent is None: # Entry task...
+                    L[t.ID] = RV(t.mu, t.var)  
+                    V[t.ID] = t.var
+                    dominant_ancestors[t.ID] = [t.ID]
+                else:
+                    L[t.ID] = t + eta 
+                    V[t.ID] = dom_parent_sd**2 + t.var
+                    dominant_ancestors[t.ID] = dominant_ancestors[dom_parent.ID] + [t.ID] 
+        else:
+            backward_traversal = list(reversed(self.top_sort)) 
+            for t in backward_traversal:    
+                dom_child = None 
+                for child in self.graph.successors(t):
+                    L_ij = self.graph[t][child]['weight'] + L[child.ID] + child
+                    if dom_child is None:
+                        dom_child = child 
+                        dom_child_descs = set(dominant_ancestors[dom_child.ID])
+                        dom_child_sd = V[dom_child.ID] + dom_child.var
+                        try:
+                            dom_child_sd += self.graph[t][dom_child]['weight'].var
+                        except AttributeError:
+                            pass
+                        dom_child_sd = np.sqrt(dom_child_sd) 
+                        eta = L_ij
+                    else: 
+                        for a in reversed(dominant_ancestors[child.ID]):
+                            if a in dom_child_descs:
+                                lca = a
+                                break
+                        child_sd = V[child.ID] + child.var
+                        try:
+                            child_sd += self.graph[t][child]['weight'].var
+                        except AttributeError:
+                            pass
+                        child_sd = np.sqrt(child_sd) 
+                        # Find LCA task. TODO: don't like this, rewrite so not necessary.
+                        for s in self.top_sort:
+                            if s.ID == lca:
+                                lca_var = s.var
+                                break
+                        r = (V[lca] + lca_var) / (dom_child_sd * child_sd) 
+                        if L_ij.mu > eta.mu: 
+                            dom_child = child
+                            dom_child_descs = set(dominant_ancestors[child.ID])
+                            dom_child_sd = child_sd
+                        eta = eta.clark_max(L_ij, rho=r)  
+                if dom_child is None: # Entry task...
+                    L[t.ID], V[t.ID] = 0.0, 0.0
+                    dominant_ancestors[t.ID] = [t.ID]
+                else:
+                    L[t.ID] = eta 
+                    V[t.ID] = dom_child_sd**2 
+                    dominant_ancestors[t.ID] = dominant_ancestors[dom_child.ID] + [t.ID]            
+        
+        if return_correlation_info:
+            return L, dominant_ancestors, V
+        return L 
+
+    def corLCA_with_tree(self, remaining=False, return_correlation_info=False):
+        """
+        CorLCA heuristic for estimating the makespan of a fixed-cost stochastic DAG.
+        'Correlation-aware heuristics for evaluating the distribution of the longest path length of a DAG with random weights,' 
+        Canon and Jeannot (2016).     
+        Assumes single entry and exit tasks. 
+        This version explicitly constructs the correlation tree using a Networkx DiGraph, but is slower than the method above that doesn't.
+        """   
+                   
+        # Correlation tree.      
+        correlation_tree = nx.DiGraph()        
+        # L represents finish times (called Y in 2016 paper). C is an approximation to L for estimating rho values. 
+        L, C = {}, {} 
+        
+        if not remaining:              
+            for t in self.top_sort:     # Traverse the DAG in topological order. 
+                dom_parent = None 
+                for parent in self.graph.predecessors(t):    
+                    # L_ij = path length up to (but not including) node t.
+                    L_ij = self.graph[parent][t]['weight'] + L[parent.ID]         
+                    # Need to store C edge values to compute rho.
+                    C[(parent.ID, t.ID)] = self.graph[parent][t]['weight'] + C[parent.ID] 
+                                        
+                    # Only one parent.
+                    if dom_parent is None:
+                        dom_parent = parent 
+                        eta = L_ij                    
+                    # At least two parents, so need to use Clark's equations to compute eta.
+                    else:                    
+                        # Find the lowest common ancestor of the dominant parent and the current parent.
+                        get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_parent.ID, parent.ID)])
+                        lca = list(get_lca)[0][1]                    
+                            
+                        # Estimate the relevant correlation.
+                        r = C[lca].var / (np.sqrt(C[(dom_parent.ID, t.ID)].var) * np.sqrt(C[(parent.ID, t.ID)].var))
+                            
+                        # Find dominant parent for the maximization.
+                        # Assuming everything normal so it suffices to compare expected values.
+                        if L_ij.mu > eta.mu: 
+                            dom_parent = parent
+                        
+                        # Compute eta.
+                        eta = eta.clark_max(L_ij, rho=r)  
+                
+                if dom_parent is None: # Entry task...
+                    L[t.ID] = RV(t.mu, t.var)
+                    C[t.ID] = RV(t.mu, t.var)         
+                else:
+                    L[t.ID] = t + eta 
+                    C[t.ID] = t + self.graph[dom_parent][t]['weight'] + C[dom_parent.ID]
+                    # Add edge in correlation tree from the dominant parent to the current task.
+                    correlation_tree.add_edge(dom_parent.ID, t.ID) 
+                    
+        else:   # Work backward.
             backward_traversal = list(reversed(self.top_sort)) 
             for t in backward_traversal:
                 dom_child = None
                 for child in self.graph.successors(t):
-                    R_ij = self.graph[t][child]['weight'] + R[child.ID] + child
-                    C[(child.ID, t.ID)] = self.graph[t][child]['weight'] + C[child.ID] 
+                    L_ij = self.graph[t][child]['weight'] + L[child.ID] + child
+                    C[(child.ID, t.ID)] = self.graph[t][child]['weight'] + C[child.ID] + child
                     if dom_child is None:
                         dom_child = child
-                        eta = R_ij
+                        eta = L_ij
                     else:
                         get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_child.ID, child.ID)])
                         lca = list(get_lca)[0][1] 
-                        r = C[lca].var / (np.sqrt(C[(dom_child.ID, t.ID)].var) * np.sqrt(C[(child.ID, t.ID)].var))
-                        if R_ij.mu > eta.mu: 
+                        for s in self.top_sort:
+                            if s.ID == lca:
+                                lca_var = s.var
+                                break
+                        r = (C[lca].var + lca_var)/ (np.sqrt(C[(dom_child.ID, t.ID)].var) * np.sqrt(C[(child.ID, t.ID)].var))
+                        if L_ij.mu > eta.mu: 
                             dom_child = child
-                        eta = eta.clark_max(R_ij, rho=r) 
+                        eta = eta.clark_max(L_ij, rho=r) 
                 if dom_child is None:
-                    R[t.ID] = 0.0
-                    C[t.ID] = RV(t.mu, t.var)
+                    L[t.ID] = 0.0
+                    C[t.ID] = RV(0.0, 0.0)
                 else:
-                    R[t.ID] = eta
-                    C[t.ID] = self.graph[t][dom_child]['weight'] + C[dom_child.ID] 
+                    L[t.ID] = eta
+                    C[t.ID] = C[(dom_child.ID, t.ID)]**2
                     correlation_tree.add_edge(dom_child.ID, t.ID)
-            if return_correlation_tree:
-                return R, correlation_tree, C
-            return R
-                    
-                    
-        # Correlation tree.
-        correlation_tree = nx.DiGraph()        
-        # F represents finish times (called Y in 2016 paper). C is an approximation to F for estimating rho values. 
-        L, C = {}, {} 
-        
-        # Traverse the DAG in topological order.        
-        for t in self.top_sort:                
             
-            dom_parent = None 
-            for parent in self.graph.predecessors(t):                
-                
-                # L_ij = path length up to (but not including) node t.
-                L_ij = self.graph[parent][t]['weight'] + L[parent.ID]         
-                # Need to store C edge values to compute rho.
-                C[(parent.ID, t.ID)] = self.graph[parent][t]['weight'] + C[parent.ID] 
-                                    
-                # Only one parent.
-                if dom_parent is None:
-                    dom_parent = parent 
-                    eta = L_ij                    
-                # At least two parents, so need to use Clark's equations to compute eta.
-                else:                    
-                    # Find the lowest common ancestor of the dominant parent and the current parent.
-                    get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_parent.ID, parent.ID)])
-                    lca = list(get_lca)[0][1]
-                        
-                    # Estimate the relevant correlation.
-                    r = C[lca].var / (np.sqrt(C[(dom_parent.ID, t.ID)].var) * np.sqrt(C[(parent.ID, t.ID)].var))
-                        
-                    # Find dominant parent for the maximization.
-                    # Assuming everything normal so it suffices to compare expected values.
-                    if L_ij.mu > eta.mu: 
-                        dom_parent = parent
-                    
-                    # Compute eta.
-                    eta = eta.clark_max(L_ij, rho=r)  
-            
-            if dom_parent is None: # Entry task...
-                L[t.ID] = RV(t.mu, t.var)
-                C[t.ID] = RV(t.mu, t.var)         
-            else:
-                L[t.ID] = t + eta 
-                C[t.ID] = t + self.graph[dom_parent][t]['weight'] + C[dom_parent.ID]
-                # Add edge in correlation tree from the dominant parent to the current task.
-                correlation_tree.add_edge(dom_parent.ID, t.ID) 
-        if return_correlation_tree:
+        if return_correlation_info:
             return L, correlation_tree, C
         return L
-    
-    def corLCA_lite(self):
-        """
-        Faster but less accurate version of CorLCA.
-        Bit of a misnomer in that the common ancestor found isn't necessarily the lowest.
-        """    
-        
-        # Dominant ancestors dict used instead of DiGraph for the common ancestor queries.
-        dominant_ancestors = defaultdict(list)        
-        # L represents longest path estimates (called Y in 2016 paper). 
-        L = {}
-        
-        # Traverse the DAG in topological order.        
-        for t in self.top_sort:               
-            
-            dom_parent = None 
-            for parent in self.graph.predecessors(t):
-                
-                # L_ij = path length up to (but not including) node t.
-                L_ij = self.graph[parent][t]['weight'] + L[parent.ID]   
-                                    
-                # Only one parent.
-                if dom_parent is None:
-                    dom_parent = parent 
-                    eta = L_ij
-                    
-                # At least two parents, so need to use Clark's equations to compute eta.
-                else:                    
-                    # Find the lowest common ancestor of the dominant parent and the current parent.
-                    check_set = set(dominant_ancestors[parent.ID])
-                    for a in reversed(dominant_ancestors[parent.ID]):
-                        if a in check_set:
-                            lca = a
-                            break
-                        
-                    # Estimate the relevant correlation.
-                    r = min(1, L[lca].var / (np.sqrt(eta.var) * np.sqrt(L_ij.var))) 
-                        
-                    # Find dominant parent for the maximization.
-                    if L_ij.mu > eta.mu: 
-                        dom_parent = parent
-                    
-                    # Compute eta.
-                    eta = eta.clark_max(L_ij, rho=r)  
-            
-            if dom_parent is None: # Entry task...
-                L[t.ID] = RV(t.mu, t.var)        
-            else:
-                L[t.ID] = t + eta 
-                dominant_ancestors[t.ID] = dominant_ancestors[dom_parent.ID] + [dom_parent.ID] 
-                
-        return L #L[self.top_sort[-1].ID]     # Assumes single exit task.
     
     def canonical(self):
         """
         Estimates the makespan distribution using the canonical method...
         Assumes DAG has no edge weights and all costs are in canonical form.
-        TODO: take another look at this.
+        TODO: take another look at this - did work but made a few changes to improve efficiency and haven't
+        thoroughly checked yet.
         """
         
         # Convert to canonical form.
