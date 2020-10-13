@@ -13,7 +13,7 @@ sys.path.append('../')
 from src import RV, SDAG
 
 chol_dag_path = '../graphs/cholesky_heft_accelerated'
-n_tasks = [35, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
+n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 
 info = {}
 for nt in n_tasks:
@@ -49,17 +49,14 @@ for nt in n_tasks:
     info[nt]["CorLCA-R"] = corlca_backward
     # Monte Carlo.
     # Normal costs.
-    mcn = H.monte_carlo(samples=10) # TODO: return list.
+    mcn = H.monte_carlo(samples=100) 
     info[nt]["MCN"] = mcn
     # Gamma costs.
-    mcg = H.monte_carlo(samples=10, dist="GAMMA") # TODO: return list.
+    mcg = H.monte_carlo(samples=100, dist="GAMMA") 
     info[nt]["MCG"] = mcg   
     
 # Save the info dict.
 with open('before_runtime.dill', 'wb') as handle:
     dill.dump(info, handle)  
     
-# with open('before_runtime.dill', 'rb') as file:
-#     info = dill.load(file) 
     
-print(info)

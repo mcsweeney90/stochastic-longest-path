@@ -94,13 +94,13 @@ class RV:
         a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)     
         b = (self.mu - other.mu) / a
             
-        Phi_b = norm.cdf(b)
-        Phi_minus = norm.cdf(-b)
+        cdf_b = norm.cdf(b)
+        cdf_minus = norm.cdf(-b)
         pdf_b = norm.pdf(b) 
         
-        mu = self.mu * Phi_b + other.mu * Phi_minus + a * pdf_b      
-        var = (self.mu**2 + self.var) * Phi_b
-        var += (other.mu**2 + other.var) * Phi_minus
+        mu = self.mu * cdf_b + other.mu * cdf_minus + a * pdf_b      
+        var = (self.mu**2 + self.var) * cdf_b
+        var += (other.mu**2 + other.var) * cdf_minus
         var += (self.mu + other.mu) * a * pdf_b
         var -= mu**2         
         return RV(mu, var)  # No ID set for new RV.
@@ -121,13 +121,13 @@ class RV:
         a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)
         b = (self.mu - other.mu) / a
             
-        Phi_b = norm.cdf(b)
-        Phi_minus = norm.cdf(-b)
+        cdf_b = norm.cdf(b)
+        cdf_minus = norm.cdf(-b)
         pdf_b = norm.pdf(b) 
         
-        mu = mu = self.mu * Phi_minus + other.mu * Phi_b - a * pdf_b     
-        var = (self.mu**2 + self.var) * Phi_minus
-        var += (other.mu**2 + other.var) * Phi_b
+        mu = mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
+        var = (self.mu**2 + self.var) * cdf_minus
+        var += (other.mu**2 + other.var) * cdf_b
         var -= (self.mu + other.mu) * a * pdf_b
         var -= mu**2         
         return RV(mu, var)  
