@@ -73,7 +73,7 @@ class RV:
                 r = norm.ppf(percentile, loc=self.mu, scale=np.sqrt(self.var))
             self.realization = r
         elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
-            self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu) # TODO: weird error.            
+            self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)          
             # Need to be careful to make sure mu and var aren't zero (shouldn't be for a Gamma dist ofc but programmatically sometimes tempting.) 
         elif dist == "uniform":
             u = np.sqrt(3 * self.var)
@@ -645,7 +645,9 @@ class SDAG:
         return L    
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
-        """TODO."""
+        """
+        TODO. Is this the best way to do this?
+        """
         # Realize entire DAG.
         self.realize(dist=dist, percentile=percentile)
         # Compute makespan.
@@ -704,8 +706,8 @@ class SDAG:
                 except AttributeError:
                     real_p[p.ID] = m
             if len(real_p) == len(parents): # All parents realized.
-                F[t.ID] = t + max(real_p.values())
-            elif len(rv_p) == len(parents): # No parents realized.
+                F[t.ID] = t + max(real_p.values()) # TODO: else compute maximum no matter what and then do truncated Gaussian?
+            elif len(rv_p) == len(parents): # No parents realized. TODO.
                 dom_parent = None
                 for parent in self.graph.predecessors(t):   
                     F_ij = self.graph[parent][t]['weight'] + F[parent.ID]    

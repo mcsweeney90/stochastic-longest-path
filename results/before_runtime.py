@@ -49,10 +49,10 @@ for nt in n_tasks:
     info[nt]["CorLCA-R"] = corlca_backward
     # Monte Carlo.
     # Normal costs.
-    mcn = H.monte_carlo(samples=100) 
+    mcn = H.monte_carlo(samples=100000) 
     info[nt]["MCN"] = mcn
     # Gamma costs.
-    mcg = H.monte_carlo(samples=100, dist="GAMMA") 
+    mcg = H.monte_carlo(samples=100000, dist="GAMMA") 
     info[nt]["MCG"] = mcg   
     
 # Save the info dict.

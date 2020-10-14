@@ -13,7 +13,7 @@ sys.path.append('../')
 from src import RV, SDAG
 
 chol_dag_path = '../graphs/cholesky_heft_accelerated'
-nb = 128
+nb = 1024
 n_tasks = [35, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
 
 # =============================================================================

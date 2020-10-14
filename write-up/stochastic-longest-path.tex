@@ -396,27 +396,64 @@ and
 \end{align*}
 Using these expressions, we can now compute \eqref{eq.dash_Li}, and therefore work through the remainder of the DAG updating the finish time estimates for all tasks that have not yet completed. 
 
-\section{Results}
+\section{Numerical experiments}
 \label{sect.results}
 
-% mention emapse here?
+In order to study the problem of estimating the longest path of a stochastic graph---i.e., the makespan distribution of stochastic schedules---we created a simple software package which implements several of the heuristic methods discussed so far in this chapter. As in previous chapters, the source code is written in {\tt Python} and is available in its entirety on Github\footnote{\href{https://github.com/mcsweeney90/stochastic-longest-path}{{\tt \small https://github.com/mcsweeney90/stochastic-longest-path}}}. Much more sophisticated software along these lines already exists, such as the {\em Emapse} package from Canon and Jeannot (citation). However, we decided to create our own, both as a learning exercise and for ease of integration with other work in this thesis. In this section, we describe the results of small-scale numerical experiments performed in this framework concerning various aspects of the longest path estimation problem.
 
-We created a software framework to study the problem of approximating the makespan distribution of stochastic DAGs...
+\subsection{Before runtime}
+\label{subsect.before_runtime}
 
-\subsection{Benchmarking}
-\label{subsect.benchmarking}
+Exhaustive comparisons of heuristic methods for estimating the longest path distribution before any RVs have been realized have been done before in the literature, with the best example again probably being the work of Canon and Jeannot \cite{can16}. Rather than repeating those investigations, we take a narrower view and focus on a single family of graphs based on schedules for a widely-used application in scientific computing, namely Cholesky factorization, on an accelerated target platform.
 
-We don't spend too much time on this since it was done much more thoroughly by Canon and Jeannot but we consider Sculli, CorLCA, possibly canonical and Cordyn for the Cholesky DAGs sets (i.e., we focus on a single example)...
+More specifically, the graphs are constructed from schedules computed by the static HEFT heuristic for Cholesky task graphs with between $35$ and $11480$ tasks (corresponding to matrix tilings from $5 \times 5$ to $40 \times 40$, with the dimensions increasing in increments of $5$). The target platform is the {\em Single GPU} platform from Chapter X, comprising 7 CPU resources and one GPU. The schedule is initially computed as in Chapter X, which then determines the topology of the schedule graph---i.e., where we add the disjunctive edges to the original task graph. The node and edge weights of the schedule graph are then modeled as random variables with means and variances given by the sample means and variances we observed for the relevant tasks in the experimental testing we described in Chapter X, with tile size $128$ and no asynchronous data transfers being assumed.
 
-\subsection{Update rule}
-\label{subsect.results_update_rule}
+Taking the main conclusions of the more wide-ranging study by Canon and Jeannot as given, at least in the general case, the overall aim of our small-scale investigation is basically to determine whether the improved moment estimates produced by the correlation-aware heuristic CorLCA rather than Sculli's method are worth the extra computational cost for the realistic example schedule graphs considered here. In addition, we also briefly consider how useful some of the cheaper bounds are in this case, with a view to their possible use for making scheduling decisions.
+
+\subsubsection{The normality assumption}
+\label{subsubsect.results_normality}
+
+Other studies have thoroughly investigated how close to normal the longest path distribution actually tends to be for randomly-generated schedule DAGs, so we only treat this topic very briefly here. Our conclusions for the Cholesky schedule graphs are that the longest path distribution does very much tend to normality as the number of tasks increases and the costs themselves are sampled from distributions closer to normal.
+
+In order to estimate the true longest path distribution in this section---and the following two---we use the Monte Carlo method with $10^5$ samples. Given the number of samples, these estimates are likely to be very good for the smallest graphs but perhaps slightly less accurate for the largest ones (although we expect them to still be at least fairly good).
+
+First we assume that all individual costs are normally distributed. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, etc, but it is perhaps more instructive here to consider the longest path distribution visually. Figure X shows how the shape of empirical distribution changes as the number of tasks in the DAG increases... We see that the distribution does indeed more closely resemble the normal bell curve as the size of the DAG increases...
+
+\begin{figure}
+	\centering	
+	\includegraphics[scale=1.0]{normality_placeholder.png}
+	\caption{Place.}	
+	\label{plot.normal_assum_normal}
+      \end{figure}
+      % TODO: just a placeholder, better image.
+
+% TODO: Gamma costs.
+
+\subsubsection{Kamburowski's bounds}
+\label{subsubsect.results_bounds}
+
+Although there are many different bounds on the longest path distribution in the literature, given our overriding interest in practical scheduling methods and our experience in the previous chapter with Fulkerson's bounds on the expected value, we eschew methods based on graph reductions or which require the evaluation of complex integrals and focus here largely bounds that can be computed through simple numerical schemes. In particular, Kamburowski's bounds on the mean and variance when costs are normally distributed are fairly cheap and only require the evaluation of the unit normal cdf, which is a standard part of most good numerical software libraries, so we largely focus on those. Basically we want to establish how tight the bounds are in practice.
+
+Our conclusions are that while the lower bound on the mean is fairly tight, it is rarely a significant improvement on the classic (cheaper) PERT bound. The upper bound is much looser and rarely likely to be useful. As to the variance, both bounds are so loose as to be impractical...
+
+% Probably the cheapest possible bound to compute is the PERT bound so that's the natural comparison...
+
+
+
+\subsubsection{Do correlations need to be considered?}
+\label{subsubsect.results_correlations}
+
+The question we consider here is, although CorLCA generally obtains superior estimates of the makespan distribution, are these gains significant enough to be worthwhile in a scheduling heuristic?
+
+\subsection{Updating the finish time}
+\label{subsect.results_updating}
 
 Consider different permutations (fraction of tasks initially realized, distributions of the costs, etc) in a systematic manner and compare with MC estimates... 
 
 \section{Conclusions}
 \label{sect.conclusions}
 
-What we really want to know: is there enough justification for considering the correlations in the context of a stochastic scheduling heuristic? 
+Conclusions go here. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bibliography.
