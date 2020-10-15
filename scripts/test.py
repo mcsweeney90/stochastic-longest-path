@@ -13,12 +13,15 @@ sys.path.append('../')
 from src import RV, SDAG
 
 chol_dag_path = '../graphs/cholesky_heft_accelerated'
-nb = 1024
+nb = 128
 n_tasks = [35, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
 
 # =============================================================================
 # Timings.
 # =============================================================================
+
+with open('../results/before_runtime.dill', 'rb') as file:
+    before = dill.load(file)
 
 
 for nt in n_tasks:
@@ -26,25 +29,35 @@ for nt in n_tasks:
         G = dill.load(file)
     H = SDAG(G)
     
+    print("\n\n\n---------------------------------")
+    print("NUMBER OF TASKS: {}".format(nt)) 
+    print("---------------------------------")
+    
+    print("\nREFERENCE SOLUTION: {}".format(before[nt]["MCN"][-1])) 
+    
+    print("\nBOUNDS") 
+    print("PERT-CPM bound on mean: {}".format(before[nt]["PERT"]))
+    print("Kamburowski bounds on mean: ({}, {})".format(before[nt]["KML"], before[nt]["KMU"]))
+    print("Kamburowski bounds on variance: ({}, {})".format(before[nt]["KVL"], before[nt]["KVU"]))
+    print("\nAPPROXIMATIONS") 
+    print("Sculli forward: {}".format(before[nt]["SCULLI"]))
+    print("Sculli backward: {}".format(before[nt]["SCULLI-R"]))
+    print("CorLCA forward: {}".format(before[nt]["CorLCA"]))
+    print("CorLCA backward: {}".format(before[nt]["CorLCA-R"]))
+    print("MC10: {}".format(before[nt]["MCN"][0]))
+    # print("\nMONTE CARLO - NORMAL COSTS")
+    # m = 10
+    # for mcn in before[nt]["MCN"]:
+    #     print("{} SAMPLES: {}".format(m, mcn)) 
+    #     m *= 10
+    # print("\nMONTE CARLO - GAMMA COSTS")
+    # m = 10
+    # for mcg in before[nt]["MCG"]:
+    #     print("{} SAMPLES: {}".format(m, mcg)) 
+    #     m *= 10
+    
     start = timer()
-    
-    # Get a reference solution (may need more samples depending on size of course).
-    mc = H.monte_carlo(samples=100)
-    # PERT bound on the mean.
-    pb = H.longest_path(pert_bound=True)[H.top_sort[-1].ID]
-    # Kamburowski.
-    lm, um, ls, us = H.kamburowski()
-    # Sculli.
-    SL = H.sculli()
-    SR = H.sculli(remaining=True)    
-    sculli_forward = SL[H.top_sort[-1].ID]
-    sculli_backward = SR[H.top_sort[0].ID] + H.top_sort[0]
-    # CorLCA.
-    CL = H.corLCA()
-    CR = H.corLCA(remaining=True)
-    corlca_forward = CL[H.top_sort[-1].ID]
-    corlca_backward = CR[H.top_sort[0].ID] + H.top_sort[0]
-    
+        
     # # Realize half the tasks.    
     # # Z, fixed = H.partially_realize(fraction=0.5, percentile=0.9999999, return_info=True)
     # Z, fixed = H.partially_realize(fraction=0.5, percentile=None, return_info=True)
@@ -125,19 +138,19 @@ for nt in n_tasks:
     
     
     elapsed = timer() - start
-    print("\nNumber of tasks: {}".format(nt))
+    # print("\nNumber of tasks: {}".format(nt))
     
-    print("---------------------------------")
-    print("BEFORE RUNTIME")
-    print("---------------------------------")    
-    print("MC-100: {}".format(mc))
-    print("PERT-CPM bound on mean: {}".format(pb))
-    print("Kamburowksi bounds on mean: ({}, {})".format(lm[H.top_sort[-1].ID], um[H.top_sort[-1].ID]))
-    print("Kamburowksi bounds on variance: ({}, {})".format(ls[H.top_sort[-1].ID], us[H.top_sort[-1].ID]))
-    print("Sculli forward: {}".format(sculli_forward))
-    print("Sculli backward: {}".format(sculli_backward))
-    print("CorLCA forward: {}".format(corlca_forward))
-    print("CorLCA backward: {}".format(corlca_backward))
+    # print("---------------------------------")
+    # print("BEFORE RUNTIME")
+    # print("---------------------------------")    
+    # print("MC-100: {}".format(mc))
+    # print("PERT-CPM bound on mean: {}".format(pb))
+    # print("Kamburowksi bounds on mean: ({}, {})".format(lm[H.top_sort[-1].ID], um[H.top_sort[-1].ID]))
+    # print("Kamburowksi bounds on variance: ({}, {})".format(ls[H.top_sort[-1].ID], us[H.top_sort[-1].ID]))
+    # print("Sculli forward: {}".format(sculli_forward))
+    # print("Sculli backward: {}".format(sculli_backward))
+    # print("CorLCA forward: {}".format(corlca_forward))
+    # print("CorLCA backward: {}".format(corlca_backward))
     
     # print("\n---------------------------------")
     # print("HALFWAY THROUGH RUNTIME")

@@ -327,6 +327,7 @@ class SDAG:
         """
         Monte Carlo sampling method to estimate the makespan distribution (well, its first two moments, since it is assumed to be 
         normal by the CLT) of the longest path. 
+        #TODO: return all the empirical data (to plot histograms).
         """
         
         estimates, lps = [], []        
@@ -341,6 +342,25 @@ class SDAG:
                 estimates.append(RV(mu, var))
         self.reset(fixed=fixed)
         return estimates
+    
+    def bootstrap_monte_carlo(self, samples, resamples, dist="NORMAL"):
+        """TODO."""
+        # Get the initial sample.
+        lps = []
+        for _ in range(samples):
+            self.realize(dist=dist)
+            Z = self.longest_path()
+            lp = Z[self.top_sort[-1].ID]     # Assumes single exit task.
+            lps.append(lp)
+        # Re-sample.
+        B = []
+        for _ in range(resamples):
+            R = np.random.choice(lps, size=samples, replace=True)
+            B.append(np.mean(R))
+        # Compute variance of the sample means.
+        vB = np.var(B)
+        # Construct confidence intervals on the mean.
+        return vB # TODO.        
 
     def sculli(self, remaining=False):
         """
@@ -643,6 +663,14 @@ class SDAG:
                 L[t.ID] = t
                     
         return L    
+    
+    def expected_critical_path(self):
+        """
+        TODO. 
+        Use expected values to estimate critical path and use that as a lower bound on the true longest path distribution.
+        What is the link between the variance of this and the longest path variance? Is it an upper bound?
+        """
+        return
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """

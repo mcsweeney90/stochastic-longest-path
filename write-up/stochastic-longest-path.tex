@@ -427,14 +427,14 @@ First we assume that all individual costs are normally distributed. Now, there a
       \end{figure}
       % TODO: just a placeholder, better image.
 
-% TODO: Gamma costs.
+% TODO: Extend this - more analysis of the distribution itself.
 
 \subsubsection{Kamburowski's bounds}
 \label{subsubsect.results_bounds}
 
 Although there are many bounds on the longest path distribution in the literature, given our overriding interest in practical scheduling methods and our experience in the previous chapter with Fulkerson's bounds on the expected value---which were impractically expensive even for relatively small graphs---we decided to eschew methods which require the evaluation of complex integrals. Similarly, bounds based on graphs reductions may be prohibitively expensive. Hence we decided to focus here on bounds that can be computed through simple numerical schemes, such as the classic PERT-CPM bound on the mean and Kamburowski's bounds on the first two moments (when costs are normally distributed). The latter does require the evaluation of the unit normal cdf, but this is a standard part of most good numerical software libraries, so can be computed efficiently.
 
-Table \ref{tb.mean_bounds} shows how tight the PERT-CPM and Kamburowski bounds on the expected value are for the Cholesky graph set, where the reference solution is computed using the Monte Carlo method with $10^5$ samples. We see that the lower bounds are very tight, with Kamburowski only improving on PERT-CPM very slightly. This may be down to the topology and cost structure of the Cholesky graphs, which is relatively simple, although it should be noted that in general it is not the case that complex applications necessarily have complex task graphs. The upper bounds from Kamburowski are much looser, although even in the worst case no more than $19\%$ greater than the true value.
+Table \ref{tb.mean_bounds} shows how tight the PERT-CPM and Kamburowski bounds on the expected value are for the Cholesky graph set, where the reference solution is computed using the Monte Carlo method with $10^5$ samples under the assumption that all individual RVs are normally distributed (although it should also be noted that results were extremely similar when costs are Gamma distributed, see previous section). We see that the lower bounds are very tight, with Kamburowski only improving on PERT-CPM very slightly. This may be down to the topology and cost structure of the Cholesky graphs, which is relatively simple, although it should be noted that in general it is not the case that complex applications necessarily have complex task graphs. The upper bounds from Kamburowski are much looser, although even in the worst case no more than $19\%$ greater than the true value. 
 % TODO: gamma costs.
 
 \begin{table}
@@ -447,20 +447,20 @@ Table \ref{tb.mean_bounds} shows how tight the PERT-CPM and Kamburowski bounds o
 			Bound & $35$ & $220$ & $680$ & $1540$ & $2925$ & $4960$ & $7770$ & $11480$\\
 			\cmidrule{1-9}
 			PERT-CPM & $99.5$ & $98.9$ & $98.5$ & $98.7$ & $99.2$ & $99.2$ & $99.4$ & $99.5$\\
-                  K. (lower) & $99.9$ & $99.2$ & $98.8$ & $99.0$ & $99.4$ & $99.4$ & $99.5$ & $99.6$\\
-                  K. (upper) & $100.7$ & $104.0$ & $110.2$ & $118.5$ & $116.6$ & $114.1$ & $112.4$ & $111.5$\\
+                  K. (lower) & $99.9$ & $99.4$ & $98.9$ & $99.1$ & $99.4$ & $99.3$ & $99.5$ & $99.6$\\
+                  K. (upper) & $100.9$ & $104.0$ & $110.3$ & $118.7$ & $116.6$ & $114.0$ & $112.4$ & $111.5$\\
 			\bottomrule
 		\end{tabular}
 		\label{tb.mean_bounds}
 	\end{center}	
-      \end{table} % TODO: normal costs only? Update
+      \end{table} 
 
       Unfortunately, the variance bounds given by Kamburowski's method are considerably looser in both directions, potentially to the extent of being impractical when making scheduling decisions. Figure \ref{plot.variance_bounds} illustrates how wide the bounds are for the Cholesky graphs... 
 
       \begin{figure}
 	\centering	
 	\includegraphics[scale=1.0]{variance_bounds.png}
-	\caption{Kamburowski's bounds on the variance for the Cholesky graph set. Reference solutions for normal and Gamma distributed costs given by solid lines.}	
+	\caption{Kamburowski's bounds on the variance for the Cholesky graph set. Reference solution given by solid line.}	
 	\label{plot.variance_bounds}
       \end{figure}
 
