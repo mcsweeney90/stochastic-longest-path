@@ -1,0 +1,145 @@
+TIGHTNESS OF BOUNDS ON THE EXPECTED VALUE RELATIVE TO REFERENCE SOLUTION.
+
+
+
+---------------------------------
+NUMBER OF TASKS: 35
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 1017.0934162410407
+PERT-CPM (%): 99.54407882629124
+Kamburowski lower (%): 99.91859283241551
+Kamburowski upper (%): 100.87337016159019
+
+GAMMA COSTS
+Reference solution: 1017.0872202524458
+PERT-CPM (%): 99.54468523837156
+Kamburowski lower (%): 99.91920152599583
+Kamburowski upper (%): 100.87398467157381
+
+
+
+---------------------------------
+NUMBER OF TASKS: 220
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 2854.387046156927
+PERT-CPM (%): 98.91935474558514
+Kamburowski lower (%): 99.25823827694646
+Kamburowski upper (%): 104.01233608341016
+
+GAMMA COSTS
+Reference solution: 2850.474683697317
+PERT-CPM (%): 99.05512454289256
+Kamburowski lower (%): 99.39447320211971
+Kamburowski upper (%): 104.1550961511829
+
+
+
+---------------------------------
+NUMBER OF TASKS: 680
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 6107.15046545689
+PERT-CPM (%): 98.51065582923903
+Kamburowski lower (%): 98.82481619005699
+Kamburowski upper (%): 110.21306748053956
+
+GAMMA COSTS
+Reference solution: 6104.129743358239
+PERT-CPM (%): 98.5594053361347
+Kamburowski lower (%): 98.87372116401913
+Kamburowski upper (%): 110.2676081050833
+
+
+
+---------------------------------
+NUMBER OF TASKS: 1540
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 11127.538933367565
+PERT-CPM (%): 98.72915096308076
+Kamburowski lower (%): 99.07760881604378
+Kamburowski upper (%): 118.54510689688189
+
+GAMMA COSTS
+Reference solution: 11108.725324416135
+PERT-CPM (%): 98.89635751325476
+Kamburowski lower (%): 99.24540551041436
+Kamburowski upper (%): 118.7458735212363
+
+
+
+---------------------------------
+NUMBER OF TASKS: 2925
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 19619.403929761327
+PERT-CPM (%): 99.20855649683521
+Kamburowski lower (%): 99.35585927827137
+Kamburowski upper (%): 116.59339611059585
+
+GAMMA COSTS
+Reference solution: 19615.0538481385
+PERT-CPM (%): 99.2305582370183
+Kamburowski lower (%): 99.37789368617626
+Kamburowski upper (%): 116.61925333197746
+
+
+
+---------------------------------
+NUMBER OF TASKS: 4960
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 31737.402323563765
+PERT-CPM (%): 99.21333953856883
+Kamburowski lower (%): 99.32777946578784
+Kamburowski upper (%): 114.00902451179844
+
+GAMMA COSTS
+Reference solution: 31710.583024518724
+PERT-CPM (%): 99.29724945029403
+Kamburowski lower (%): 99.41178616534657
+Kamburowski upper (%): 114.10544790836138
+
+
+
+---------------------------------
+NUMBER OF TASKS: 7770
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 48390.548367463205
+PERT-CPM (%): 99.3876602736241
+Kamburowski lower (%): 99.45681212399496
+Kamburowski upper (%): 112.37776118374043
+
+GAMMA COSTS
+Reference solution: 48377.67449134695
+PERT-CPM (%): 99.41410851528309
+Kamburowski lower (%): 99.48327876778602
+Kamburowski upper (%): 112.4076662461667
+
+
+
+---------------------------------
+NUMBER OF TASKS: 11480
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 70466.30239693038
+PERT-CPM (%): 99.51538546891764
+Kamburowski lower (%): 99.55861252205389
+Kamburowski upper (%): 111.53781942732228
+
+GAMMA COSTS
+Reference solution: 70463.32665263678
+PERT-CPM (%): 99.51958811381822
+Kamburowski lower (%): 99.56281699248078
+Kamburowski upper (%): 111.54252979291881
