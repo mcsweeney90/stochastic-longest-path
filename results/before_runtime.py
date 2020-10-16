@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Small-scale testing of methods for estimating the makespan/longest path distribution before runtime.
+TODO: break this up into bounds and approximations? At any rate, re-run without Monte Carlo method since have already done that
+separately.
 """
 
 import dill, pathlib, sys
@@ -46,14 +48,7 @@ for nt in n_tasks:
     corlca_forward = CL[H.top_sort[-1].ID]
     corlca_backward = CR[H.top_sort[0].ID] + H.top_sort[0]
     info[nt]["CorLCA"] = corlca_forward
-    info[nt]["CorLCA-R"] = corlca_backward
-    # Monte Carlo.
-    # Normal costs.
-    mcn = H.monte_carlo(samples=100000) 
-    info[nt]["MCN"] = mcn
-    # Gamma costs.
-    mcg = H.monte_carlo(samples=100000, dist="GAMMA") 
-    info[nt]["MCG"] = mcg   
+    info[nt]["CorLCA-R"] = corlca_backward  
     
 # Save the info dict.
 with open('before_runtime.dill', 'wb') as handle:

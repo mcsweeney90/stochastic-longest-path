@@ -237,28 +237,69 @@ class SDAG:
                     except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
                         pass
                     
-    def longest_path(self, pert_bound=False):
+    def real_longest_path(self):
         """
-        Computes the (realized) longest path of the DAG. If pert_bound == True, returns the classic PERT-CPM bound on the 
-        expected value of the longest path instead.
+        Computes the realized longest path of the DAG. 
+        Notes:
+            - disjunctive edges make the code slightly uglier since can't just do start_time = max(parent realizations).
         """            
         Z = {}       
         for t in self.top_sort:
             start_length = 0.0
             for p in self.graph.predecessors(t):
-                m = Z[p.ID]
+                st = Z[p.ID]
                 try:
-                    if pert_bound:
-                        m += self.graph[p][t]['weight'].mu
-                    else:
-                        m += self.graph[p][t]['weight'].realization
+                    st += self.graph[p][t]['weight'].realization
                 except AttributeError: # Disjunctive edge.
                     pass
-                start_length = max(start_length, m)
-            task_cost = t.mu if pert_bound else t.realization                
-            Z[t.ID] = task_cost + start_length                                           
-        return Z      
-
+                start_length = max(start_length, st)              
+            Z[t.ID] = t.realization  + start_length                                           
+        return Z[self.top_sort[-1].ID]   # Assumes single exit task.  
+    
+    def monte_carlo(self, samples, dist="NORMAL", fixed={}):
+        """
+        Monte Carlo sampling method to estimate the makespan distribution of the longest path. 
+        """
+        
+        longest_paths = []        
+        for _ in range(samples):
+            self.realize(dist=dist, fixed=fixed)
+            lp = self.real_longest_path()
+            longest_paths.append(lp)
+        self.reset(fixed=fixed)
+        return longest_paths
+    
+    def CPM(self, variance=False):
+        """
+        Returns the classic PERT-CPM bound on the expected value of the longest path.
+        If variance == True, also returns the variance of this longest path to use as a rough estimate
+        of the longest path variance.
+        TODO: Is there any link between the variance of this and the longest path variance? Is it an upper bound?
+        """
+        Z = {}       
+        for t in self.top_sort:
+            start_length = 0.0
+            if variance:
+                v = 0.0
+            for p in self.graph.predecessors(t):
+                st = Z[p.ID] if not variance else Z[p.ID].mu
+                try:
+                    st += self.graph[p][t]['weight'].mu
+                except AttributeError: # Disjunctive edge.
+                    pass
+                start_length = max(start_length, st)  
+                if variance and start_length == st:
+                    v = Z[p.ID].var
+                    try:
+                        v += self.graph[p][t]['weight'].var
+                    except AttributeError:
+                        pass
+            if not variance:
+                Z[t.ID] = t.mu + start_length       
+            else:
+                Z[t.ID] = RV(t.mu + start_length, t.var + v)                                    
+        return Z    
+    
     def kamburowski(self):
         """
         Returns:
@@ -321,46 +362,7 @@ class SDAG:
             Xover = list(sorted(Xover, key=lambda x:x.var))
             um[t.ID] = fover(Xover)
         
-        return lm, um, ls, us
-    
-    def monte_carlo(self, samples=10, dist="NORMAL", fixed={}):
-        """
-        Monte Carlo sampling method to estimate the makespan distribution (well, its first two moments, since it is assumed to be 
-        normal by the CLT) of the longest path. 
-        #TODO: return all the empirical data (to plot histograms).
-        """
-        
-        estimates, lps = [], []        
-        for i in range(samples):
-            self.realize(dist=dist, fixed=fixed)
-            Z = self.longest_path()
-            lp = Z[self.top_sort[-1].ID]     # Assumes single exit task.
-            lps.append(lp)
-            if i in [9, 99, 999, 9999, 99999]:
-                mu = np.mean(lps)
-                var = np.var(lps)
-                estimates.append(RV(mu, var))
-        self.reset(fixed=fixed)
-        return estimates
-    
-    def bootstrap_monte_carlo(self, samples, resamples, dist="NORMAL"):
-        """TODO."""
-        # Get the initial sample.
-        lps = []
-        for _ in range(samples):
-            self.realize(dist=dist)
-            Z = self.longest_path()
-            lp = Z[self.top_sort[-1].ID]     # Assumes single exit task.
-            lps.append(lp)
-        # Re-sample.
-        B = []
-        for _ in range(resamples):
-            R = np.random.choice(lps, size=samples, replace=True)
-            B.append(np.mean(R))
-        # Compute variance of the sample means.
-        vB = np.var(B)
-        # Construct confidence intervals on the mean.
-        return vB # TODO.        
+        return lm, um, ls, us      
 
     def sculli(self, remaining=False):
         """
@@ -662,15 +664,42 @@ class SDAG:
             except IndexError:
                 L[t.ID] = t
                     
-        return L    
+        return L   
     
-    def expected_critical_path(self):
-        """
-        TODO. 
-        Use expected values to estimate critical path and use that as a lower bound on the true longest path distribution.
-        What is the link between the variance of this and the longest path variance? Is it an upper bound?
-        """
-        return
+    def bootstrap_confidence_intervals(self, samples, resamples, dist="NORMAL"):
+        """TODO."""
+        # Get the initial sample and compute its mean.
+        lps = self.monte_carlo(samples=samples, dist=dist)
+        mu = np.mean(lps)
+        # Re-sample.
+        deltas = []
+        for _ in range(resamples):
+            R = np.random.choice(lps, size=samples, replace=True)
+            star = np.mean(R)
+            deltas.append(star - mu)
+        # Sort deltas.
+        deltas = list(sorted(deltas))
+        intervals = {}
+        # 80%.
+        s = resamples // 10
+        p = deltas[s - 1]
+        q = deltas[9*s - 1]
+        intervals[80] = (mu - q, mu - p)
+        # 90%.
+        s = resamples // 20
+        p = deltas[s - 1]
+        q = deltas[9*s - 1]
+        intervals[90] = (mu - q, mu - p)
+        # 95%.
+        s = resamples // 40
+        p = deltas[s - 1]
+        q = deltas[9*s - 1]
+        intervals[95] = (mu - q, mu - p)        
+        return intervals
+        
+        
+        
+        
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """
@@ -703,72 +732,72 @@ class SDAG:
             Z = {k : v for k, v in L.items() if v <= T} 
             return Z, fixed     
         
-    def update_corLCA(self, L, correlation_tree, C):
-        """
-        L is dict {t.ID : N(mu, sigma)} of longest path/finish time estimates before runtime.
-        correlation_tree is the correlation tree as defined by CorLCA.
-        C is a dict {t.ID : N(mu1, sigma1)} of approximations to L which are used to estimate the correlations.
-        TODO: still working on this.
-        """
+    # def update_corLCA(self, L, correlation_tree, C):
+    #     """
+    #     L is dict {t.ID : N(mu, sigma)} of longest path/finish time estimates before runtime.
+    #     correlation_tree is the correlation tree as defined by CorLCA.
+    #     C is a dict {t.ID : N(mu1, sigma1)} of approximations to L which are used to estimate the correlations.
+    #     TODO: still working on this.
+    #     """
         
-        F = {}
-        for t in self.top_sort:
-            parents = list(self.graph.predecessors(t))
-            if t.realization is not None:
-                st = 0
-                for p in parents:
-                    try:
-                        m = F[p.ID] + self.graph[p][t]['weight'].realization
-                    except AttributeError:
-                        m = F[p.ID]
-                    st = max(st, m)
-                F[t.ID] = t.realization + st
-                continue
-            # Task not realized, but parents may be...
-            real_p, rv_p = {}, {}
-            for p in parents:
-                m = F[p.ID] + self.graph[p][t]['weight']
-                try:
-                    m.mu
-                    rv_p[p.ID] = m
-                except AttributeError:
-                    real_p[p.ID] = m
-            if len(real_p) == len(parents): # All parents realized.
-                F[t.ID] = t + max(real_p.values()) # TODO: else compute maximum no matter what and then do truncated Gaussian?
-            elif len(rv_p) == len(parents): # No parents realized. TODO.
-                dom_parent = None
-                for parent in self.graph.predecessors(t):   
-                    F_ij = self.graph[parent][t]['weight'] + F[parent.ID]    
-                    if dom_parent is None:
-                        dom_parent = parent 
-                        st = F_ij  
-                    else:  # TODO: change correlation tree/C?
-                        get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_parent.ID, parent.ID)])
-                        lca = list(get_lca)[0][1]
-                        r = C[lca].var / (np.sqrt(C[(dom_parent.ID, t.ID)].var) * np.sqrt(C[(parent.ID, t.ID)].var))
-                        if F_ij.mu > st.mu: 
-                            dom_parent = parent
-                        st = st.clark_max(F_ij, rho=r) 
-                F[t.ID] = t if dom_parent is None else t + st
+    #     F = {}
+    #     for t in self.top_sort:
+    #         parents = list(self.graph.predecessors(t))
+    #         if t.realization is not None:
+    #             st = 0
+    #             for p in parents:
+    #                 try:
+    #                     m = F[p.ID] + self.graph[p][t]['weight'].realization
+    #                 except AttributeError:
+    #                     m = F[p.ID]
+    #                 st = max(st, m)
+    #             F[t.ID] = t.realization + st
+    #             continue
+    #         # Task not realized, but parents may be...
+    #         real_p, rv_p = {}, {}
+    #         for p in parents:
+    #             m = F[p.ID] + self.graph[p][t]['weight']
+    #             try:
+    #                 m.mu
+    #                 rv_p[p.ID] = m
+    #             except AttributeError:
+    #                 real_p[p.ID] = m
+    #         if len(real_p) == len(parents): # All parents realized.
+    #             F[t.ID] = t + max(real_p.values()) # TODO: else compute maximum no matter what and then do truncated Gaussian?
+    #         elif len(rv_p) == len(parents): # No parents realized. TODO.
+    #             dom_parent = None
+    #             for parent in self.graph.predecessors(t):   
+    #                 F_ij = self.graph[parent][t]['weight'] + F[parent.ID]    
+    #                 if dom_parent is None:
+    #                     dom_parent = parent 
+    #                     st = F_ij  
+    #                 else:  # TODO: change correlation tree/C?
+    #                     get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_parent.ID, parent.ID)])
+    #                     lca = list(get_lca)[0][1]
+    #                     r = C[lca].var / (np.sqrt(C[(dom_parent.ID, t.ID)].var) * np.sqrt(C[(parent.ID, t.ID)].var))
+    #                     if F_ij.mu > st.mu: 
+    #                         dom_parent = parent
+    #                     st = st.clark_max(F_ij, rho=r) 
+    #             F[t.ID] = t if dom_parent is None else t + st
                 
-            else: 
-                X = max(real_p.values())
-                # Find original maximization.
-                M_mu = L[t.ID].mu - t.mu
-                M_var = L[t.ID].var - t.var
-                # Update M.
-                a = (X - M_mu) / np.sqrt(M_var)
-                # print("\n", a)
-                pa = norm.pdf(a)
-                b = 1 - norm.cdf(a) 
-                # print(b)
-                mu_add = (np.sqrt(M_var) * pa) / b
-                var_mult = 1 + (a * pa) / b - (pa/b)**2 
-                Mdash = RV(M_mu + mu_add, M_var * var_mult)
-                # print(mu_add, var_mult)
-                F[t.ID] = Mdash + t               
+    #         else: 
+    #             X = max(real_p.values())
+    #             # Find original maximization.
+    #             M_mu = L[t.ID].mu - t.mu
+    #             M_var = L[t.ID].var - t.var
+    #             # Update M.
+    #             a = (X - M_mu) / np.sqrt(M_var)
+    #             # print("\n", a)
+    #             pa = norm.pdf(a)
+    #             b = 1 - norm.cdf(a) 
+    #             # print(b)
+    #             mu_add = (np.sqrt(M_var) * pa) / b
+    #             var_mult = 1 + (a * pa) / b - (pa/b)**2 
+    #             Mdash = RV(M_mu + mu_add, M_var * var_mult)
+    #             # print(mu_add, var_mult)
+    #             F[t.ID] = Mdash + t               
                 
-        return F
+    #     return F
     
 def h(mu1, var1, mu2, var2):
     """Helper function for Kamburowski method."""

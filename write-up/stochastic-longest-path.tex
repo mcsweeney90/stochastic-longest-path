@@ -176,6 +176,7 @@ The problem of approximating the distribution of the longest path through a DAG 
 
 Although computing the exact distribution of the longest path distribution or its expected value is usually infeasible, bounds may be computed much more cheaply. Depending on the context, these may be tight enough to be useful. Now, while bounds on the distribution itself have been proven---for example, Kleindorfer gives both upper and lower bounds \cite{kle71}, the first of which was improved on by Dodin \cite{dod85}---these are typically based on graph reductions and fairly expensive, perhaps impractically so in the context of a scheduling heuristic, which is where our interest ultimately lies.
 % Complexity results/more detail?
+% TODO: the best review of these results is probably by Ludwig (2001), who empirically compares the existing bounds and improves them...
 
 However, bounds on the expected value, or other moments, may be more practical. Indeed, we have already seen in the previous chapter that a lower bound $u_n$ on the expected value of $L_n$ (respectively $u_1$ and $L_1$ if working backward) can be computed in $O(n^2)$ operations by replacing all costs with their expected value and proceeding as in \eqref{eq.Li}---i.e., define $u_1 = \E[\pi_1]$ and
 \begin{align}
