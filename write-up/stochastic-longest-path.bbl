@@ -68,6 +68,14 @@ Jerzy Kamburowski.
 \newblock {\em Journal of the Operational Research Society}, 36\penalty0
   (11):\penalty0 1051--1057, 1985.
 
+\bibitem{kam85a}
+Jerzy Kamburowski.
+\newblock
+  \href{http://www.sciencedirect.com/science/article/pii/0377221785900323}{An
+  upper bound on the expected completion time of {PERT} networks}.
+\newblock {\em European Journal of Operational Research}, 21\penalty0
+  (2):\penalty0 206 -- 212, 1985.
+
 \bibitem{kle71}
 George~B. Kleindorfer.
 \newblock \href{https://doi.org/10.1287/opre.19.7.1586}{Bounding distributions
@@ -120,6 +128,13 @@ C.~{Visweswariah}, K.~{Ravindran}, K.~{Kalafala}, S.~G. {Walker}, S.~{Narayan},
   incremental block-based statistical timing analysis}.
 \newblock {\em IEEE Transactions on Computer-Aided Design of Integrated
   Circuits and Systems}, 25\penalty0 (10):\penalty0 2170--2180, 2006.
+
+\bibitem{yaz91}
+N.~Yazia-Pekergin and J-M. Vincent.
+\newblock \href{https://doi.org/10.1109/32.99189}{Stochastic bounds on
+  execution times of parallel programs}.
+\newblock {\em IEEE Transactions on Software Engineering}, 17\penalty0
+  (10):\penalty0 1005--1012, 1991.
 
 \bibitem{zha06}
 L.~{Zhang}, W.~{Chen}, Y.~{Hu}, and C.~C. {Chen}.
