@@ -9,45 +9,45 @@ You're missing a field name---line 10 of file references.bib
 I'm skipping whatever remains of this entry
 Database file #2: strings.bib
 Warning--empty year in hag88
-You've used 21 entries,
+You've used 20 entries,
             2359 wiz_defined-function locations,
-            1329 strings with 18642 characters,
-and the built_in function-call counts, 7143 in all, are:
-= -- 691
-> -- 271
+            1322 strings with 18499 characters,
+and the built_in function-call counts, 6867 in all, are:
+= -- 664
+> -- 264
 < -- 0
-+ -- 114
-- -- 88
-* -- 642
-:= -- 1172
-add.period$ -- 63
-call.type$ -- 21
-change.case$ -- 107
++ -- 111
+- -- 86
+* -- 619
+:= -- 1126
+add.period$ -- 60
+call.type$ -- 20
+change.case$ -- 103
 chr.to.int$ -- 0
-cite$ -- 22
-duplicate$ -- 231
-empty$ -- 612
-format.name$ -- 88
-if$ -- 1468
+cite$ -- 21
+duplicate$ -- 220
+empty$ -- 586
+format.name$ -- 86
+if$ -- 1410
 int.to.chr$ -- 0
-int.to.str$ -- 21
-missing$ -- 21
-newline$ -- 109
-num.names$ -- 42
-pop$ -- 67
+int.to.str$ -- 20
+missing$ -- 20
+newline$ -- 104
+num.names$ -- 40
+pop$ -- 65
 preamble$ -- 2
-purify$ -- 86
+purify$ -- 83
 quote$ -- 0
-skip$ -- 148
+skip$ -- 141
 stack$ -- 0
-substring$ -- 605
-swap$ -- 42
+substring$ -- 585
+swap$ -- 40
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 84
+type$ -- 80
 warning$ -- 1
-while$ -- 69
-width$ -- 23
-write$ -- 233
+while$ -- 66
+width$ -- 22
+write$ -- 222
 (There was 1 error message)

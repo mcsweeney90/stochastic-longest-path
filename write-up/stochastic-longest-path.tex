@@ -71,6 +71,7 @@
 \def\e{eigenvalue}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
+\def\diff{\mathop{}\!\mathrm{d}}
 
 % \DeclareMathOperator{\diag}{diag}   % Requires amsmath.
 \def\diag{\mathop{\mathrm{diag}}}     % If not using amsmath.
@@ -184,37 +185,57 @@ Some of the oldest results are concerned with the expected value. In particular,
 for all other $i = 2, \dots, n$, then we have $u_i \leq \E[L_i]$ and in particular $u_n \leq \E[L_n]$. We will refer to this as the {\em critical path method} (CPM) bound. Furthermore, we also saw in the previous chapter that a tighter bound can be found through Fulkerson's \cite{ful62} alternative method, which was extended to continuous weights by Clingen \cite{cli64} and later improved by Elmaghraby \cite{elm67}. Although this approach as generalized by Robillard and Trahan \cite{rob76} can tighten the lower bound almost arbitrarily, the computational cost of even Fulkerson's bound can be prohibitive in some cases, as suggested by our experience in the previous chapter.    
 % cpm bound since that was the context in which...
 
-All of those methods provide only lower bounds for the expected value. However, Dodin's lower bound on the distribution function also induces an upper bound on the expected value \cite{dod85} (see below).  Furthermore, if all graphs weights follow {\em New Better Than Used in Expectation} (NBUE) distributions\footnote{A concept from reliability theory, referring to distributions representing object lifetimes such that, at any given time, the expected value of the remaining lifetime is smaller than the expected value of the entire lifetime. Certain common distributions such as Erlang and uniform are NBUE, as are many others such as Gamma under restricted parameter regimes.}, then an upper bound can be computed by replacing all weights by exponentially distributed RVs with the same means and then performing a series-parallel reduction \cite{kam85a, yaz91}. This approach has the advantage that only the expected values of all graph weights are necessary. 
+All of those methods provide only lower bounds for the expected value. However, Dodin's lower bound on the distribution function also induces an upper bound on the expected value \cite{dod85} (see below).  Furthermore, if all graphs weights follow {\em New Better Than Used in Expectation} (NBUE)\footnote{A concept from reliability theory, referring to distributions representing object lifetimes such that, at any given time, the expected value of the remaining lifetime is smaller than the expected value of the entire lifetime. Certain common distributions such as Erlang and uniform are NBUE, as are many others such as Gamma under restricted parameter regimes.} distributions, then an upper bound can be computed by replacing all weights by exponentially distributed RVs with the same means and then performing a series-parallel reduction \cite{kam85a, yaz91}. This approach has the advantage that only the expected values of all graph weights are necessary. 
 
 Alternatively, if all node and edge weights are normally distributed, then Kamburowski \cite{kam85} was able to prove both lower and upper bounds on the expected value. However, his bounds---although exact when weights are normal---are conceptually very similar to a class of heuristics discussed in the following section, so will be described in more detail there. Kamburowski also proved a lower bound on the variance, as well as a conjectured upper bound, for the case of normally distributed weights. These are the only formal bounds on moments higher than the first that we are aware of, although the upper is unproven and the lower is very loose.
 
-Rather than just the moments, we may be more interested in bounds on the cumulative distribution function (cdf) $F_{L_n}$ of the longest path, where the bounds indicate (first-order) {\em stochastically dominant} relationships between the underlying RVs. In particular, we say that $B$ stochastically dominates $L_n$ if $F_{L_n}(z) = \P[L_n \leq z] \leq \P[B \leq z] = F_B(z) \; \forall z$. For convenience, from now on we simply write $F_{L_n} \leq F_B$ to represent the previous expression, so that the aim here is to determine $F_b$ and $F_B$ such that $F_b \leq F_{L_n} \leq F_B$. Sums and maximizations of random variables correspond to convolutions and products of their respective cdfs, which are easy to compute when the variables are independent. In particular,...
+Rather than just the moments, we may be more interested in bounds on the cumulative distribution function (cdf) $F_{L_n}$ of the longest path, where the bounds indicate (first-order) {\em stochastically dominant} relationships between the underlying RVs. In particular, we say that $B$ stochastically dominates $L_n$ if $F_{L_n}(z) = \P[L_n \leq z] \leq \P[B \leq z] = F_B(z) \; \forall z$. For convenience, from now on we simply write $F_{L_n} \leq F_B$ to represent the previous expression, so that the aim here is to determine $F_b$ and $F_B$ such that $F_b \leq F_{L_n} \leq F_B$.
 
-The first bounds of this type were proven by Kleindorfer, who gave both upper and lower bounds. The upper bound is computed by simply treating all of the operands of a maximization as independent and computing their product using (eqref). The lower is derived by simply selecting the minimal operand and using that... Inspired by the observation that Kleindorfer's upper bound is exact for series-parallel graphs, Dodin improved it in the general case by combining the method with a series of reductions...
+The first bounds on the distribution of the longest path were provided by Kleindorfer \cite{kle71}. Now, distribution functions for the sum and maximization of {\em independent} random variables are easily computed. In particular, suppose $X$ and $Y$ are independent and define $S = X + Y$ and $M = \max(X, Y)$. Then $F_S$ is computed through the convolution
+\begin{align}
+  \label{eq.cdf_convolution}
+  F_S(z) = \int_{-\infty}^{\infty} F_Y(z - t) f_X(t) \; \diff t,
+\end{align}
+where $f_X$ is the probability density function of $X$, and $F_M$ via the product
+\begin{align}
+  \label{eq.cdf_product}
+  F_M(z) = F_X(z) \times F_Y(z),
+\end{align}
+both of which can be readily approximated through standard numerical methods. Kleindorfer's upper bound is determined by working through the graph in the usual manner and assuming path independence---i.e., computing \eqref{eq.Li} using \eqref{eq.cdf_convolution} and \eqref{eq.cdf_product} for sums and maximizations, respectively. A corresponding lower bound is given by effectively disregarding all maximizations and simply using one of the operands.
 
-An alternative bound on the cdf can perhaps be derived from the following result... The problem is that we don't know the mean, but there are good heuristic methods that usually give good approximations. 
+Inspired by the observation that Kleindorfer's upper bound is exact when all path lengths are independent, Dodin \cite{dod85} combined the method with a sequence of series-parallel reductions such that the graph is transformed to a single edge whose associated distribution function bounds the longest path distribution from above. If the graph is already series-parallel then the bound is exact. Moreover, Dodin showed that the bound is tighter than Kleindorfer's, and, as noted above, that a corresponding lower bound on the expected value can be inferred.
 
-%All of the known bounds of this type are based on first reducing the stochastic graph to series-parallel form so that maximizations are only ever performed on independent random variables. Bounding distributions are then computed through a series of convolutions and products on the weight cdfs. In this manner, Kleindorfer proved both upper and lower bounds on the cdf  \cite{kle71}, the first of which was tightened by Dodin \cite{dod85}.
+Exhaustive empirical investigations by Ludwig, M{\"o}hring and Stork \cite{lud01} and Canon and Jeannot \cite{can16} suggest that the bounds of Kleindorfer and especially Dodin are usually tight, so they may be useful as approximations of the distribution function in addition to bounds. However, although both methods run in polynomial time, they tend to still be significantly more expensive than heuristics based on the Central Limit Theorem (see Section \ref{subsect.normality}), without pronounced improvements in accuracy, so are typically of less interest from a scheduling perspective and are not included in comparisons here. 
 
-%Reference to Bein? What about Ludwig? Shogan?
+%Reference to Bein? Shogan?
 %good reference for stochastic dominance.
-% Complexity results/more detail?
-% TODO: the best review of these results is probably by Ludwig (2001), who empirically compares the existing bounds and improves them...
-% the tail distribution
-% Concentration inequality...
-% More discussion. Spelde's heuristic bound.
-% Can be done in polynomial time but still slower than methods based on the CLT.
-
-
-Rather than a formal bound, in many cases it may be more useful to simply approximate the longest path distribution. To that end, many heuristic methods have been proposed. We focus in this chapter largely on the family of heuristics described in the following section, although alternative methods are briefly discussed in Section \ref{sect.other_methods}.
-
-% One approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest 
-
 
 \section{Heuristics}
-\label{sect.normality}
+\label{sect.heuristics}
 
-Fundamentally, the longest path is computed through a series of summations and maximizations of the cost RVs. By the Central Limit Theorem, sums of random variables are asymptotically normally distributed so if we assume that the effect of the maximizations is minor, then the longest path distribution is likely to be approximately normal, $L_n \approx N(\mu_n, \sigma_n)$. Indeed, this has often been observed empirically, even when all costs follow very different distributions \cite{can10}. If we assume further that all RVs can be characterized by their mean and variance (i.e., effectively that they are also normal), then sums can be computed though the well-known rule for summing two normal RVs $\epsilon \sim N(\mu_\epsilon, \sigma_\epsilon^2)$ and $\eta \sim N(\mu_\eta, \sigma_\eta^2)$,
+Rather than a formal bound, in many cases it may be more useful to simply obtain a good estimate of the longest path distribution. To that end, many heuristic approaches have been proposed. In this section we discuss some of those which may be of particular interest.
+
+\subsection{Monte Carlo}
+\label{subsect.monte_carlo} 
+
+% MC part is same as in previous chapter - where best to put it?
+
+{\em Monte Carlo} (MC) methods have a long history in approximating the longest path distribution of PERT networks, dating back to at least the early 1960s \cite{van63}. The idea is to simulate the realization of all weight RVs and then evaluate the longest path of the resulting scalar graph. This is done repeatedly, giving a set of longest path instances whose empirical distribution function is guaranteed to converge to the true distribution by the Glivenko-Cantelli theorem\footnote{Despite this convergence in the limit, we refer to MC as a heuristic as any solutions obtained in practice will only ever be approximate.}. Furthermore, analytical results allow us to (at least roughly) quantify the approximation error for any given the number of realizations---and therefore the number of realizations needed to reach a given accuracy. On top of these theoretical assurances, the other big advantage of this approach is its simplicity: once the graph weights are realized, we only need to perform sums and maximizations of scalar values, rather than possibly dependent RVs.  
+% Canon reference in support of the convergence claim? 
+
+The major disadvantage of MC methods is the computational cost. Of course, modern architectures are well-suited to this approach because of their parallelism, but MC can still be impractical for large, dense graphs that require many realizations in order to obtain an accurate solution. For this reason, in our numerical experiments we typically only use MC to obtain a reference solution for the longest path distribution of a given schedule graph. 
+% We call it a heuristic since the solutions are not exact by definition, although we do use them as a reference since they are guaranteed to converge...
+
+
+\subsection{Applying the CLT}
+\label{subsect.normality}
+
+Fundamentally, the length of any given path through a schedule graph is just the sum of the weight RVs along it. By the Central Limit Theorem (CLT), sums of random variables are asymptotically normally distributed. So we can make a reasonable argument that longest path distribution itself is likely to be at least approximately normal, $L_n \approx N(\mu_n, \sigma_n)$. Indeed, this has often been observed empirically, even when the individual graph weights follow very different distributions \cite{can10}. This argument forms the basis of a family of efficient heuristics for computing an approximation to the longest path distribution.
+
+\subsubsection{Clark's equations and Sculli's method}
+\label{subsubsect.clark_sculli}
+
+Computing the longest path ultimately reduces to performing summations and maximizations of dependent random variables. If we assume that all weight RVs can be characterized by their mean and variance (i.e., effectively that they are also normal), then sums can be computed though the well-known rule for any two normal RVs $\epsilon \sim N(\mu_\epsilon, \sigma_\epsilon^2)$ and $\eta \sim N(\mu_\eta, \sigma_\eta^2)$,
 \begin{align}
 \label{eq.sum_moments}
 \epsilon + \eta \sim N \big(\mu_\epsilon + \mu_\eta, \sigma_\epsilon^2 + \sigma_\eta^2 + 2 \rho_{\epsilon\eta}\sigma_\epsilon \sigma_\eta \big), 
@@ -234,26 +255,29 @@ Then the first two moments $\mu_{\max}$ and $\sigma_{\max}$ of $\max(\epsilon, \
 \sigma_{\max}^2 &= (\mu_\epsilon^2 + \sigma_\epsilon^2) \Phi(\beta) + (\mu_\eta^2 + \sigma_\eta^2) \Phi(-\beta) \label{eq.clark_max_sigma}\\
 &+ (\mu_\epsilon + \mu_\eta)\alpha\phi(\beta) -\mu_{\max}^2 \nonumber.
 \end{align}
-Using \eqref{eq.sum_moments} for summations, and \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} for maximizations, we can now move through the DAG and compute approximations $\mu_n$ and $\sigma_n$ (or $\mu_1$ and $\sigma_1$ if working backward) of the first two moments of the longest path distribution in a manner similar to \eqref{eq.Li}.
+Although these formulae are exact, they are only valid for a single pair of normal RVs. As already noted, the maximization of two normal RVs is not normal, so we cannot obtain the exact moments for a set of arbitrarily many RVs by applying them in a pairwise manner; we can however at least get an approximation. Altogether this means that by using \eqref{eq.sum_moments} for summations, and \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} pairwise for maximizations, we can now move through the graph in a manner similar to \eqref{eq.Li} and compute approximations $\mu_n$ and $\sigma_n$ to the first two moments of the longest path which, since it is assumed to be roughly normal, suffices to describe the entire distribution. This method appears to have first been proposed for estimating the completion time of PERT networks by Sculli \cite{scu83}, although to simplify the problem he assumed that all of the correlation coefficients $\rho_{\epsilon \eta}$ in \eqref{eq.alpha_beta} were zero (see next section).
 
-This method appears to have first been proposed for estimating the completion time of PERT networks by Sculli \cite{scu83}, although there he assumed that all of the correlation coefficients $\rho_{\epsilon \eta}$ in \eqref{eq.alpha_beta} were zero (see next section). While there are obviously no guarantees, the moment estimates obtained using Sculli's method tend to be fairly good \cite{kam85}, with performance improving as the cost distributions move closer to normality and the number of nodes in the graph increases, as we might expect. Furthermore, Sculli's method is typically much faster than the alternatives \cite{can16}. 
+In practice, the moment estimates obtained using Sculli's method tend to be fairly good, with performance improving as the weight distributions move closer to normality and the number of nodes in the graph increases (as we might intuitively expect). More importantly, Sculli's method is typically much faster than the alternatives \cite{can16}. 
 
-\subsection{Including correlations}
-\label{subsect.correlation_aware}
+\subsubsection{Including correlations}
+\label{subsubsect.correlation_aware}
 
-Sculli assumed that all correlations were zero, which is rarely the case for real graphs since common ancestors make the longest path at two nodes dependent, even if all costs themselves are independent. Computing the correlation coefficients efficiently is tricky. However, Canon and Jeannot \cite{can16} proposed two different heuristics which alternatively prioritize precision and speed. The first is a dynamic programming algorithm called Cordyn which recursively computes the correlations using formulae derived in Clark's original paper for the correlation coefficients between any normal RV $\tau$ and a summation or maximization of normal RVs $\epsilon$ and $\eta$, 
+Sculli assumed that all correlations were zero, which is rarely the case in practice since common ancestors make the longest path at two nodes dependent, even if all weights themselves are independent. Computing the correlation coefficients efficiently is tricky. However, Canon and Jeannot \cite{can16} proposed two different heuristics which alternatively prioritize precision and speed. The first is a dynamic programming algorithm called Cordyn which recursively computes the correlations using formulae derived in Clark's original paper for the correlation coefficients between any normal RV $\tau$ and a summation or maximization of normal RVs $\epsilon$ and $\eta$, 
 \begin{align*}
   \rho_{\tau, \, \text{sum}(\epsilon, \eta)} &= \frac{\sigma_\epsilon \rho_{\tau \epsilon} + \sigma_\eta \rho_{\tau \eta} }{\sigma_{\text{sum}}} \quad \text{and} \quad
 \rho_{\tau, \max(\epsilon, \eta)} = \frac{\sigma_\epsilon \rho_{\tau \epsilon} \Phi(\beta) + \sigma_\eta \rho_{\tau \eta} \Phi(-\beta)}{\sigma_{\max}}.
 \end{align*} 
-Cordyn has time complexity $O(ne) \approx O(n^3)$, so is more expensive than Sculli's method, which is quadratic in $n$, however numerical experiments by Canon and Jeannot suggest that it is almost always more accurate. 
+Cordyn has time complexity $O(ne) \approx O(n^3)$, so is more expensive than Sculli's method, which is quadratic in $n$, but numerical experiments performed by Canon and Jeannot suggest that it is almost always more accurate. 
 % something about being competitive with reduction based methods?
 
 In an effort to marry the speed of Sculli's method and the accuracy of Cordyn, Canon and Jeannot also proposed an alternative heuristic called CorLCA. The main idea is to construct a simplified version of the DAG called a {\em correlation tree} that has all the same nodes as the original but only retains a subset of the edges. In particular, where multiple edges are incident to a node---i.e., a maximization must be performed---only the edge which contributes most to the maximization is retained in the correlation tree. The motivation here is that the correlation coefficient between any two longest path estimates $L_i$ and $L_k$ can be efficiently approximated by finding the {\em lowest common ancestor} (LCA) $t_{a}$ of the corresponding nodes $t_i$ and $t_k$ in the correlation tree: since $L_i \approx L_a + \eta$ and $L_k \approx L_a + \epsilon$ where $\eta$ and $\epsilon$ are independent RVs representing the sums of the costs along the paths between $t_a$ and $t_i$ (resp. $t_a$ and $t_k$) in the correlation tree, we have
 \begin{align*}
   \rho_{L_i, L_k} \approx \frac{\sigma_{L_a}^2}{\sigma_{L_i}\sigma_{L_k}}. % Not technically correct---introduce C?
   \end{align*}
-For every edge, we need to do a lowest common ancestor query, so the time complexity of CorLCA depends to a large extent on the cost of these queries. Although they do not present a method, based on similar results in the literature, Canon and Jeannot hypothesize this can be done in $O(1)$ operations, giving an overall time complexity $O(e) \approx O(n^2)$ for the entire algorithm. At any rate, an extensive numerical comparison of several heuristic methods for approximating the longest path distribution by the original authors suggested that CorLCA is more efficient than Cordyn with only a relatively small reduction in accuracy \cite{can16}. It should however also be noted that it can do badly when longest path length estimates at two or more nodes with a common child are similar since only one of the respective edges to the child will be retained in the correlation tree.   
+  For every edge, we need to do a lowest common ancestor query, so the time complexity of CorLCA depends to a large extent on the cost of these. Although they do not present a method, based on similar results in the literature, Canon and Jeannot hypothesize this can be done in $O(1)$ operations, giving an overall time complexity $O(e) \approx O(n^2)$ for the entire algorithm. At any rate, an extensive numerical comparison of several heuristic methods for approximating the longest path distribution by the original authors suggested that CorLCA is more efficient than Cordyn with only a relatively small reduction in accuracy \cite{can16}. It should however also be noted that it can do badly when longest path length estimates at two or more nodes with a common child are similar since only one of the respective edges to the child will be retained in the correlation tree.
+
+  \subsubsection{The canonical method}
+\label{subsubsect.canonical}
 
 
 Another method for estimating the longest path distribution that approximates correlations in a similar manner comes from the field of digital circuit design. In the so-called {\em canonical model} \cite{vis06,zha06}, all RVs are expressed as the sum of their expected value and a weighted sum of standard normal distributions that characterize the variance, 
@@ -276,12 +300,12 @@ By definition, $\P[\eta > \epsilon] = \Phi(\beta)$ and we can therefore approxim
 This is both similar and in some sense contrary to the Clark equation approach, in that the latter precisely computes the first two moments of the maximization of two normal RVs, whereas the canonical method approximates the distribution of the maximization of any two RVs using linear combinations of normal RVs. In their empirical comparison, Canon and Jeannot found that the canonical method tended to fall between Sculli's method and CorLCA in terms of both speed and approximation quality \cite{can16}. 
 
 
-\subsection{Kamburowski's bounds}
-\label{subsect.kamburowski}
+\subsubsection{Kamburowski's bounds}
+\label{subsubsect.kamburowski}
 
-When all costs are independent Gaussian RVs, Kamburowski was able to prove both upper and lower bounds on the first two moments\footnote{As noted in Section \ref{sect.bounds}, the upper bound on the variance technically remains a conjecture.} of the longest path distribution. Since normally distributed costs occur in many applications and the method is both cheap and somewhat similar to the approaches discussed previously in this section, we describe it in depth here.
+As stated in Section \ref{sect.bounds}, when all costs are independent Gaussian RVs, Kamburowski was able to prove both upper and lower bounds on the first two moments\footnote{As noted previously, the upper bound on the variance technically remains a conjecture.} of the longest path distribution. Since the bounds are somewhat similar to the approaches discussed elsewhere in this section, we describe them here.
 
-The bounds are achieved by recursively computing four number sequences $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$ such that $\underline{m_i} \leq \mu_{L_i} \leq \overline{m_i}$ and $ \underline{s_i} \leq \sigma_{L_i} \leq \overline{s_i}$ for all $i = 1, \dots, n$. Clearly, by taking $\underline{m_1} = \overline{m_1} = \E[\pi_1]$ and $\underline{s_1}^2 = \overline{s_1}^2 = Var[\pi_1]$ we can achieve the desired bounds for $L_1$. (As ever, we can work backward instead in which case the analogous results hold for the index $n$.) Now we suppose that all of the upper and lower bounds have been computed for all of the parents of a given node $t_i$ and consider how we can construct  $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$. The variance bounds are relatively straightforward. The lower bound is given by
+The basic idea is to recursively compute four number sequences $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$ such that $\underline{m_i} \leq \mu_{L_i} \leq \overline{m_i}$ and $ \underline{s_i} \leq \sigma_{L_i} \leq \overline{s_i}$ for all $i = 1, \dots, n$. Clearly, by taking $\underline{m_1} = \overline{m_1} = \E[\pi_1]$ and $\underline{s_1}^2 = \overline{s_1}^2 = Var[\pi_1]$ we can achieve the desired bounds for $L_1$. (As ever, we could work backward instead, in which case the analogous results hold for the index $n$.) Now we suppose that all of the upper and lower bounds have been computed for all of the parents of a given node $t_i$ and consider how we can construct  $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$. The variance bounds are relatively straightforward, albeit loose. The lower bound is given by
 \begin{equation}
 \underline{s_i^2} =\left\{
 \begin{array}{@{}ll@{}}
@@ -290,7 +314,7 @@ The bounds are achieved by recursively computing four number sequences $\underli
 \end{array}\right.
 \label{eq.si_under}
 \end{equation}
-reflecting the fact that the variance, as computed by equation \eqref{eq.clark_max_sigma}, can be reduced to an arbitrary extent by a maximization (which needs to be performed for multiple parents). The (conjectured) upper bound is similarly a result of this fact,
+reflecting the intuition that the variance can be reduced almost arbitrarily by a maximization (which needs to be performed for the case of multiple parents). The upper bound is similarly intuitive since it is effectively equivalent to saying that the variance of the maximum of a set of normal RVs is bounded above by the maximum variance of the RVs, although this has never been proven (see Section \ref{subsubsect.perspective}). More precisely, define 
 \begin{align}
   \label{eq.si_over}
   \overline{s_i^2} = \max_{h \in P_i}\{ \overline{s_h^2} + Var[\pi_{hi}] + Var[\pi_{i}]\}.
@@ -328,20 +352,11 @@ we have
 \end{align*}
 (Here we are assuming that the sets $\{\underline{X_h}\}_{h \in S_i}$ and $\{\overline{X_h}\}_{h \in S_i}$ are ordered in such a way that the inequality constraints on the variances is satisfied.)
 
+\subsubsection{Another perspective}
+\label{subsubsect.perspective}
 
-\section{Other heuristics}
-\label{sect.other_methods} 
-
-% MC part is same as in previous chapter - where best to put it?
-
-{\em Monte Carlo} methods have a long history in approximating the longest path distribution of PERT networks, dating back to at least the early 1960s \cite{van63}. The idea is to simulate the realization of all RVs and evaluate the longest path of the resulting deterministic graph. This is done repeatedly, giving a set of longest path instances whose empirical distribution function is guaranteed to converge to the true distribution by the Glivenko-Cantelli theorem \cite{can16}. Furthermore, analytical results allow us to quantify the approximation error for any given the number of realizations---and therefore the number of realizations needed to reach a desired accuracy. The major disadvantage is the cost, particularly when the number of realizations required is large, although modern architectures are well-suited to MC methods because of their parallelism so this problem may no longer be as acute as it once was. At any rate, in this chapter, we typically only use MC methods in order to obtain reference solutions.
-% We call it a heuristic since the solutions are not exact by definition, although we do use them as a reference since they are guaranteed to converge...
-% Maybe put this first.
-% The oldest and most reliable way to approximate the longest path dist...
-
-If the graph is {\em series-parallel} then we can compute the exact distribution of the longest path length in polynomial-time through a series of reductions \cite{dod85,mar65}. If this isn't the case, similar methods have been proposed that give approximations to the distribution \cite{dod85,lud01}, however these tend to be less accurate than Monte Carlo-based methods and more expensive than the those based on the normality assumption \cite{can16}.
-% Too abrupt in light of stuff about series parallel graphs in bounds section. Combine with there.
-% Also Spelde's heuristic bound on the cdf...
+An alternative bound on the cdf can perhaps be derived from the following result... The problem is that we don't know the mean, but there are good heuristic methods that usually give good approximations.
+% Spelde's heuristic bound.
 
 % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
 

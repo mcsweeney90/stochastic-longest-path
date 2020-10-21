@@ -1,17 +1,21 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
 \BOOKMARK [1][-]{section.2}{Bounds}{}% 2
 \BOOKMARK [1][-]{section.3}{Heuristics}{}% 3
-\BOOKMARK [2][-]{subsection.3.1}{Including correlations}{section.3}% 4
-\BOOKMARK [2][-]{subsection.3.2}{Kamburowski's bounds}{section.3}% 5
-\BOOKMARK [1][-]{section.4}{Other heuristics}{}% 6
-\BOOKMARK [1][-]{section.5}{Updating makespan estimates}{}% 7
-\BOOKMARK [2][-]{subsection.5.1}{Estimating the remaining time}{section.5}% 8
-\BOOKMARK [2][-]{subsection.5.2}{Updating the makespan directly}{section.5}% 9
-\BOOKMARK [2][-]{subsection.5.3}{Propagating updates forward}{section.5}% 10
-\BOOKMARK [1][-]{section.6}{Numerical experiments}{}% 11
-\BOOKMARK [2][-]{subsection.6.1}{Before runtime}{section.6}% 12
-\BOOKMARK [3][-]{subsubsection.6.1.1}{The normality assumption}{subsection.6.1}% 13
-\BOOKMARK [3][-]{subsubsection.6.1.2}{Kamburowski's bounds}{subsection.6.1}% 14
-\BOOKMARK [3][-]{subsubsection.6.1.3}{Do correlations need to be considered?}{subsection.6.1}% 15
-\BOOKMARK [2][-]{subsection.6.2}{Updating the finish time}{section.6}% 16
-\BOOKMARK [1][-]{section.7}{Conclusions}{}% 17
+\BOOKMARK [2][-]{subsection.3.1}{Monte Carlo}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Applying the CLT}{section.3}% 5
+\BOOKMARK [3][-]{subsubsection.3.2.1}{Clark's equations and Sculli's method}{subsection.3.2}% 6
+\BOOKMARK [3][-]{subsubsection.3.2.2}{Including correlations}{subsection.3.2}% 7
+\BOOKMARK [3][-]{subsubsection.3.2.3}{The canonical method}{subsection.3.2}% 8
+\BOOKMARK [3][-]{subsubsection.3.2.4}{Kamburowski's bounds}{subsection.3.2}% 9
+\BOOKMARK [3][-]{subsubsection.3.2.5}{Another perspective}{subsection.3.2}% 10
+\BOOKMARK [1][-]{section.4}{Updating makespan estimates}{}% 11
+\BOOKMARK [2][-]{subsection.4.1}{Estimating the remaining time}{section.4}% 12
+\BOOKMARK [2][-]{subsection.4.2}{Updating the makespan directly}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.3}{Propagating updates forward}{section.4}% 14
+\BOOKMARK [1][-]{section.5}{Numerical experiments}{}% 15
+\BOOKMARK [2][-]{subsection.5.1}{Before runtime}{section.5}% 16
+\BOOKMARK [3][-]{subsubsection.5.1.1}{The normality assumption}{subsection.5.1}% 17
+\BOOKMARK [3][-]{subsubsection.5.1.2}{Kamburowski's bounds}{subsection.5.1}% 18
+\BOOKMARK [3][-]{subsubsection.5.1.3}{Do correlations need to be considered?}{subsection.5.1}% 19
+\BOOKMARK [2][-]{subsection.5.2}{Updating the finish time}{section.5}% 20
+\BOOKMARK [1][-]{section.6}{Conclusions}{}% 21
