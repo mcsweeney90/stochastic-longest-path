@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2020.9.13)  21 OCT 2020 16:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2020.9.13)  22 OCT 2020 18:29
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -1081,52 +1081,44 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6] [7] [8
-] [9]
-
-LaTeX Warning: Reference `sect.normality' on page 10 undefined on input line 37
-1.
-
-[10] [11] [12]
-Overfull \hbox (11.74017pt too wide) in paragraph at lines 420--421
+] [9] [10]
+[11] [12]
+Overfull \hbox (11.74017pt too wide) in paragraph at lines 436--437
 \OT1/cmr/m/n/12 Rather than up-dat-ing the fin-ish time of the exit task---and 
 there-fore the makespan---
  []
 
-[13] [14]
-<images/normality_placeholder.png, id=297, 410.13225pt x 309.13492pt>
+[13] [14] [15]
+<images/normality_placeholder.png, id=310, 410.13225pt x 309.13492pt>
 File: images/normality_placeholder.png Graphic file (type png)
 <use images/normality_placeholder.png>
 Package pdftex.def Info: images/normality_placeholder.png  used on input line 4
-68.
+84.
 (pdftex.def)             Requested size: 410.13124pt x 309.13414pt.
- [15] [16 <./images/normality_placeholder.png>]
-<images/variance_bounds.png, id=311, 379.95952pt x 263.24347pt>
+ [16] [17 <./images/normality_placeholder.png>]
+<images/variance_bounds.png, id=326, 379.95952pt x 263.24347pt>
 File: images/variance_bounds.png Graphic file (type png)
 <use images/variance_bounds.png>
-Package pdftex.def Info: images/variance_bounds.png  used on input line 506.
+Package pdftex.def Info: images/variance_bounds.png  used on input line 522.
 (pdftex.def)             Requested size: 379.95857pt x 263.24281pt.
- [17]
-(./stochastic-longest-path.bbl [18 <./images/variance_bounds.png>] [19])
-[20]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 538.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 538.
+
+(./stochastic-longest-path.bbl [18] [19 <./images/variance_bounds.png>]
+[20]) [21]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 554.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 554.
  (./stochastic-longest-path.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 538.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 538.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 554.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 554.
 Package rerunfilecheck Info: File `stochastic-longest-path.out' has not changed
 .
-(rerunfilecheck)             Checksum: 414AA5935CEB1874C9A985888F285143;1475.
-
-
-LaTeX Warning: There were undefined references.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 538.
+(rerunfilecheck)             Checksum: 4DC4DD059CCAA9B8E7B2AEAA76F3F144;1482.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 554.
  ) 
 Here is how much of TeX's memory you used:
- 29506 strings out of 481239
- 592775 string characters out of 5920377
- 946125 words of memory out of 5000000
- 44118 multiletter control sequences out of 15000+600000
+ 29512 strings out of 481239
+ 592836 string characters out of 5920377
+ 946246 words of memory out of 5000000
+ 44120 multiletter control sequences out of 15000+600000
  543272 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  65i,12n,103p,1293b,495s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1149,10 +1141,10 @@ s/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type
 ic/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
 fonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm0700
 .pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on stochastic-longest-path.pdf (20 pages, 510726 bytes).
+Output written on stochastic-longest-path.pdf (21 pages, 514114 bytes).
 PDF statistics:
- 456 PDF objects out of 1000 (max. 8388607)
- 382 compressed objects within 4 object streams
- 85 named destinations out of 1000 (max. 500000)
+ 472 PDF objects out of 1000 (max. 8388607)
+ 397 compressed objects within 4 object streams
+ 89 named destinations out of 1000 (max. 500000)
  335 words of extra memory for PDF output out of 10000 (max. 10000000)
 

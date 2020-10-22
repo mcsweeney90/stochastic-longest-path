@@ -9,45 +9,46 @@ You're missing a field name---line 10 of file references.bib
 I'm skipping whatever remains of this entry
 Database file #2: strings.bib
 Warning--empty year in hag88
-You've used 20 entries,
+Warning--there's a number but no volume in ross03
+You've used 22 entries,
             2359 wiz_defined-function locations,
-            1322 strings with 18499 characters,
-and the built_in function-call counts, 6867 in all, are:
-= -- 664
-> -- 264
+            1339 strings with 18893 characters,
+and the built_in function-call counts, 7393 in all, are:
+= -- 717
+> -- 278
 < -- 0
-+ -- 111
-- -- 86
-* -- 619
-:= -- 1126
-add.period$ -- 60
-call.type$ -- 20
-change.case$ -- 103
++ -- 117
+- -- 90
+* -- 662
+:= -- 1215
+add.period$ -- 66
+call.type$ -- 22
+change.case$ -- 111
 chr.to.int$ -- 0
-cite$ -- 21
-duplicate$ -- 220
-empty$ -- 586
-format.name$ -- 86
-if$ -- 1410
+cite$ -- 24
+duplicate$ -- 241
+empty$ -- 633
+format.name$ -- 90
+if$ -- 1516
 int.to.chr$ -- 0
-int.to.str$ -- 20
-missing$ -- 20
-newline$ -- 104
-num.names$ -- 40
-pop$ -- 65
+int.to.str$ -- 22
+missing$ -- 22
+newline$ -- 114
+num.names$ -- 44
+pop$ -- 70
 preamble$ -- 2
-purify$ -- 83
+purify$ -- 89
 quote$ -- 0
-skip$ -- 141
+skip$ -- 154
 stack$ -- 0
-substring$ -- 585
-swap$ -- 40
+substring$ -- 620
+swap$ -- 44
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 80
-warning$ -- 1
-while$ -- 66
-width$ -- 22
-write$ -- 222
+type$ -- 88
+warning$ -- 2
+while$ -- 72
+width$ -- 24
+write$ -- 244
 (There was 1 error message)

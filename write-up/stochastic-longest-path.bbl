@@ -55,6 +55,13 @@ D.~R. Fulkerson.
   lengths in {PERT} networks}.
 \newblock {\em Operations Research}, 10\penalty0 (6):\penalty0 808--817, 1962.
 
+\bibitem{gal72}
+Janos Galambos.
+\newblock \href{http://www.jstor.org/stable/2239989}{On the distribution of the
+  maximum of random variables}.
+\newblock {\em The Annals of Mathematical Statistics}, 43\penalty0
+  (2):\penalty0 516--521, 1972.
+
 \bibitem{hag88}
 Jane~N. Hagstrom.
 \newblock \href{https://doi.org/10.1002/net.3230180206}{Computational
@@ -101,6 +108,13 @@ Pierre Robillard and Michel Trahan.
 \newblock \href{https://doi.org/10.1287/opre.24.1.177}{Technical
   note{---}expected completion time in {PERT} networks}.
 \newblock {\em Operations Research}, 24\penalty0 (1):\penalty0 177--182, 1976.
+
+\bibitem{ross03}
+Andrew~M. Ross.
+\newblock
+  \href{https://people.emich.edu/aross15/q/papers/bounds_Emax.pdf}{Useful
+  bounds on the expected maximum of correlated normal variables}.
+\newblock {\em Industrial and Systems Engineering}, \penalty0 (03W-004), 2003.
 
 \bibitem{scu83}
 D.~Sculli.

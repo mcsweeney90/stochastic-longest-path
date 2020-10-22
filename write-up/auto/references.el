@@ -22,6 +22,8 @@
     "van63"
     "mar65"
     "yaz91"
-    "kam85a"))
+    "kam85a"
+    "ross03"
+    "gal72"))
  :bibtex)
 

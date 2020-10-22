@@ -297,7 +297,7 @@ By definition, $\P[\eta > \epsilon] = \Phi(\beta)$ and we can therefore approxim
 \hat{\omega} &= \Phi(\beta)\eta + \Phi(-\beta) \\
 &= \Phi(\beta) \mu_\epsilon + \Phi(-\beta) \mu_\epsilon + \sum_i \big( \Phi(\beta) v_{\eta, i} + \Phi(-\beta) v_{\epsilon, i} \big) \delta_i.
 \end{align*}
-This is both similar and in some sense contrary to the Clark equation approach, in that the latter precisely computes the first two moments of the maximization of two normal RVs, whereas the canonical method approximates the distribution of the maximization of any two RVs using linear combinations of normal RVs. In their empirical comparison, Canon and Jeannot found that the canonical method tended to fall between Sculli's method and CorLCA in terms of both speed and approximation quality \cite{can16}. 
+This is both similar and in some sense contrary to the Clark equation approach, in that the latter precisely computes the first two moments of the maximization of two normal RVs, whereas the canonical method approximates the distribution of the maximization of any two RVs using linear combinations of normal RVs. In their empirical comparison, Canon and Jeannot found that the canonical method tended to fall between Sculli's heuristic and CorLCA in terms of both speed and approximation quality \cite{can16}, so we decided not to include it in comparisons here. 
 
 
 \subsubsection{Kamburowski's bounds}
@@ -352,13 +352,29 @@ we have
 \end{align*}
 (Here we are assuming that the sets $\{\underline{X_h}\}_{h \in S_i}$ and $\{\overline{X_h}\}_{h \in S_i}$ are ordered in such a way that the inequality constraints on the variances is satisfied.)
 
-\subsubsection{Another perspective}
+\subsubsection{A path-centric perspective}
 \label{subsubsect.perspective}
+
+From first principles, the longest path through a graph is exactly that: the longest of all possible paths. Let $q$ denote the number of paths through a given schedule graph and $P_a$, $a \in \{ 1, \dots, q \}$, be any path through the DAG. Then by definition we of course have
+\begin{align}
+  \label{eq.first_principles}
+  L_n = \max_{a = 1, \dots, q} P_a.
+  \end{align}
+  The obvious problem with this method of computing the longest path is that $q$ is (usually) impractically large for even small graphs, so the dynamic programming approach defined by \eqref{eq.Li} is (usually) the only practical option. Hence \eqref{eq.first_principles} would seem to be of very little use in bounding or even approximating the longest path. However, by also making use of the normality assumption induced by the CLT, there are a handful of results that may be useful heuristically. The majority of these can also be applied to the smaller maximizations encountered in \eqref{eq.Li} but the hope is that by reducing the number of maximizations that need to be done we may be able to reduce the approximation error.  
+
+  Since all paths are approximately normal---or exactly normal if all weight distributions are as well---we assume from now on that equation \eqref{eq.first_principles} reduces to the problem of finding the maximum of a (very large) set of dependent, differently distributed (DDD) normal RVs. Although much less studied than the IID case, bounds on both the distribution and its moments have received some attention in the literature. However, few of these are practical for very large sets. Ross gives a general upper bound for the expected value of a set of (not necessarily normal) DDD RVs, which he later specializes for the normal case, as well as mathematical programs for computing tight upper and lower bounds when the RVs are normally distributed \cite{ross03}. Unfortunately, all of these bounds require iterating over the set of paths at some point or other and their practical limit is stated to probably be for sets comprising hundreds of RVs. Similarly, efficiently computing the distribution bounds of Galambos \cite{gal72} seems impossible.          
+
+  The best approach is to give up on exact bounds and take a heuristic approach...
+
+
 
 An alternative bound on the cdf can perhaps be derived from the following result... The problem is that we don't know the mean, but there are good heuristic methods that usually give good approximations.
 % Spelde's heuristic bound.
 
 % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
+%Similarly, although correlations between any two given paths can easily be computed (exactly in the normal weight case, or approximately otherwise) in a manner very similar to how they are estimated in the CorLCA heuristic by separating the path lengths into sums of shared and unique weight RVs, explicitly computing the correlations between all pairs of paths is not possible. 
+
+% sin07 and ross03 discuss the order in which the pairwise Clark approximations should be done. 
 
 
 \section{Updating makespan estimates}
@@ -368,7 +384,7 @@ An alternative bound on the cdf can perhaps be derived from the following result
 % Mention emapse somewhere - e.g., we don't repeat the work of Canon, who did the best empirical comparison of different methods for computing the longest path distribution... Many of the methods discussed here were implemented in their emapse package... We chose to implement our own smaller-scale simulator for continuity with earlier work in this thesis...
 % This is a question that is particularly relevant when large, unexpected delays occur and decisions may need to be made as to whether to continue following the computed schedule at all.
 
-Estimating the length of a schedule with stochastic costs before its execution has been widely-studied, as the examples in previous sections illustrate. We therefore focus here on a different but related problem: how can schedule makespan estimates be quickly updated {\em during} execution? This would be particularly useful in situations such as when a large unexpected delay occurs. More precisely, the scenario we consider is as follows. Given a schedule $\pi$, we computed a complete set of task finish times estimates $L_i \sim N(\mu_i, \sigma_i^2)$ for all $i = 1, \dots, n$ before runtime using one of the Clark equation-based methods discussed in Section \ref{sect.normality}. At some point in time $T$ during the schedule execution we want to compute a new, more accurate estimate of the makespan based on the costs which have been observed thus far. How do we do this as quickly and accurately as possible?
+Estimating the length of a schedule with stochastic costs before its execution has been widely-studied, as the examples in previous sections illustrate. We therefore focus here on a different but related problem: how can schedule makespan estimates be quickly updated {\em during} execution? This would be particularly useful in situations such as when a large unexpected delay occurs. More precisely, the scenario we consider is as follows. Given a schedule $\pi$, we computed a complete set of task finish times estimates $L_i \sim N(\mu_i, \sigma_i^2)$ for all $i = 1, \dots, n$ before runtime using one of the Clark equation-based methods discussed in Section. At some point in time $T$ during the schedule execution we want to compute a new, more accurate estimate of the makespan based on the costs which have been observed thus far. How do we do this as quickly and accurately as possible?
 
 Effectively, at time $T$ the schedule graph $G_s$ can be divided into two distinct subgraphs: one corresponding to those tasks that have been completed and the other to those that have not. Define $C_T$ to be the set of indices corresponding to tasks that have completed by time $T$ and $U_T$ to be the set of indices corresponding to tasks that are still not done. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of tasks which have been completed but at least one of their parents has not---i.e., in some sense the boundary of the realized and unrealized sections of the graph.
 % something about the first having multiple exit tasks and the second multiple entry tasks?
