@@ -24,6 +24,7 @@
     "yaz91"
     "kam85a"
     "ross03"
-    "gal72"))
+    "gal72"
+    "sin07"))
  :bibtex)
 

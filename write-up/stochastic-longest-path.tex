@@ -230,7 +230,7 @@ The major disadvantage of MC methods is the computational cost. Of course, moder
 \subsection{Applying the CLT}
 \label{subsect.normality}
 
-Fundamentally, the length of any given path through a schedule graph is just the sum of the weight RVs along it. By the Central Limit Theorem (CLT), sums of random variables are asymptotically normally distributed. So we can make a reasonable argument that longest path distribution itself is likely to be at least approximately normal, $L_n \approx N(\mu_n, \sigma_n)$. Indeed, this has often been observed empirically, even when the individual graph weights follow very different distributions \cite{can10}. This argument forms the basis of a family of efficient heuristics for computing an approximation to the longest path distribution.
+Fundamentally, the length of any given path through a schedule graph is just the sum of the weight RVs along it. By the Central Limit Theorem (CLT), sums of random variables are asymptotically normally distributed. So we can make a reasonable argument that the longest path distribution itself is likely to be at least approximately normal, $L_n \approx N(\mu_n, \sigma_n)$. Indeed, this has often been observed empirically, even when the graph weights follow distributions that are far from normal \cite{can10}. This argument forms the basis of a family of efficient heuristics for computing an approximation to the longest path distribution.
 
 \subsubsection{Clark's equations and Sculli's method}
 \label{subsubsect.clark_sculli}
@@ -255,9 +255,11 @@ Then the first two moments $\mu_{\max}$ and $\sigma_{\max}$ of $\max(\epsilon, \
 \sigma_{\max}^2 &= (\mu_\epsilon^2 + \sigma_\epsilon^2) \Phi(\beta) + (\mu_\eta^2 + \sigma_\eta^2) \Phi(-\beta) \label{eq.clark_max_sigma}\\
 &+ (\mu_\epsilon + \mu_\eta)\alpha\phi(\beta) -\mu_{\max}^2 \nonumber.
 \end{align}
-Although these formulae are exact, they are only valid for a single pair of normal RVs. As already noted, the maximization of two normal RVs is not normal, so we cannot obtain the exact moments for a set of arbitrarily many RVs by applying them in a pairwise manner; we can however at least get an approximation. Altogether this means that by using \eqref{eq.sum_moments} for summations, and \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} pairwise for maximizations, we can now move through the graph in a manner similar to \eqref{eq.Li} and compute approximations $\mu_n$ and $\sigma_n$ to the first two moments of the longest path which, since it is assumed to be roughly normal, suffices to describe the entire distribution. This method appears to have first been proposed for estimating the completion time of PERT networks by Sculli \cite{scu83}, although to simplify the problem he assumed that all of the correlation coefficients $\rho_{\epsilon \eta}$ in \eqref{eq.alpha_beta} were zero (see next section).
+Although these formulae are exact, they are only valid for a single pair of normal RVs. As already noted, the maximization of two normal RVs is not normal, so we cannot obtain the exact moments for a set of arbitrarily many RVs by applying them in a pairwise manner. However, we can at least get an approximation. Sinha, Zhou and Shenoy \cite{sin07} empirically investigated the accuracy of this approximation for sets of up to 100 normal RVs, concluding that it is usually fairly good. Furthermore, they considered several possible orderings for the operands of the maximization (randomly, by mean value, and so on), a topic that was also briefly discussed by Ross \cite{ross03}.        
 
-In practice, the moment estimates obtained using Sculli's method tend to be fairly good, with performance improving as the weight distributions move closer to normality and the number of nodes in the graph increases (as we might intuitively expect). More importantly, Sculli's method is typically much faster than the alternatives \cite{can16}. 
+Bringing this all together, by using \eqref{eq.sum_moments} for summations, and \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} pairwise for maximizations, we can now move through the graph in a manner similar to \eqref{eq.Li} and compute approximations $\mu_n$ and $\sigma_n^2$ to the first two moments of the longest path which, since it is assumed to be roughly normal, suffices to describe the entire distribution. This method appears to have first been proposed for estimating the completion time of PERT networks by Sculli \cite{scu83}, although to simplify the problem he assumed that all of the correlation coefficients $\rho_{\epsilon \eta}$ in \eqref{eq.alpha_beta} were zero (see next section).
+
+In practice, the moment estimates obtained using Sculli's method tend to be quite accurate, with performance improving as the weight distributions move closer to normality and the number of nodes in the graph increases (as we might intuitively expect). More importantly, Sculli's method is typically much faster than the alternatives \cite{can16}. 
 
 \subsubsection{Including correlations}
 \label{subsubsect.correlation_aware}
@@ -360,21 +362,42 @@ From first principles, the longest path through a graph is exactly that: the lon
   \label{eq.first_principles}
   L_n = \max_{a = 1, \dots, q} P_a.
   \end{align}
-  The obvious problem with this method of computing the longest path is that $q$ is (usually) impractically large for even small graphs, so the dynamic programming approach defined by \eqref{eq.Li} is (usually) the only practical option. Hence \eqref{eq.first_principles} would seem to be of very little use in bounding or even approximating the longest path. However, by also making use of the normality assumption induced by the CLT, there are a handful of results that may be useful heuristically. The majority of these can also be applied to the smaller maximizations encountered in \eqref{eq.Li} but the hope is that by reducing the number of maximizations that need to be done we may be able to reduce the approximation error.  
+  The obvious problem with this method of computing the longest path is that $q$ is (usually) impractically large for even small graphs, so the dynamic programming approach defined by \eqref{eq.Li} is (usually) the only practical option. Hence \eqref{eq.first_principles} would seem to be of very little use in bounding or even approximating the longest path. However, by making use of the normality assumption induced by the CLT, we may still be able to derive useful approximations to the longest path distribution. 
 
-  Since all paths are approximately normal---or exactly normal if all weight distributions are as well---we assume from now on that equation \eqref{eq.first_principles} reduces to the problem of finding the maximum of a (very large) set of dependent, differently distributed (DDD) normal RVs. Although much less studied than the IID case, bounds on both the distribution and its moments have received some attention in the literature. However, few of these are practical for very large sets. Ross gives a general upper bound for the expected value of a set of (not necessarily normal) DDD RVs, which he later specializes for the normal case, as well as mathematical programs for computing tight upper and lower bounds when the RVs are normally distributed \cite{ross03}. Unfortunately, all of these bounds require iterating over the set of paths at some point or other and their practical limit is stated to probably be for sets comprising hundreds of RVs. Similarly, efficiently computing the distribution bounds of Galambos \cite{gal72} seems impossible.          
+  Since all paths are approximately normal---or exactly normal if all weight distributions are as well---we assume from now on that equation \eqref{eq.first_principles} reduces to the problem of finding the maximum of a (very large) set of dependent, differently distributed (DDD) normal RVs. Although much less studied than the IID case, bounds on both the distribution and its moments have received some attention in the literature. However, few of these are practical for very large sets. Ross gives a general upper bound for the expected value of a set of (not necessarily normal) DDD RVs, which he later specializes for the normal case, as well as mathematical programs for computing tight upper and lower bounds when the RVs are normally distributed \cite{ross03}. Unfortunately, all of these bounds require iterating over the set of paths at some point or other and their practical limit is stated to probably be for sets comprising hundreds of RVs. Similarly, efficiently computing the distribution bounds of Galambos \cite{gal72} seems impossible.
 
-  The best approach is to give up on exact bounds and take a heuristic approach...
+  Now, there are certain quantities of possible interest that we can compute directly even when $q$ is very large. For example, if all weights are normal, then the mean of a given path length is just the sum of the means of the weights along it, so we can easily compute $\max_a(\E[P_a])$ via dynamic programming. This is useful because by Jensen's inequality we have  
+$\E[\max_aP_a] \geq \max_a(\E[P_a])$---i.e., the classic CPM lower bound on the expected value of the longest path. (Of course, this can be proven via other methods to be true even when all weights are not normally distributed.) Similarly, $\max_a(Var[P_a])$ can be computed cheaply for normal weights; this is Kamburowski's conjectured upper bound on the variance of the longest path in that case. Indeed, the bound therefore holds if and only if the variance of the maximum of a set of normals is smaller than the maximum variance of the individual RVs. Counterexamples can easily be found for arbitrary RVs, but empirically this seems as though it may be true for normal RVs... In fact, if we assume that the shape of the maximum is roughly normal, we could argue heuristically that the variance is bounded by the variance of the path which maximizes $\mu_a + \sigma_a$...   
 
 
 
-An alternative bound on the cdf can perhaps be derived from the following result... The problem is that we don't know the mean, but there are good heuristic methods that usually give good approximations.
+  The only practical way forward is to reduce the number of paths we need to consider. Of course, it is impossible to do this entirely accurately. However, note that we can compute the correlations between any two paths, as well as the probability that one is greater than another. The plan then: generate paths until the probability it is the longest goes below some tolerance and then we will have a much smaller sets of path lengths to deal with... This is similar to Dodin's method... Also done by Ludwig, inspired by earlier work of Spelde... 
+
+
+
+
+  
+% QUESTION FOR NEIL.
+  %Perhaps the best approach is to give up on exact bounds and take a heuristic approach. In particular, the following concentration inequality may be useful for (roughly) bounding the distribution function of the longest path...
+  %\begin{prop}
+%	Let $g = (g_1, \dots, g_n)$ be a Gaussian random vector, whose coordinates are not necessarily independent. One can express $g$ as... Let $\sigma^2 = \max_iVar(g_i)$. Then for all $t > 0$,
+%	\begin{align*}
+%	\P\bigg[\max_i g_i - \E[\max_i g_i] \geq t \bigg] \leq e^{-t^2/2\sigma^2}
+%	\end{align*}
+     %   and
+     %   \begin{align*}
+%	\P\bigg[\max_i g_i - \E[\max_i g_i] \leq -t \bigg] \leq e^{-t^2/2\sigma^2}.
+%	\end{align*}
+    %  \end{prop}
+
+      
+
+
 % Spelde's heuristic bound.
 
 % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
 %Similarly, although correlations between any two given paths can easily be computed (exactly in the normal weight case, or approximately otherwise) in a manner very similar to how they are estimated in the CorLCA heuristic by separating the path lengths into sums of shared and unique weight RVs, explicitly computing the correlations between all pairs of paths is not possible. 
 
-% sin07 and ross03 discuss the order in which the pairwise Clark approximations should be done. 
 
 
 \section{Updating makespan estimates}
