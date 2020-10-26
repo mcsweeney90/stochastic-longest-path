@@ -10,45 +10,45 @@ I'm skipping whatever remains of this entry
 Database file #2: strings.bib
 Warning--empty year in hag88
 Warning--there's a number but no volume in ross03
-You've used 23 entries,
+You've used 24 entries,
             2359 wiz_defined-function locations,
-            1347 strings with 19057 characters,
-and the built_in function-call counts, 7774 in all, are:
-= -- 753
-> -- 296
+            1354 strings with 19189 characters,
+and the built_in function-call counts, 8068 in all, are:
+= -- 782
+> -- 303
 < -- 0
-+ -- 124
-- -- 96
-* -- 698
-:= -- 1277
-add.period$ -- 69
-call.type$ -- 23
-change.case$ -- 117
++ -- 127
+- -- 98
+* -- 723
+:= -- 1325
+add.period$ -- 72
+call.type$ -- 24
+change.case$ -- 121
 chr.to.int$ -- 0
-cite$ -- 25
-duplicate$ -- 252
-empty$ -- 664
-format.name$ -- 96
-if$ -- 1595
+cite$ -- 26
+duplicate$ -- 263
+empty$ -- 692
+format.name$ -- 98
+if$ -- 1657
 int.to.chr$ -- 0
-int.to.str$ -- 23
-missing$ -- 23
-newline$ -- 119
-num.names$ -- 46
-pop$ -- 74
+int.to.str$ -- 24
+missing$ -- 24
+newline$ -- 124
+num.names$ -- 48
+pop$ -- 76
 preamble$ -- 2
-purify$ -- 94
+purify$ -- 97
 quote$ -- 0
-skip$ -- 161
+skip$ -- 168
 stack$ -- 0
-substring$ -- 652
-swap$ -- 46
+substring$ -- 678
+swap$ -- 48
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 92
+type$ -- 96
 warning$ -- 2
-while$ -- 75
-width$ -- 25
-write$ -- 255
+while$ -- 78
+width$ -- 26
+write$ -- 266
 (There was 1 error message)

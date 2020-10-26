@@ -37,6 +37,12 @@ C.~T. Clingen.
   {F}ulkerson's {PERT} algorithm}.
 \newblock {\em Operations Research}, 12\penalty0 (4):\penalty0 629--632, 1964.
 
+\bibitem{dod84}
+Bajis Dodin.
+\newblock \href{https://doi.org/10.1287/opre.32.4.859}{Determining the k most
+  critical paths in {PERT} networks}.
+\newblock {\em Operations Research}, 32\penalty0 (4):\penalty0 859--877, 1984.
+
 \bibitem{dod85}
 Bajis Dodin.
 \newblock \href{https://doi.org/10.1287/opre.33.4.862}{Bounding the project
