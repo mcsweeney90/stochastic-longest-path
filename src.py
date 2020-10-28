@@ -269,7 +269,7 @@ class SDAG:
         self.reset(fixed=fixed)
         return longest_paths
     
-    def CPM(self, variance=False):
+    def pert_cpm(self, variance=False):
         """
         Returns the classic PERT-CPM bound on the expected value of the longest path.
         If variance == True, also returns the variance of this longest path to use as a rough estimate
@@ -696,7 +696,14 @@ class SDAG:
         q = deltas[9*s - 1]
         intervals[95] = (mu - q, mu - p)        
         return intervals
-        
+    
+    def get_longest_paths(self, epsilon):
+        """TODO."""
+        return
+    
+    def max_paths(self, paths, method="Cordyn"):
+        """TODO."""
+        return        
         
         
         
