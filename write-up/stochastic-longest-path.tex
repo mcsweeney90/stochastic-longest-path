@@ -538,7 +538,6 @@ In order to evaluate the quality of the bounds and heuristics considered later i
 The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the simple analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples. At any rate, time constraints restricted us to a maximum of $100$,$000$ samples for the largest graph in the test set, so we used that number of samples for all of the graphs. Van Slyke's analysis suggests that the computed mean and variance estimates are therefore likely to be within about $1\%$ of the true values. They will however be assumed to be exact in comparisons with other heuristic solutions in later sections.
 %(As an aside, Van Slyke's analysis, albeit only rough, does not depend at all on the size of the graph, which seems counterintuitive. There are other approaches as well, but they also largely suffer from this apparent issue...)  
 
-
 We have largely avoided discussing runtimes for the various algorithms implemented in this thesis so far because our code is not---and is not intended to be---as efficient as possible. However, this is an area in which at least some baseline comparisons are necessary. Therefore in Table \ref{tb.mc_timings} we show how the runtime of our MC function for computing the reference solution---i.e., with $100$,$000$ samples---increases with the size of the graph. (Note that we use the {\tt normal} and {\tt gamma} functions from the {\tt numpy} {\tt random} module in order to sample from the distributions so it is interesting to see that the time also varies significantly based on which is used.) Although this very much depends on the application, we can easily imagine how runtimes for the larger graphs may be impractical based on the timings in the table; indeed, in many cases, even the time taken for the smaller graphs may be excessive. 
 
 \begin{table}
@@ -562,9 +561,9 @@ We have largely avoided discussing runtimes for the various algorithms implement
 		\end{tabular}
 		\label{tb.mc_timings}
 	\end{center}	
-      \end{table} 
+      \end{table}
 
-Other studies have thoroughly investigated how reasonable the normality assumption on the longest path distribution actually is for both real and randomly-generated graphs, so we only treat this topic very briefly here. First we assume that all individual costs are normally distributed. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, etc, but it is perhaps more instructive here to consider the longest path distribution visually. Figure X shows how the shape of empirical distribution changes as the number of tasks in the DAG increases... We see that the distribution does indeed more closely resemble the normal bell curve as the size of the DAG increases...
+      Other studies have thoroughly investigated how reasonable the normality assumption on the longest path distribution actually is for both real and randomly-generated graphs, so we only treat this topic very briefly here. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets, so in Table Y we summarize, ... Informally, we see that the data may well be close to normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero. It is perhaps more instructive here to consider the longest path distribution visually...
 
 \begin{figure}
 	\centering	
