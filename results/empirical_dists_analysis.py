@@ -51,5 +51,8 @@ n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 # Load info.
 with open('empirical_dists.dill', 'rb') as file:
     empirical = dill.load(file) 
+    
+
+
 
             
