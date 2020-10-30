@@ -36,9 +36,9 @@ plt.ioff() # Don't show plots.
 ####################################################################################################
 
 # Destinations to save summaries and generated plots.
-summary_path = "summaries/"
+summary_path = "summaries/existing_heuristics"
 pathlib.Path(summary_path).mkdir(parents=True, exist_ok=True)
-plot_path = "plots/"
+plot_path = "plots/existing_heuristics"
 pathlib.Path(plot_path).mkdir(parents=True, exist_ok=True)
 
 nb = 128
@@ -49,8 +49,8 @@ n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 # =============================================================================
 
 # Load info.
-with open('before_runtime.dill', 'rb') as file:
-    before = dill.load(file) 
+with open('existing_heuristics.dill', 'rb') as file:
+    existing = dill.load(file) 
 
 # # Print full summary.
 # with open("{}/before_runtime.txt".format(summary_path), "w") as dest:
@@ -103,15 +103,15 @@ with open('before_runtime.dill', 'rb') as file:
 #         print("Kamburowski upper (%): {}".format((before[nt]["KMU"] /ref)*100), file=dest)
 
             
-# # Plot the variance bounds.
-fig = plt.figure(dpi=400)
-ax1 = fig.add_subplot(111)
-ax1.plot(n_tasks, list(before[nt]["MCN"][-1].var for nt in n_tasks), color='#E24A33', label="ACTUAL")
-ax1.fill_between(n_tasks, list(before[nt]["KVL"] for nt in n_tasks), list(before[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.5)
-plt.yscale('log')
-ax1.set_xlabel("DAG SIZE", labelpad=5)
-# ax1.set_ylabel("VARIANCE", labelpad=5)
-ax1.legend(handlelength=3, handletextpad=0.4, ncol=2, loc='best', fancybox=True, facecolor='white') 
-plt.savefig('{}/variance_bounds'.format(plot_path), bbox_inches='tight') 
-plt.close(fig) 
+# # # Plot the variance bounds.
+# fig = plt.figure(dpi=400)
+# ax1 = fig.add_subplot(111)
+# ax1.plot(n_tasks, list(existing[nt]["MCN"][-1].var for nt in n_tasks), color='#E24A33', label="ACTUAL")
+# ax1.fill_between(n_tasks, list(existing[nt]["KVL"] for nt in n_tasks), list(existing[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.5)
+# plt.yscale('log')
+# ax1.set_xlabel("DAG SIZE", labelpad=5)
+# # ax1.set_ylabel("VARIANCE", labelpad=5)
+# ax1.legend(handlelength=3, handletextpad=0.4, ncol=2, loc='best', fancybox=True, facecolor='white') 
+# plt.savefig('{}/variance_bounds'.format(plot_path), bbox_inches='tight') 
+# plt.close(fig) 
             

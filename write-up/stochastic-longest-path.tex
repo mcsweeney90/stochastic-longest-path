@@ -17,6 +17,7 @@
 \usepackage{subfig}
 \usepackage[most, minted]{tcolorbox}
 \usepackage{mdwlist}
+\usepackage{multirow}
 \tcbuselibrary{listings}
 
 \newtcblisting{myminted}{%
@@ -538,47 +539,90 @@ In order to evaluate the quality of the bounds and heuristics considered later i
 The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the simple analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples. At any rate, time constraints restricted us to a maximum of $100$,$000$ samples for the largest graph in the test set, so we used that number of samples for all of the graphs. Van Slyke's analysis suggests that the computed mean and variance estimates are therefore likely to be within about $1\%$ of the true values. They will however be assumed to be exact in comparisons with other heuristic solutions in later sections.
 %(As an aside, Van Slyke's analysis, albeit only rough, does not depend at all on the size of the graph, which seems counterintuitive. There are other approaches as well, but they also largely suffer from this apparent issue...)  
 
-We have largely avoided discussing runtimes for the various algorithms implemented in this thesis so far because our code is not---and is not intended to be---as efficient as possible. However, this is an area in which at least some baseline comparisons are necessary. Therefore in Table \ref{tb.mc_timings} we show how the runtime of our MC function for computing the reference solution---i.e., with $100$,$000$ samples---increases with the size of the graph. (Note that we use the {\tt normal} and {\tt gamma} functions from the {\tt numpy} {\tt random} module in order to sample from the distributions so it is interesting to see that the time also varies significantly based on which is used.) Although this very much depends on the application, we can easily imagine how runtimes for the larger graphs may be impractical based on the timings in the table; indeed, in many cases, even the time taken for the smaller graphs may be excessive. 
+We have largely avoided discussing runtimes for the various algorithms implemented in this thesis so far because our code is not---and is not intended to be---optimized. However, this is an area in which at least some baseline comparisons are necessary. Therefore in Table \ref{tb.mc_timings} we show how the runtime of our MC function for computing the reference solution---i.e., with $100$,$000$ samples---increases with the size of the graph. (Note that we use the {\tt normal} and {\tt gamma} functions from the {\tt numpy} {\tt random} module in order to sample from the distributions so it is interesting to see that the time also varies significantly based on which is used.) Although this very much depends on the application, we can easily imagine how runtimes for the larger graphs may be impractical based on the timings in the table; indeed, in many cases, even the time taken for the smaller graphs may be excessive. 
 
 \begin{table}
 	\caption{Time needed to obtain reference makespan distributions.} 
 	\begin{center}	
 		\begin{tabular}{c c c}
                   \toprule
-                  & \multicolumn{2}{c}{Time (hours, minutes, seconds)} \\
-                  \cmidrule{2-3}
-                  DAG size & Normal weights & Gamma weights \\
+                  DAG size & Weight Dist. &  Time (hours, minutes, seconds)\\
                   \cmidrule{1-3}
-                  $35$ & $41$s & $48$s\\
-                  $220$ & $5$m $43$s & $6$m $47$s \\
-                  $680$ & $20$m $44$s & $24$m $47$s\\
-                  $1540$ & $49$m $56$s & $1$h $0$m $5$s \\
-                  $2925$ & $1$h $39$m $54$s & $1$h $59$m $45$s \\
-                  $4960$ & $2$h $55$m $35$s & $3$h $29$m $44$s \\
-                  $7770$ & $4$h $49$m $42$s & $5$h $42$m $56$s \\
-                  $11480$ & $7$h $39$m $4$s & $9$h $0$m $40$s \\
+                  \multirow{2}{*}{$35$} & Normal & $41$s \\
+                           & Gamma & $48$s\\
+                  \multirow{2}{*}{$220$} & Normal & $5$m $43$s \\
+                           & Gamma & $6$m $47$s \\
+                  \multirow{2}{*}{$680$} & Normal & $20$m $44$s \\
+                  & Gamma &  $24$m $47$s\\
+                  \multirow{2}{*}{$1540$} & Normal & $49$m $56$s \\
+                           & Gamma & $1$h $0$m $5$s \\
+                  \multirow{2}{*}{$2925$} & Normal & $1$h $39$m $54$s \\
+                           & Gamma & $1$h $59$m $45$s \\
+                  \multirow{2}{*}{$4960$} & Normal & $2$h $55$m $35$s \\
+                           & Gamma & $3$h $29$m $44$s \\
+                  \multirow{2}{*}{$7770$} & Normal & $4$h $49$m $42$s \\
+                           & Gamma & $5$h $42$m $56$s \\
+                  \multirow{2}{*}{$11480$} & Normal & $7$h $39$m $4$s \\
+                           & Gamma & $9$h $0$m $40$s \\
 		\bottomrule
 		\end{tabular}
 		\label{tb.mc_timings}
 	\end{center}	
       \end{table}
 
-      Other studies have thoroughly investigated how reasonable the normality assumption on the longest path distribution actually is for both real and randomly-generated graphs, so we only treat this topic very briefly here. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets, so in Table Y we summarize, ... Informally, we see that the data may well be close to normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero. It is perhaps more instructive here to consider the longest path distribution visually...
+      Other studies have thoroughly investigated how reasonable the normality assumption on the longest path distribution actually is for both real and randomly-generated graphs, with the conclusions typically being that it is fairly reasonable, so we only treat this topic very briefly here. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets\footnote{We did apply all three of the aforementioned tests to the data, with normality being rejected in all cases.}, so in Table \ref{tb.emp_summary} we present instead some summary statistics for the empirical distributions (with normal and Gamma weights) in order to convey a more intuitive understanding. Informally, we see that the data may well be close to normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero. Inspecting the visualizations of the distributions in Figure \ref{plot.emp_hists}, we see that the distributions for the larger graphs in particular are clearly not normal but they are at least broadly similar. Indeed, it is interesting that the distributions for the smaller graphs appear to be closer to normal than the larger one, when we would perhaps expect the opposite to be the case. A possible explanation for this is that for small graphs only a few paths may be the longest, so the distribution more closely resembles an individual path length distribution---which is either normal, if the weights are as well, or roughly so by the CLT---whereas this may not be the case for the larger graphs.    
 
-\begin{figure}
+      Leaving aside the question of how close to normal the longest path distributions appears to be, the more important takeaway is that they appear to be very similar for both choices of weight distribution, as we would both hope and expect. It should however also be emphasized that they aren't identical. This is important when evaluating the quality of the bounds and approximations discussed in the following sections since most of them are agnostic of the weight distributions; it is difficult to determine which of two similar approximate solutions is the more accurate when the true solution may vary.
+      % should we quantify how similar the two distributions are?
+
+      \begin{table}
+	\caption{Summary statistics for empirical distributions.} 
+	\begin{center}	
+		\begin{tabular}{c c c c c c c}
+                  \toprule
+                  DAG size & Weight Dist. & Mean & Median & Std dev. & Skewness & Kurtosis \\
+                  \cmidrule{1-7}
+                  \multirow{2}{*}{$35$} & Normal & $1017.1$ & $1016.5$ & $12.4$ & $0.3$ & $0.2$\\
+                           & Gamma & $1017.1$ & $1016.3$ & $12.4$ & $0.4$ & $0.3$\\
+                  \\
+                  \multirow{2}{*}{$220$} & Normal & $2854.4$ & $2853.5$ & $17.4$ & $0.3$ & $0.2$\\
+                           & Gamma & $2850.5$ & $2849.7$ & $17.8$ & $0.3$ & $0.3$\\
+                  \\
+                  \multirow{2}{*}{$680$} & Normal & $6107.0$ & $6105.8$ & $29.9$ & $0.2$ & $0.1$\\
+                           & Gamma & $6104.1$ & $6102.8$ & $30.9$ & $0.2$ & $0.1$\\
+                  \\
+                  \multirow{2}{*}{$1540$} & Normal & $11127.3$ & $11124.0$ & $48.9$ & $0.4$ & $0.5$\\
+                           & Gamma & $11108.8$ & $11105.4$ & $50.6$ & $0.5$ & $0.7$\\
+                  \\
+                  \multirow{2}{*}{$2925$} & Normal & $19619.9$ & $19614.7$ & $68.0$ & $0.4$ & $0.4$\\
+                           & Gamma & $19615.1$ & $19609.9$ & $69.5$ & $0.5$ & $0.4$\\
+                  \\
+                  \multirow{2}{*}{$4960$} & Normal & $31737.0$ & $31730.1$ & $91.5$ & $0.4$ & $0.3$\\
+                           & Gamma & $31710.2$ & $31702.4$ & $91.9$ & $0.5$ & $0.4$\\
+                  \\
+                  \multirow{2}{*}{$7770$} & Normal & $48391.5$ & $48383.3$ & $115.5$ & $0.4$ & $0.3$\\
+                           & Gamma & $48377.2$ & $48368.1$ & $115.7$ & $0.5$ & $0.3$\\
+                  \\
+                  \multirow{2}{*}{$11480$} & Normal & $70466.0$ & $70454.7$ & $141.1$ & $0.5$ & $0.3$\\
+                           & Gamma & $70464.2$ & $70453.1$ & $142.3$ & $0.5$ & $0.3$\\
+		\bottomrule
+		\end{tabular}
+		\label{tb.emp_summary}
+	\end{center}	
+      \end{table}
+
+      \begin{figure}
 	\centering	
-	\includegraphics[scale=1.0]{normality_placeholder.png}
-	\caption{Placeholder--TODO.}	
-	\label{plot.normal_assum_normal}
+	\subfloat[Normal weights.]{\label{plot.hist_normal}\includegraphics[scale=0.55]{histograms_NORMAL.png}}
+	\subfloat[Gamma weights.]{\label{plot.hist_gamma}\includegraphics[scale=0.55]{histograms_GAMMA.png}}
+	\caption{Histograms of empirical distributions.}	
+	\label{plot.emp_hists} 
       \end{figure}
-      % TODO: just a placeholder, better image.
-
-      % TODO: Extend this - more analysis of the distribution itself.
 
       % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
 
-\subsection{Bounds}
-\label{subsect.results_bounds}
+\subsection{Existing bounds and heuristics}
+\label{subsect.results_existing}
 
 Although there are many bounds on the longest path distribution in the literature, given our overriding interest in practical scheduling methods and our experience in the previous chapter with Fulkerson's bounds on the expected value---which were impractically expensive even for relatively small graphs---we decided to eschew methods which require the evaluation of complex integrals. Similarly, bounds based on graphs reductions may be prohibitively expensive. Hence we decided to focus here on bounds that can be computed through simple numerical schemes, such as the classic PERT-CPM bound on the mean and Kamburowski's bounds on the first two moments (when costs are normally distributed). The latter does require the evaluation of the unit normal cdf, but this is a standard part of most good numerical software libraries, so can be computed efficiently.
 
@@ -618,8 +662,8 @@ Table \ref{tb.mean_bounds} shows how tight the PERT-CPM and Kamburowski bounds o
 
 
 
-\subsection{Comparison of heuristics}
-\label{subsect.results_heuristics}
+\subsection{Path reduction}
+\label{subsect.results_path_reduction}
 
 The question we consider here is, although CorLCA generally obtains superior estimates of the makespan distribution, are these gains significant enough to be worthwhile in a scheduling heuristic?
 

@@ -131,6 +131,42 @@ class RV:
         var -= (self.mu + other.mu) * a * pdf_b
         var -= mu**2         
         return RV(mu, var)  
+    
+class Path:
+    """
+    Path class - basically a collection of RVs.
+    TODO.
+    """
+    def __init__(self, mu=0.0, var=0.0, realization=None, ID=None): 
+        self.mu = mu
+        self.var = var
+        self.ID = ID
+        self.realization = realization
+    def __repr__(self):
+        return "RV(mu = {}, var = {})".format(self.mu, self.var)
+    # Overload addition operator.
+    def __add__(self, other): 
+        if isinstance(other, float) or isinstance(other, int):
+            return RV(self.mu + other, self.var)
+        return RV(self.mu + other.mu, self.var + other.var) 
+    __radd__ = __add__ 
+    # Overload subtraction operator.
+    def __sub__(self, other):
+        if isinstance(other, float) or isinstance(other, int):
+            return RV(self.mu - other, self.var)
+        return RV(self.mu - other.mu, self.var + other.var)
+    __rsub__ = __sub__ 
+    # Overload multiplication operator.
+    def __mul__(self, c):
+        return RV(c * self.mu, c * c * self.var)
+    __rmul__ = __mul__ 
+    # Overload division operators.
+    def __truediv__(self, c): 
+        return RV(self.mu / c, self.var / (c * c))
+    __rtruediv__ = __truediv__ 
+    def __floordiv__(self, c): 
+        return RV(self.mu / c, self.var / (c * c))
+    __rfloordiv__ = __floordiv__ 
 
 class CRV:
     """
