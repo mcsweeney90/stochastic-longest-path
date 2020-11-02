@@ -96,6 +96,13 @@ George~B. Kleindorfer.
 \newblock {\em Operations Research}, 19\penalty0 (7):\penalty0 1586--1601,
   1971.
 
+\bibitem{li15}
+K.~{Li}, X.~{Tang}, B.~{Veeravalli}, and K.~{Li}.
+\newblock \href{https://doi.org/10.1109/TC.2013.205}{Scheduling precedence
+  constrained stochastic tasks on heterogeneous cluster systems}.
+\newblock {\em IEEE Transactions on Computers}, 64\penalty0 (1):\penalty0
+  191--204, 2015.
+
 \bibitem{lud01}
 Arfst Ludwig, Rolf~H. M{\"o}hring, and Frederik Stork.
 \newblock \href{https://doi.org/10.1023/A:1010945830113}{A computational study

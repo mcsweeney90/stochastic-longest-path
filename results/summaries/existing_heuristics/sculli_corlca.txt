@@ -1,0 +1,273 @@
+QUALITY OF APPROXIMATIONS TO MEAN AND VARIANCE FOR SCULLI AND CORLCA.
+
+
+
+---------------------------------
+NUMBER OF TASKS: 35
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 1017.1129229254797
+Sculli mean: 1020.5339270731592
+Difference (%): -0.3363445759630963
+CorLCA mean: 1016.8075050674341
+Difference (%): 0.030027920318531187
+
+Reference variance: 153.02371333811203
+Sculli variance: 114.77250398570416
+Difference (%): 24.99691617591992
+CorLCA variance: 151.84332368991548
+Difference (%): 0.7713769470411762
+
+GAMMA COSTS
+
+Reference mean: 1017.0665967353777
+Sculli mean: 1020.5339270731592
+Difference (%): -0.340914778728461
+CorLCA mean: 1016.8075050674341
+Difference (%): 0.025474405390497168
+
+Reference variance: 154.83866105888444
+Sculli variance: 114.77250398570416
+Difference (%): 25.876067901377226
+CorLCA variance: 151.84332368991548
+Difference (%): 1.9344893248785269
+
+
+
+---------------------------------
+NUMBER OF TASKS: 220
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 2854.3666810056234
+Sculli mean: 2862.04648221329
+Difference (%): -0.26905447218017287
+CorLCA mean: 2849.272107355072
+Difference (%): 0.17848350334431018
+
+Reference variance: 301.98873911472737
+Sculli variance: 113.07368923773268
+Difference (%): 62.5569848832094
+CorLCA variance: 271.5317953522617
+Difference (%): 10.08545677953073
+
+GAMMA COSTS
+
+Reference mean: 2850.5297436471747
+Sculli mean: 2862.04648221329
+Difference (%): -0.4040209926516809
+CorLCA mean: 2849.272107355072
+Difference (%): 0.04411938850682873
+
+Reference variance: 317.1181433898892
+Sculli variance: 113.07368923773268
+Difference (%): 64.3433554356077
+CorLCA variance: 271.5317953522617
+Difference (%): 14.375193910485322
+
+
+
+---------------------------------
+NUMBER OF TASKS: 680
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 6107.006556305717
+Sculli mean: 6136.421298768058
+Difference (%): -0.48165565553502176
+CorLCA mean: 6095.902737134747
+Difference (%): 0.18182098002668567
+
+Reference variance: 895.2855646087439
+Sculli variance: 157.47905319233635
+Difference (%): 82.41018738404907
+CorLCA variance: 784.2444766094277
+Difference (%): 12.402868133794072
+
+GAMMA COSTS
+
+Reference mean: 6104.0547336334785
+Sculli mean: 6136.421298768058
+Difference (%): -0.5302469677448869
+CorLCA mean: 6095.902737134747
+Difference (%): 0.1335505144443374
+
+Reference variance: 955.9533511989152
+Sculli variance: 157.47905319233635
+Difference (%): 83.52649185288874
+CorLCA variance: 784.2444766094277
+Difference (%): 17.962055823554337
+
+
+
+---------------------------------
+NUMBER OF TASKS: 1540
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 11127.277446279788
+Sculli mean: 11167.494407957114
+Difference (%): -0.3614267898997383
+CorLCA mean: 11133.64450037578
+Difference (%): -0.05722023313188629
+
+Reference variance: 2393.9025101922934
+Sculli variance: 95.44149598528841
+Difference (%): 96.01314190619976
+CorLCA variance: 418.4272195552776
+Difference (%): 82.52112532679257
+
+GAMMA COSTS
+
+Reference mean: 11108.821213484256
+Sculli mean: 11167.494407957114
+Difference (%): -0.5281676007319049
+CorLCA mean: 11133.64450037578
+Difference (%): -0.2234556341711027
+
+Reference variance: 2564.6164095949357
+Sculli variance: 95.44149598528841
+Difference (%): 96.27852743871499
+CorLCA variance: 418.4272195552776
+Difference (%): 83.68460803768446
+
+
+
+---------------------------------
+NUMBER OF TASKS: 2925
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 19619.590509633952
+Sculli mean: 19636.196903744763
+Difference (%): -0.08464189964951174
+CorLCA mean: 19597.94076607177
+Difference (%): 0.11034758116664989
+
+Reference variance: 4621.587693413983
+Sculli variance: 162.90824701054
+Difference (%): 96.47505883654024
+CorLCA variance: 819.1060496733895
+Difference (%): 82.27652261493034
+
+GAMMA COSTS
+
+Reference mean: 19615.06107813395
+Sculli mean: 19636.196903744763
+Difference (%): -0.1077530451046016
+CorLCA mean: 19597.94076607177
+Difference (%): 0.08728146190308905
+
+Reference variance: 4830.473826958386
+Sculli variance: 162.90824701054
+Difference (%): 96.62748929305101
+CorLCA variance: 819.1060496733895
+Difference (%): 83.04294611634077
+
+
+
+---------------------------------
+NUMBER OF TASKS: 4960
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 31736.953923479556
+Sculli mean: 31729.04264719835
+Difference (%): 0.02492764838201822
+CorLCA mean: 31690.374819765653
+Difference (%): 0.14676614468486093
+
+Reference variance: 8363.626743272675
+Sculli variance: 109.09585139204958
+Difference (%): 98.69559158077205
+CorLCA variance: 549.4994485085199
+Difference (%): 93.4298903409276
+
+GAMMA COSTS
+
+Reference mean: 31710.225136489476
+Sculli mean: 31729.04264719835
+Difference (%): -0.0593420911642113
+CorLCA mean: 31690.374819765653
+Difference (%): 0.06259910372247646
+
+Reference variance: 8443.148580688434
+Sculli variance: 109.09585139204958
+Difference (%): 98.70787715803583
+CorLCA variance: 549.4994485085199
+Difference (%): 93.49177095182998
+
+
+
+---------------------------------
+NUMBER OF TASKS: 7770
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 48391.47461331456
+Sculli mean: 48354.162350414976
+Difference (%): 0.07710503388818779
+CorLCA mean: 48308.94110721059
+Difference (%): 0.170553815033486
+
+Reference variance: 13342.441121237613
+Sculli variance: 120.11134406973818
+Difference (%): 99.0997798455445
+CorLCA variance: 502.4268610184381
+Difference (%): 96.23437078377877
+
+GAMMA COSTS
+
+Reference mean: 48377.239981679646
+Sculli mean: 48354.162350414976
+Difference (%): 0.047703488817077755
+CorLCA mean: 48308.94110721059
+Difference (%): 0.14117976654914344
+
+Reference variance: 13383.38489882267
+Sculli variance: 120.11134406973818
+Difference (%): 99.1025338882669
+CorLCA variance: 502.4268610184381
+Difference (%): 96.24589096990974
+
+
+
+---------------------------------
+NUMBER OF TASKS: 11480
+---------------------------------
+
+NORMAL COSTS
+
+Reference mean: 70466.02976089019
+Sculli mean: 70395.81508630599
+Difference (%): 0.09964329595759125
+CorLCA mean: 70339.8276704351
+Difference (%): 0.17909635448928896
+
+Reference variance: 19913.1905179916
+Sculli variance: 139.23893530828857
+Difference (%): 99.30077033520828
+CorLCA variance: 841.3245676325074
+Difference (%): 95.77503882729205
+
+GAMMA COSTS
+
+Reference mean: 70464.23300364839
+Sculli mean: 70395.81508630599
+Difference (%): 0.09709595127340265
+CorLCA mean: 70339.8276704351
+Difference (%): 0.17655103576710474
+
+Reference variance: 20235.156181569804
+Sculli variance: 139.23893530828857
+Difference (%): 99.31189591985898
+CorLCA variance: 841.3245676325074
+Difference (%): 95.84226303922088

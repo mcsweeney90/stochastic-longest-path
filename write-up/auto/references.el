@@ -27,6 +27,7 @@
     "gal72"
     "sin07"
     "dod84"
-    "sor94"))
+    "sor94"
+    "li15"))
  :bibtex)
 

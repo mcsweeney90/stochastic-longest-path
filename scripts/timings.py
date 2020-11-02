@@ -29,7 +29,7 @@ with open("est_timing.txt", "w") as dest:
         
         # PERT bound.
         start = timer()
-        pb = H.longest_path(pert_bound=True)[H.top_sort[-1].ID]
+        pb = H.pert_cpm()
         elapsed = timer() - start
         print("PERT bound: {} seconds".format(elapsed), file=dest)
         
@@ -51,9 +51,9 @@ with open("est_timing.txt", "w") as dest:
         elapsed = timer() - start
         print("CorLCA: {} seconds".format(elapsed), file=dest)
             
-        # Monte Carlo.
-        start = timer()
-        mc = H.monte_carlo(samples=10)
-        elapsed = timer() - start
-        print("Monte Carlo (10 runs): {} seconds".format(elapsed), file=dest)
-        print("Estimated time for 10^5 runs: {} hours".format(elapsed * 10000 / 3600), file=dest)
+        # # Monte Carlo.
+        # start = timer()
+        # mc = H.monte_carlo(samples=10)
+        # elapsed = timer() - start
+        # print("Monte Carlo (10 runs): {} seconds".format(elapsed), file=dest)
+        # print("Estimated time for 10^5 runs: {} hours".format(elapsed * 10000 / 3600), file=dest)

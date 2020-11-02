@@ -18,7 +18,8 @@
 \BOOKMARK [1][-]{section.6}{Numerical experiments}{}% 18
 \BOOKMARK [2][-]{subsection.6.1}{Graphs}{section.6}% 19
 \BOOKMARK [2][-]{subsection.6.2}{Empirical distributions}{section.6}% 20
-\BOOKMARK [2][-]{subsection.6.3}{Existing bounds and heuristics}{section.6}% 21
-\BOOKMARK [2][-]{subsection.6.4}{Path reduction}{section.6}% 22
-\BOOKMARK [2][-]{subsection.6.5}{Updating the finish time}{section.6}% 23
-\BOOKMARK [1][-]{section.7}{Conclusions}{}% 24
+\BOOKMARK [2][-]{subsection.6.3}{Kamburowski's bounds}{section.6}% 21
+\BOOKMARK [2][-]{subsection.6.4}{Do correlations need to be considered?}{section.6}% 22
+\BOOKMARK [2][-]{subsection.6.5}{Path reduction}{section.6}% 23
+\BOOKMARK [2][-]{subsection.6.6}{Updating the finish time}{section.6}% 24
+\BOOKMARK [1][-]{section.7}{Conclusions}{}% 25
