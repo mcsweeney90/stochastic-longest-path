@@ -535,6 +535,7 @@ The node and edge weights of the schedule graph are modeled as random variables 
 \label{subsect.empirical_distribution}
 
 In order to evaluate the quality of the bounds and heuristics considered later in this investigation, we need to compute the actual longest path distributions for the graphs in our test set---or at least a very good approximation. The natural choice is to use the Monte Carlo method with a large number of samples, which is precisely what we do. However, we need to specify the distributions the weights follow in order to do this. We consider only two different cases here: when all weights are normally distributed and when they all follow a Gamma distribution. The normal distribution was chosen as a ``best-case scenario'' for the CLT-based heuristics we consider, since all path lengths are exactly normally distributed in that case, whereas the Gamma distribution is used as that is a more realistic choice for the kind of distribution that costs are likely to follow in practice, based on our own experience. Since the CLT-based bounds and heuristics are agnostic of the weight distribution, this leads to the interesting situation in which there are two ``reference'' solutions for each graph---clearly, we should hope these are very similar! If this is not the case then the normality assumption of the CLT approach is unlikely to be useful for the given graph; we consider whether or not this is true for the Cholesky graphs below.
+% Don't just consider normal and Gamma. We want to establish how much variation we can expect from different distributions assuming we only know the weight means and variances. Can probably at least restrict the range of distributions they can follow...
 
 The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the simple analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples. At any rate, time constraints restricted us to a maximum of $100$,$000$ samples for the largest graph in the test set, so we used that number of samples for all of the graphs. Van Slyke's analysis suggests that the computed mean and variance estimates are therefore likely to be within about $1\%$ of the true values. They will however be assumed to be exact in comparisons with other heuristic solutions in later sections.
 %(As an aside, Van Slyke's analysis, albeit only rough, does not depend at all on the size of the graph, which seems counterintuitive. There are other approaches as well, but they also largely suffer from this apparent issue...)  
@@ -569,10 +570,11 @@ We have largely avoided discussing runtimes for the various algorithms implement
 		\label{tb.mc_timings}
 	\end{center}	
       \end{table}
+      % Move this to afterward. Just normal costs and include other MC solutions.
 
       Other studies have thoroughly investigated how reasonable the normality assumption on the longest path distribution actually is for both real and randomly-generated graphs, with the conclusions typically being that it is fairly reasonable, so we only treat this topic very briefly here. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets\footnote{We did apply all three of the aforementioned tests to the data, with normality being rejected in all cases.}, so in Table \ref{tb.emp_summary} we present instead some summary statistics for the empirical distributions (with normal and Gamma weights) in order to convey a more intuitive understanding. Informally, we see that the data may well be close to normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero. Inspecting the visualizations of the distributions in Figure \ref{plot.emp_hists}, we see that the distributions for the larger graphs in particular are clearly not normal but they are at least broadly similar. Indeed, it is interesting that the distributions for the smaller graphs appear to be closer to normal than the larger one, when we would perhaps expect the opposite to be the case. A possible explanation for this is that for small graphs only a few paths may be the longest, so the distribution more closely resembles an individual path length distribution---which is either normal, if the weights are as well, or roughly so by the CLT---whereas this may not be the case for the larger graphs.    
 
-      Leaving aside the question of how close to normal the longest path distributions actually are, perhaps the more important takeaway from the table and the figure is that they appear to be very similar for both choices of weight distribution, as we would hope. It should however also be emphasized that they aren't identical. This means there will always be a range---however narrow---of distributions that the ``true'' solution can take under the assumption that only the first two moments of the weight distributions are known.  
+      Leaving aside the question of how close to normal the longest path distributions actually are, perhaps the more important takeaway from the table and the figure is that they appear to be very similar for both choices of weight distribution, as we would hope. Now, it should also be emphasized that they aren't identical: there will always be a range---however narrow---of distributions that the ``true'' solution can take under the assumption that only the first two moments of the weight distributions are known. However, given the great similarity between the two, for the remainder of this investigation we will use only the reference solution obtained with normally distributed weights. 
       % should we quantify how similar the two distributions are?
 
       \begin{table}
@@ -610,6 +612,7 @@ We have largely avoided discussing runtimes for the various algorithms implement
 		\label{tb.emp_summary}
 	\end{center}	
       \end{table}
+      % Extend to other distributions.
 
       \begin{figure}
 	\centering	
@@ -620,13 +623,14 @@ We have largely avoided discussing runtimes for the various algorithms implement
       \end{figure}
 
       % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
+      % More extensive testing with lots of different weight distributions?
+      % Comment somewhere about how this is technically a truncated normal but never had to make correction because of the mean and sd values.
+      % "There are surely combinations of weight distribution and mean, variance pairs that lead to much more divergent behavior (and DAG topology of course) but for this particular application we're going to take it that they will be extremely similar..."
 
 \subsection{Kamburowski's bounds}
 \label{subsect.results_kamb}
 
-Several bounds on both the moments and distribution function of the longest path were discussed in Section \ref{sect.bounds}. Given the conclusions of the previous section and other, more rigorous empirical studies \cite{can16,lud01}, we assume that the longest path distribution is at least roughly normal, so we are most interested in the former. Our experience in the previous chapter with Fulkerson's bound on the expected value suggests that in a scheduling context that approach can be impractically expensive, so we focus here largely on Kamburowski's bounds, since they have received less attention in the literature.
-
-Although the bounds technically only hold for normally distributed weights, the CLT suggests that they may still be useful heuristically when that is not the case, since the longest path distribution is likely to be similar in any event. The closeness of the empirical distributions for Cholesky graphs with normal and Gamma weights in the previous section also supports this. For the remainder of this section we will assume that all weights are normal, but this should always be borne in mind.
+Several bounds on both the moments and distribution function of the longest path were discussed in Section \ref{sect.bounds}. Given the conclusions of the previous section---and other, more rigorous empirical studies \cite{can16,lud01}---we assume that the longest path distribution is at least roughly normal, so we are most interested in the former. Our experience in the previous chapter with Fulkerson's bound on the expected value suggests that in a scheduling context that approach can be impractically expensive, so we focus here largely on Kamburowski's bounds, since they have also received less attention in the literature. They are also the only bounds we are aware of on the variance. Note that although the bounds technically only hold for normally distributed weights, the CLT suggests that they may still be useful heuristically when that is not the case, since the longest path distribution is likely to be similar in any event, a conclusion supported by our results in the previous section. Therefore, for the remainder of this section we will assume that all weights are normal, but this fact should always be borne in mind.
 
 When evaluating any bounds, there are two questions we need to answer: how tight are they, and how expensive are they to compute? With regard to the former, there are in turn two components, the expected value and the variance, so we treat them separately. Table \ref{tb.mean_bounds} shows how tight the upper and lower bounds on the expected value are for the Cholesky graph set, where the reference solution is computed using Monte Carlo with $10^5$ samples---and normally distributed weights---as in the previous section. The classic CPM lower bound is also included in the table for comparison since it is the cheapest and most widely-applicable bound on the mean. We see that both lower bounds are very tight, with even the CPM bound being very close to the true value. In any event, Kamburowski's lower bound does improve on it. (Of course, it should be emphasized that these graphs represent a single application; in general, the CPM bound may be less accurate.) The upper bound is much looser, although even in the worst case no more than $19\%$ greater than the true value.  
 
@@ -648,7 +652,7 @@ When evaluating any bounds, there are two questions we need to answer: how tight
 	\end{center}	
       \end{table} 
 
-      Unfortunately, the variance bounds given by Kamburowski's method are considerably looser in both directions, especially below. Figure \ref{plot.variance_bounds} illustrates this fact for the Cholesky graphs (note the logarithmic scale on the $y$-axis). Now, depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions.     
+      Unfortunately, the variance bounds given by Kamburowski's method are considerably looser in both directions, especially below. Figure \ref{plot.variance_bounds} illustrates this fact for the Cholesky graphs (note the logarithmic scale on the $y$-axis). Now, depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions.    
 
       \begin{figure}
 	\centering	
@@ -657,17 +661,49 @@ When evaluating any bounds, there are two questions we need to answer: how tight
 	\label{plot.variance_bounds}
       \end{figure}
 
-      As well as the tightness of the bounds, the other key consideration is how long they take to compute. As always, this depends to an extent on the details of the implementation but for what it's worth, in Figure X we display the runtime for our own (with the same setup used throughout this section). Note that the mean bounds are much more expensive to compute than the variance since they require repeated evaluation of the unit normal cdf. Furthermore, the mean bounds depend on the variance but not vice versa, so if only the variance is required then the runtime would be considerably reduced. 
+      As well as the tightness of the bounds, the other key consideration is how long they take to compute. As always, this depends to an extent on the details of the implementation but for what it's worth, in Figure \ref{plot.existing_timings} we illustrate the runtime for our own. Also included are the corresponding runtimes for Sculli's method and CorLCA (see next section), as useful points of comparison. We see that computing the bounds is consistently more expensive than either of the heuristics, typically taking about twice as long as Sculli's method in particular. It should however be noted that the mean bounds depend on the variance bounds but not vice versa; the former are much more expensive since they require repeated evaluation of the unit normal cdf, so if only the variance is required then the runtime would be considerably reduced. Given that the mean estimates achieved by the heuristics are typically very good but the variances less so (see next section), this might be a practical choice.
+
+      \begin{figure}
+	\centering	
+	\includegraphics[scale=1.0]{existing_timings.png}
+	\caption{Runtimes for Kamburowski's bounds, Sculli's method and CorLCA.}	
+	\label{plot.existing_timings}
+      \end{figure}
 
       \subsection{Do correlations need to be considered?}
       \label{subsect.results_correlations}
 
       Through extensive numerical experiments, Canon and Jeannot showed that the correlation-aware heuristics CorLCA and Cordyn, and the very similar canonical method, all achieved better approximations of the longest path distribution than Sculli's method, on average, for a diverse collection of stochastic graphs. However, they were all more expensive as well. The question is, is the gain in accuracy worth the extra cost in a scheduling context? After all, as we will see in the next chapter, there are examples of stochastic scheduling heuristics that take correlations into account, such as Rob-HEFT \cite{can10}, while there are others that do not, such as {\em stochastic dynamic level scheduling} (SDLS) \cite{li15}.      
 
-      Of the three correlation-aware heuristics considered by Canon and Jeannot, CorLCA arguably achieved the best balance of speed and accuracy, so we consider only that as an alternative to Sculli's method here. Now, since both CorLCA and Sculli's method assume that the longest path distribution is normal, in order to evaluate the quality of their solutions we compare the computed moments with the corresponding statistics derived from the empirical distributions as described in Section \ref{subsect.empirical_distribution}. For the Cholesky DAG set, we found this to very much be a tale of two moments: for both heuristics, the purported means were very close to the true values, whereas the variance estimates were of much poorer quality, especially for the larger DAGs. With regards to their relative performance, CorLCA was usually, but not always, superior to Sculli's method for both moments. Table X summarizes all of the relevant data, including timings...
+      Of the three correlation-aware heuristics considered by Canon and Jeannot, CorLCA arguably achieved the best balance of speed and accuracy, so we consider only that as an alternative to Sculli's method here. Now, since both CorLCA and Sculli's method assume that the longest path distribution is normal, in order to evaluate the quality of their solutions for the Cholesky DAG set we compare the computed moments with the corresponding statistics derived from the empirical distribution (with normally distributed weights) obtained in Section \ref{subsect.empirical_distribution}. As can be seen from Table \ref{tb.sculli_corlca}, this was very much a tale of two moments. For both heuristics, the purported means are very close to the true values, whereas the variance estimates were of much poorer quality, especially for the larger DAGs. With regards to their relative performance, CorLCA was always superior to Sculli's method for the variance (albeit both could be poor), as well as the mean most of the time. Interestingly, though, Sculli's method obtained superior estimates to the mean for the four largest DAGs.
 
-      Another observation we made that as far as we know has not been remarked on elsewhere is that the longest path estimates computed by the forward and backward variants of the two heuristics could vary considerably. For example, we found that for Cholesky schedule DAGs, the variance as computed by both Sculli's method and CorLCA was always smaller in the backward case. We attribute this to the fact that the average number of task children exceeds the average number of task parents so more pairwise maximizations are performed when moving forward and the effect of \eqref{eq.clark_max_sigma} is to decrease the variance, this may not be entirely surprising...
+      As illustrated in Figure \ref{plot.existing_timings}, CorLCA was on average about $15\%$ more expensive than Sculli's method, so overall we must conclude that the additional cost does not appear to be worthwhile, at least for the Cholesky DAG set as a whole. However, for the three smallest DAGs significant gains were apparent with regards to the variance. There are (at least) two possible explanations for the worsening variance estimates of CorLCA as the DAGs grow larger. The first is that this is illusory and in fact the problem is that the reference solutions do not represent enough samples to capture the true variance. After all, Van Slyke's analysis is independent of the DAG size, which seems counter-intuitive. However, this seems unlikely since the mean estimates remain very close.
 
+      The second possible explanation for CorLCA's declining performance is simply down to the accumulation of approximation errors that grow more significant as the size of the DAG increases. An observation supporting this that we don't believe has been remarked upon elsewhere is that the longest path estimates computed by the forward and backward variants of the two heuristics can vary considerably. For example, we found that for Cholesky schedule DAGs, the variance as computed by both Sculli's method and CorLCA was always smaller in the backward case. We attribute this to the fact that the average number of task children exceeds the average number of task parents so more pairwise maximizations are performed when moving forward and the approximation error is therefore greater...   
+
+      \begin{table}
+	\caption{Sculli's method and CorLCA compared for Cholesky graph set. Metric is percentage deviation from reference solutions.} 
+	\begin{center}	
+		\begin{tabular}{c c c c c c}
+                  \toprule
+                  & \multicolumn{2}{c}{Sculli} && \multicolumn{2}{c}{CorLCA} \\
+                  \cmidrule{2-3} \cmidrule{5-6}
+                  DAG size &  Mean(\%) & Var.(\%) && Mean(\%) & Var.(\%) \\
+                  \cmidrule{1-6}
+                  $35$ & $0.3$ & $25.0$ && $0.0$ & $0.8$ \\
+                  $220$ & $0.3$ & $62.6$ && $0.2$ & $10.1$ \\              
+                  $680$ & $0.5$ & $82.4$ && $0.2$ & $12.4$ \\
+                  $1540$ & $0.4$ & $96.0$ && $0.1$ & $82.5$ \\
+                  $2925$ & $0.1$ & $96.5$ && $0.1$ & $82.3$ \\
+                  $4960$ & $0.0$ & $98.7$ && $0.1$ & $93.4$ \\
+                  $7770$ & $0.1$ & $99.1$ && $0.2$ & $96.2$ \\
+                  $11480$ & $0.1$ & $99.3$ && $0.2$ & $95.8$ \\
+		\bottomrule
+		\end{tabular}
+		\label{tb.sculli_corlca}
+	\end{center}	
+      \end{table}
+      
 
 \subsection{Path reduction}
 \label{subsect.results_path_reduction}

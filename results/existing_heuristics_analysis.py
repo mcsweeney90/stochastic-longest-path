@@ -104,72 +104,95 @@ with open('empirical_dists.dill', 'rb') as file:
 #         print("Kamburowski lower (%): {}".format((existing[nt]["KML"] /ref)*100), file=dest)
 #         print("Kamburowski upper (%): {}".format((existing[nt]["KMU"] /ref)*100), file=dest)
 
-# Sculli and CorLCA.
-with open("{}/sculli_corlca.txt".format(summary_path), "w") as dest:
-    print("QUALITY OF APPROXIMATIONS TO MEAN AND VARIANCE FOR SCULLI AND CORLCA.", file=dest)
-    for nt in n_tasks: 
-        print("\n\n\n---------------------------------", file=dest)
-        print("NUMBER OF TASKS: {}".format(nt), file=dest) 
-        print("---------------------------------", file=dest)
-        print("\nNORMAL COSTS", file=dest)
-        ref_mu = np.mean(empirical[nt]["NORMAL"])
-        ref_var = np.var(empirical[nt]["NORMAL"])
+# # Sculli and CorLCA.
+# with open("{}/sculli_corlca.txt".format(summary_path), "w") as dest:
+#     print("QUALITY OF APPROXIMATIONS TO MEAN AND VARIANCE FOR SCULLI AND CORLCA.", file=dest)
+#     for nt in n_tasks: 
+#         print("\n\n\n---------------------------------", file=dest)
+#         print("NUMBER OF TASKS: {}".format(nt), file=dest) 
+#         print("---------------------------------", file=dest)
+#         print("\nNORMAL COSTS", file=dest)
+#         ref_mu = np.mean(empirical[nt]["NORMAL"])
+#         ref_var = np.var(empirical[nt]["NORMAL"])
         
-        print("\nReference mean: {}".format(ref_mu), file=dest)
-        print("Sculli mean: {}".format(existing[nt]["SCULLI"].mu), file=dest)
-        sd = 100 - (existing[nt]["SCULLI"].mu / ref_mu) * 100
-        print("Difference (%): {}".format(sd), file=dest)
+#         print("\nReference mean: {}".format(ref_mu), file=dest)
+#         print("Sculli mean: {}".format(existing[nt]["SCULLI"].mu), file=dest)
+#         sd = 100 - (existing[nt]["SCULLI"].mu / ref_mu) * 100
+#         print("Difference (%): {}".format(sd), file=dest)
         
-        print("CorLCA mean: {}".format(existing[nt]["CorLCA"].mu), file=dest)
-        cd = 100 - (existing[nt]["CorLCA"].mu / ref_mu) * 100
-        print("Difference (%): {}".format(cd), file=dest)
+#         print("CorLCA mean: {}".format(existing[nt]["CorLCA"].mu), file=dest)
+#         cd = 100 - (existing[nt]["CorLCA"].mu / ref_mu) * 100
+#         print("Difference (%): {}".format(cd), file=dest)
         
-        print("\nReference variance: {}".format(ref_var), file=dest)
-        print("Sculli variance: {}".format(existing[nt]["SCULLI"].var), file=dest)
-        sd = 100 - (existing[nt]["SCULLI"].var / ref_var) * 100
-        print("Difference (%): {}".format(sd), file=dest)
+#         print("\nReference variance: {}".format(ref_var), file=dest)
+#         print("Sculli variance: {}".format(existing[nt]["SCULLI"].var), file=dest)
+#         sd = 100 - (existing[nt]["SCULLI"].var / ref_var) * 100
+#         print("Difference (%): {}".format(sd), file=dest)
         
-        print("CorLCA variance: {}".format(existing[nt]["CorLCA"].var), file=dest)
-        cd = 100 - (existing[nt]["CorLCA"].var / ref_var) * 100
-        print("Difference (%): {}".format(cd), file=dest)
+#         print("CorLCA variance: {}".format(existing[nt]["CorLCA"].var), file=dest)
+#         cd = 100 - (existing[nt]["CorLCA"].var / ref_var) * 100
+#         print("Difference (%): {}".format(cd), file=dest)
         
-        print("\nGAMMA COSTS", file=dest)
-        ref_mu = np.mean(empirical[nt]["GAMMA"])
-        ref_var = np.var(empirical[nt]["GAMMA"])
+#         print("\nGAMMA COSTS", file=dest)
+#         ref_mu = np.mean(empirical[nt]["GAMMA"])
+#         ref_var = np.var(empirical[nt]["GAMMA"])
         
-        print("\nReference mean: {}".format(ref_mu), file=dest)
-        print("Sculli mean: {}".format(existing[nt]["SCULLI"].mu), file=dest)
-        sd = 100 - (existing[nt]["SCULLI"].mu / ref_mu) * 100
-        print("Difference (%): {}".format(sd), file=dest)
+#         print("\nReference mean: {}".format(ref_mu), file=dest)
+#         print("Sculli mean: {}".format(existing[nt]["SCULLI"].mu), file=dest)
+#         sd = 100 - (existing[nt]["SCULLI"].mu / ref_mu) * 100
+#         print("Difference (%): {}".format(sd), file=dest)
         
-        print("CorLCA mean: {}".format(existing[nt]["CorLCA"].mu), file=dest)
-        cd = 100 - (existing[nt]["CorLCA"].mu / ref_mu) * 100
-        print("Difference (%): {}".format(cd), file=dest)
+#         print("CorLCA mean: {}".format(existing[nt]["CorLCA"].mu), file=dest)
+#         cd = 100 - (existing[nt]["CorLCA"].mu / ref_mu) * 100
+#         print("Difference (%): {}".format(cd), file=dest)
         
-        print("\nReference variance: {}".format(ref_var), file=dest)
-        print("Sculli variance: {}".format(existing[nt]["SCULLI"].var), file=dest)
-        sd = 100 - (existing[nt]["SCULLI"].var / ref_var) * 100
-        print("Difference (%): {}".format(sd), file=dest)
+#         print("\nReference variance: {}".format(ref_var), file=dest)
+#         print("Sculli variance: {}".format(existing[nt]["SCULLI"].var), file=dest)
+#         sd = 100 - (existing[nt]["SCULLI"].var / ref_var) * 100
+#         print("Difference (%): {}".format(sd), file=dest)
         
-        print("CorLCA variance: {}".format(existing[nt]["CorLCA"].var), file=dest)
-        cd = 100 - (existing[nt]["CorLCA"].var / ref_var) * 100
-        print("Difference (%): {}".format(cd), file=dest)
+#         print("CorLCA variance: {}".format(existing[nt]["CorLCA"].var), file=dest)
+#         cd = 100 - (existing[nt]["CorLCA"].var / ref_var) * 100
+#         print("Difference (%): {}".format(cd), file=dest)
         
 
 # =============================================================================
 # Plots.
 # =============================================================================
 
+empirical_vars = list(np.var(empirical[nt]["NORMAL"]) for nt in n_tasks)
             
-# # Variance bounds.
+# Variance bounds.
+fig = plt.figure(dpi=400)
+ax1 = fig.add_subplot(111)
+ax1.plot(n_tasks, empirical_vars, color='#E24A33', label="ACTUAL")
+# ax1.plot(n_tasks, list(existing[nt]["MCN"][-1].var for nt in n_tasks), color='#E24A33', label="ACTUAL")
+ax1.fill_between(n_tasks, list(existing[nt]["KVL"] for nt in n_tasks), list(existing[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.5)
+plt.yscale('log')
+ax1.set_xlabel("DAG SIZE", labelpad=5)
+ax1.set_ylabel("VARIANCE", labelpad=5)
+ax1.legend(handlelength=3, handletextpad=0.4, ncol=2, loc='upper left', fancybox=True, facecolor='white') 
+plt.savefig('{}/variance_bounds'.format(plot_path), bbox_inches='tight') 
+plt.close(fig) 
+
+# # Timings.
+# timings = {"KAMBUROWSKI" : [0.016005605459213257, 0.17476089671254158, 0.6470920592546463, 1.5658568777143955, 3.069533459842205, 5.308403853327036, 8.511513352394104, 12.796787660568953],
+#            "SCULLI" : [0.007865753024816513, 0.08773763850331306, 0.329572681337595, 0.7906846031546593, 1.5681733973324299, 2.6994655318558216, 4.334559187293053, 6.578559648245573],
+#            "CorLCA" : [0.008354179561138153, 0.09211373329162598, 0.3452003374695778, 0.8503920026123524, 1.7388480640947819, 3.15724578499794, 5.352320522069931, 8.862768094986677]
+#            }
+# colors = {"KAMBUROWSKI" : '#E24A33', "SCULLI" : '#348ABD', "CorLCA" : '#988ED5'}
 # fig = plt.figure(dpi=400)
 # ax1 = fig.add_subplot(111)
-# ax1.plot(n_tasks, list(existing[nt]["MCN"][-1].var for nt in n_tasks), color='#E24A33', label="ACTUAL")
-# ax1.fill_between(n_tasks, list(existing[nt]["KVL"] for nt in n_tasks), list(existing[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.5)
-# plt.yscale('log')
+# for p in ["KAMBUROWSKI", "SCULLI", "CorLCA"]:    
+#     ax1.plot(n_tasks, timings[p], color=colors[p], label=p)
+# # plt.yscale('log')
 # ax1.set_xlabel("DAG SIZE", labelpad=5)
-# ax1.set_ylabel("VARIANCE", labelpad=5)
-# ax1.legend(handlelength=3, handletextpad=0.4, ncol=2, loc='upper left', fancybox=True, facecolor='white') 
-# plt.savefig('{}/variance_bounds'.format(plot_path), bbox_inches='tight') 
-# plt.close(fig) 
+# ax1.set_ylabel("TIME (SECONDS)", labelpad=5)
+# ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white') 
+# plt.savefig('{}/existing_timings'.format(plot_path), bbox_inches='tight') 
+# plt.close(fig)
+
+# for st, ct in zip(timings["SCULLI"], timings["CorLCA"]):
+#     print(ct/st * 100)
+                  
             
