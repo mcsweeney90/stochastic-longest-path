@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2020.9.13)  3 NOV 2020 13:47
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2020.9.13)  4 NOV 2020 15:27
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -1089,6 +1089,10 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6] [7] [8
 ] [9] [10]
+
+LaTeX Warning: Reference `subsect.results_correlations' on page 11 undefined on
+ input line 367.
+
 [11] [12] [13] [14]
 
 LaTeX Warning: Reference `subsect.results_heuristics' on page 15 undefined on i
@@ -1101,12 +1105,12 @@ there-fore the makespan---
  []
 
 [16] [17] [18] [19]
-<images/histograms_NORMAL.png, id=368, 384.29573pt x 253.6677pt>
+<images/histograms_NORMAL.png, id=363, 384.29573pt x 253.6677pt>
 File: images/histograms_NORMAL.png Graphic file (type png)
 <use images/histograms_NORMAL.png>
 Package pdftex.def Info: images/histograms_NORMAL.png  used on input line 619.
 (pdftex.def)             Requested size: 211.3633pt x 139.51765pt.
-<images/histograms_GAMMA.png, id=370, 383.21167pt x 253.6677pt>
+<images/histograms_GAMMA.png, id=365, 383.21167pt x 253.6677pt>
 File: images/histograms_GAMMA.png Graphic file (type png)
 <use images/histograms_GAMMA.png>
 Package pdftex.def Info: images/histograms_GAMMA.png  used on input line 620.
@@ -1118,41 +1122,42 @@ Overfull \hbox (10.1916pt too wide) in paragraph at lines 619--621
 
 [20 <./images/histograms_NORMAL.png> <./images/histograms_GAMMA.png>] [21]
 [22]
-<images/variance_bounds.png, id=396, 394.5942pt x 263.24347pt>
+<images/variance_bounds.png, id=397, 394.5942pt x 263.24347pt>
 File: images/variance_bounds.png Graphic file (type png)
 <use images/variance_bounds.png>
-Package pdftex.def Info: images/variance_bounds.png  used on input line 659.
+Package pdftex.def Info: images/variance_bounds.png  used on input line 666.
 (pdftex.def)             Requested size: 394.59322pt x 263.24281pt.
-<images/existing_timings.png, id=398, 391.34206pt x 261.79808pt>
+ [23] [24 <./images/variance_bounds.png>]
+<images/existing_timings.png, id=410, 391.34206pt x 261.79808pt>
 File: images/existing_timings.png Graphic file (type png)
 <use images/existing_timings.png>
-Package pdftex.def Info: images/existing_timings.png  used on input line 668.
+Package pdftex.def Info: images/existing_timings.png  used on input line 700.
 (pdftex.def)             Requested size: 391.3411pt x 261.79742pt.
- [23 <./images/variance_bounds.png>] [24 <./images/existing_timings.png>]
-[25] (./stochastic-longest-path.bbl [26] [27]) [28]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 729.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 729.
-
-(./stochastic-longest-path.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 729.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 729.
+ [25]
+(./stochastic-longest-path.bbl [26 <./images/existing_timings.png>] [27])
+[28]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 730.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 730.
+ (./stochastic-longest-path.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 730.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 730.
 Package rerunfilecheck Info: File `stochastic-longest-path.out' has not changed
 .
-(rerunfilecheck)             Checksum: 31D3887C93711320D3121C5FE90B8483;1683.
+(rerunfilecheck)             Checksum: 0FF152783BB14886B54F70FB6E211F78;1605.
 
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 729.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 730.
  ) 
 Here is how much of TeX's memory you used:
- 29626 strings out of 481239
- 594597 string characters out of 5920377
- 952787 words of memory out of 5000000
- 44202 multiletter control sequences out of 15000+600000
+ 29624 strings out of 481239
+ 594575 string characters out of 5920377
+ 953770 words of memory out of 5000000
+ 44201 multiletter control sequences out of 15000+600000
  543272 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 65i,12n,103p,1709b,493s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 65i,12n,103p,1709b,495s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/share/texli
 ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/tex
 mf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dis
@@ -1172,10 +1177,10 @@ s/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type
 ic/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
 fonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm0700
 .pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on stochastic-longest-path.pdf (28 pages, 633327 bytes).
+Output written on stochastic-longest-path.pdf (28 pages, 651258 bytes).
 PDF statistics:
- 574 PDF objects out of 1000 (max. 8388607)
- 487 compressed objects within 5 object streams
- 115 named destinations out of 1000 (max. 500000)
- 377 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 569 PDF objects out of 1000 (max. 8388607)
+ 482 compressed objects within 5 object streams
+ 114 named destinations out of 1000 (max. 500000)
+ 369 words of extra memory for PDF output out of 10000 (max. 10000000)
 

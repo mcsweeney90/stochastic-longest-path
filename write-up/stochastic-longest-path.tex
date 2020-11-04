@@ -627,41 +627,73 @@ We have largely avoided discussing runtimes for the various algorithms implement
       % Comment somewhere about how this is technically a truncated normal but never had to make correction because of the mean and sd values.
       % "There are surely combinations of weight distribution and mean, variance pairs that lead to much more divergent behavior (and DAG topology of course) but for this particular application we're going to take it that they will be extremely similar..."
 
-\subsection{Kamburowski's bounds}
-\label{subsect.results_kamb}
+\subsection{Existing bounds and heuristics}
+\label{subsect.results_existing}
 
-Several bounds on both the moments and distribution function of the longest path were discussed in Section \ref{sect.bounds}. Given the conclusions of the previous section---and other, more rigorous empirical studies \cite{can16,lud01}---we assume that the longest path distribution is at least roughly normal, so we are most interested in the former. Our experience in the previous chapter with Fulkerson's bound on the expected value suggests that in a scheduling context that approach can be impractically expensive, so we focus here largely on Kamburowski's bounds, since they have also received less attention in the literature. They are also the only bounds we are aware of on the variance. Note that although the bounds technically only hold for normally distributed weights, the CLT suggests that they may still be useful heuristically when that is not the case, since the longest path distribution is likely to be similar in any event, a conclusion supported by our results in the previous section. Therefore, for the remainder of this section we will assume that all weights are normal, but this fact should always be borne in mind.
+Several bounds on both the moments and distribution function of the longest path were discussed in Section \ref{sect.bounds}. Given the conclusions of the previous section---and other, more rigorous empirical studies \cite{can16,lud01}---from now on we will assume that the longest path distribution is at least roughly normal, so we are most interested in the former. Our experience in the previous chapter with Fulkerson's bound on the expected value suggests that in a scheduling context that approach can be impractically expensive, so we focus here largely on Kamburowski's bounds, since they have also received less attention in the literature. Furthermore, they are the only bounds we are aware of on the variance, which is of clear importance in tandem with the normality assumption. Note that although the bounds technically only hold for normally distributed weights, the CLT suggests that they may still be useful heuristically when that is not the case, since the longest path distribution is likely to be similar in any event, a conclusion supported by our results in the previous section. Therefore for the remainder of this section we will assume that all weights are also normal.
 
-When evaluating any bounds, there are two questions we need to answer: how tight are they, and how expensive are they to compute? With regard to the former, there are in turn two components, the expected value and the variance, so we treat them separately. Table \ref{tb.mean_bounds} shows how tight the upper and lower bounds on the expected value are for the Cholesky graph set, where the reference solution is computed using Monte Carlo with $10^5$ samples---and normally distributed weights---as in the previous section. The classic CPM lower bound is also included in the table for comparison since it is the cheapest and most widely-applicable bound on the mean. We see that both lower bounds are very tight, with even the CPM bound being very close to the true value. In any event, Kamburowski's lower bound does improve on it. (Of course, it should be emphasized that these graphs represent a single application; in general, the CPM bound may be less accurate.) The upper bound is much looser, although even in the worst case no more than $19\%$ greater than the true value.  
+Through extensive numerical experiments, Canon and Jeannot showed that the correlation-aware heuristics CorLCA and Cordyn, and the very similar canonical method, all achieved better approximations to the longest path distribution than Sculli's method, on average, for a diverse collection of stochastic graphs. However, they were all more expensive as well. The question is, is the gain in accuracy worth the extra cost in a scheduling context? After all, as we will see in the next chapter, there are examples of stochastic scheduling heuristics that take correlations into account, such as Rob-HEFT \cite{can10}, while there are others that do not, such as {\em stochastic dynamic level scheduling} (SDLS) \cite{li15}. Now, of the three correlation-aware heuristics considered by Canon and Jeannot, CorLCA arguably achieved the best balance of speed and accuracy, so we consider only that as an alternative to Sculli's method here.
+
+Since both heuristics assume that the longest path distribution is normal, in order to evaluate the quality of their solutions for the Cholesky DAG set we compare the computed moments with the corresponding statistics derived from the empirical distribution (with normally distributed weights) obtained in Section \ref{subsect.empirical_distribution}. This also allows us to compare the quality of the approximations with Kamburowski's bounds. We found that this was very much a tale of two moments, with the bounds and approximations being far more accurate for the mean than the variance in all cases. This is demonstrated by Table \ref{tb.mean_existing}, which summarizes the mean bounds and approximations as a percentage of the reference solution, and Figure \ref{plot.variance_existing} which illustrates how close the bounds and approximations were to the variance (note the logarithmic scale on the $y$-axis). The classic CPM lower bound is also included in the table for comparison since it is the cheapest and most widely-applicable bound on the mean. 
 
 \begin{table}
-	\caption{Tightness of bounds on the expected value for Cholesky DAGs, as a percentage of the reference expected value.} 
+	\caption{Bounds and approximations to the expected value for Cholesky DAGs, as a percentage of the reference solution.} 
 	\begin{center}	
 		\begin{tabular}{c c c c c c c c c}
                   \cmidrule{1-9}
                   & \multicolumn{8}{c}{DAG size} \\
                   \cmidrule{2-9}
-			Bound & $35$ & $220$ & $680$ & $1540$ & $2925$ & $4960$ & $7770$ & $11480$\\
+			& $35$ & $220$ & $680$ & $1540$ & $2925$ & $4960$ & $7770$ & $11480$\\
 			\cmidrule{1-9}
 			CPM & $99.5$ & $98.9$ & $98.5$ & $98.7$ & $99.2$ & $99.2$ & $99.4$ & $99.5$\\
-                  Lower & $99.9$ & $99.4$ & $98.9$ & $99.1$ & $99.4$ & $99.3$ & $99.5$ & $99.6$\\
-                  Upper & $100.9$ & $104.0$ & $110.3$ & $118.7$ & $116.6$ & $114.0$ & $112.4$ & $111.5$\\
+                  K. lower & $99.9$ & $99.3$ & $98.8$ & $99.1$ & $99.4$ & $99.3$ & $99.5$ & $99.6$\\
+                  K. upper & $100.9$ & $104.0$ & $110.2$ & $118.5$ & $116.6$ & $114.0$ & $112.4$ & $111.5$\\
+                  Sculli & $100.3$ & $100.3$ & $100.5$ & $100.4$ & $100.1$ & $100.0$ & $100.0$ & $99.9$\\
+                  CorLCA & $100.0$ & $100.0$ & $99.8$ & $100.1$ & $99.9$ & $99.9$ & $99.9$ & $99.8$\\
 			\bottomrule
 		\end{tabular}
-		\label{tb.mean_bounds}
+		\label{tb.mean_existing}
 	\end{center}	
-      \end{table} 
+      \end{table}
 
-      Unfortunately, the variance bounds given by Kamburowski's method are considerably looser in both directions, especially below. Figure \ref{plot.variance_bounds} illustrates this fact for the Cholesky graphs (note the logarithmic scale on the $y$-axis). Now, depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions.    
+      From the table, we see that both lower bounds on the mean are very tight, with even the CPM bound getting very close to the true value. Kamburowski's lower bound does improve on it but the gain is negligible. Of course, it should be emphasized that these graphs represent a single application; clearly it may be worthwhile to investigate how much better Kamburowski's bound does in the general case. Kamburowski's upper bound is much looser, although even in the worst case no more than $19\%$ greater than the true value. For the heuristics, both were extremely close to the true solution, although perhaps the most interesting takeaway is that Sculli's method obtained superior estimates to the mean for the four largest DAGs. It isn't clear if this is just a fluke because of how close the solutions obtained by both heuristics are to the true mean, or if it suggests something more fundamental about CorLCA for larger DAGs---again, more extensive testing may be useful here.       
+
+      Unfortunately, the bounds and approximations to the variance are much less accurate, as shown in Figure \ref{plot.variance_existing}. Kamburowski's upper bound is loose, although at most no more than about five times larger than the true value, while the lower is far more so. Depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions. With regard to the heuristics, CorLCA is consistently better than Sculli's method and does quite well for the smallest three DAGs, but after this its performance declines, returning variance estimates that are orders of magnitude smaller than the true value for the larger graphs. Moreover, although not shown in the figure, it should also be noted that for larger graphs CorLCA was worse than the Monte Carlo method with as few as 10 samples, which were also faster to compute in our implementation.
+      % add MC throughout?
 
       \begin{figure}
 	\centering	
 	\includegraphics[scale=1.0]{variance_bounds.png}
-	\caption{Kamburowski's bounds on the variance for the Cholesky graph set. Solid red line indicates reference solution.}	
-	\label{plot.variance_bounds}
+	\caption{Bounds and approximations to the variance for the Cholesky graph set. Blue area defines region within Kamburowski's upper and lower bounds. Solid red line indicates reference solution.}	
+	\label{plot.variance_existing}
       \end{figure}
 
-      As well as the tightness of the bounds, the other key consideration is how long they take to compute. As always, this depends to an extent on the details of the implementation but for what it's worth, in Figure \ref{plot.existing_timings} we illustrate the runtime for our own. Also included are the corresponding runtimes for Sculli's method and CorLCA (see next section), as useful points of comparison. We see that computing the bounds is consistently more expensive than either of the heuristics, typically taking about twice as long as Sculli's method in particular. It should however be noted that the mean bounds depend on the variance bounds but not vice versa; the former are much more expensive since they require repeated evaluation of the unit normal cdf, so if only the variance is required then the runtime would be considerably reduced. Given that the mean estimates achieved by the heuristics are typically very good but the variances less so (see next section), this might be a practical choice.
+      There are several possible explanations for the worsening variance estimates of CorLCA as the DAGs grow larger. One is that this is illusory and in fact the problem is that the reference solutions do not represent enough samples to capture the true variance. After all, Van Slyke's analysis is independent of the DAG size, which seems counter-intuitive. Disregarding this possibility for moment, another possibility is the accumulation of approximation errors that grow more significant as the size of the DAG increases. An observation supporting this is that the longest path estimates computed by the forward and backward variants of the two heuristics can vary considerably, especially with regards to the variance. For example, Table \ref{tb.direction_var} summarizes the variance estimates for the Cholesky DAG set. As noted in Section \ref{sect.path_heuristic}, this effect can perhaps be alleviated by considering paths through the DAG in their entirety, an approach we evaluate empirically in the next section.
+
+      \begin{table}
+	\caption{Variance estimates for forward and backward variants of Sculli's method and CorLCA.} 
+	\begin{center}	
+		\begin{tabular}{c c c c c c}
+                  \toprule
+                  & \multicolumn{2}{c}{Sculli} && \multicolumn{2}{c}{CorLCA} \\
+                  \cmidrule{2-3} \cmidrule{5-6}
+                  DAG size & Forward & Backward && Forward & Backward \\
+                  \cmidrule{1-6}
+                  $35$ & $114.8$ & $96.9$ && $151.8$ & $152.8$\\
+                  $220$ & $113.1$ & $89.2$ && $271.5$ & $219.2$ \\
+                  $680$ & $157.5$ & $104.7$ && $784.2$ &  $482.0$\\
+                  $1540$ & $95.4$ & $105.9$ && $418.4$ & $704.7$ \\
+                  $2925$ & $162.9$ & $105.8$ && $819.1$ & $878.5$ \\
+                  $4960$ & $109.1$ & $105.9$ && $549.5$ & $1137.9$ \\
+                  $7770$ & $120.1$ & $105.8$ && $502.4$ & $1243.6$ \\
+                  $11480$ & $139.2$ & $105.8$ && $841.3$ & $1419.2$ \\
+		\bottomrule
+		\end{tabular}
+		\label{tb.direction_var}
+	\end{center}	
+      \end{table}
+
+      Of course, as well as accuracy, the other key consideration when evaluating bounds and approximations is how long they take to compute. As always, this depends to an extent on the details of the implementation but for what it's worth, in Figure \ref{plot.existing_timings} we illustrate the runtimes of our own. We see that computing the bounds is consistently more expensive than either of the heuristics, typically taking about twice as long as Sculli's method in particular. It should however be noted that the mean bounds depend on the variance bounds but not vice versa; the former are much more expensive since they require repeated evaluation of the unit normal cdf, so if only the variance is required then the runtime would be considerably reduced. Given that the mean estimates achieved by the heuristics are typically very good but the variances less so, this might be a practical option. With regard to the two heuristics, CorLCA was on average about $15\%$ more expensive than Sculli's method. Given the relatively small benefits observed for the Cholesky DAG set as a whole, overall we must conclude that the additional cost does not appear to be worthwhile. However, for the three smallest DAGs significant gains were apparent with regards to the variance, so again a more thorough experimental investigation may be warranted.  
 
       \begin{figure}
 	\centering	
@@ -669,40 +701,9 @@ When evaluating any bounds, there are two questions we need to answer: how tight
 	\caption{Runtimes for Kamburowski's bounds, Sculli's method and CorLCA.}	
 	\label{plot.existing_timings}
       \end{figure}
+ 
 
-      \subsection{Do correlations need to be considered?}
-      \label{subsect.results_correlations}
 
-      Through extensive numerical experiments, Canon and Jeannot showed that the correlation-aware heuristics CorLCA and Cordyn, and the very similar canonical method, all achieved better approximations of the longest path distribution than Sculli's method, on average, for a diverse collection of stochastic graphs. However, they were all more expensive as well. The question is, is the gain in accuracy worth the extra cost in a scheduling context? After all, as we will see in the next chapter, there are examples of stochastic scheduling heuristics that take correlations into account, such as Rob-HEFT \cite{can10}, while there are others that do not, such as {\em stochastic dynamic level scheduling} (SDLS) \cite{li15}.      
-
-      Of the three correlation-aware heuristics considered by Canon and Jeannot, CorLCA arguably achieved the best balance of speed and accuracy, so we consider only that as an alternative to Sculli's method here. Now, since both CorLCA and Sculli's method assume that the longest path distribution is normal, in order to evaluate the quality of their solutions for the Cholesky DAG set we compare the computed moments with the corresponding statistics derived from the empirical distribution (with normally distributed weights) obtained in Section \ref{subsect.empirical_distribution}. As can be seen from Table \ref{tb.sculli_corlca}, this was very much a tale of two moments. For both heuristics, the purported means are very close to the true values, whereas the variance estimates were of much poorer quality, especially for the larger DAGs. With regards to their relative performance, CorLCA was always superior to Sculli's method for the variance (albeit both could be poor), as well as the mean most of the time. Interestingly, though, Sculli's method obtained superior estimates to the mean for the four largest DAGs.
-
-      As illustrated in Figure \ref{plot.existing_timings}, CorLCA was on average about $15\%$ more expensive than Sculli's method, so overall we must conclude that the additional cost does not appear to be worthwhile, at least for the Cholesky DAG set as a whole. However, for the three smallest DAGs significant gains were apparent with regards to the variance. There are (at least) two possible explanations for the worsening variance estimates of CorLCA as the DAGs grow larger. The first is that this is illusory and in fact the problem is that the reference solutions do not represent enough samples to capture the true variance. After all, Van Slyke's analysis is independent of the DAG size, which seems counter-intuitive. However, this seems unlikely since the mean estimates remain very close.
-
-      The second possible explanation for CorLCA's declining performance is simply down to the accumulation of approximation errors that grow more significant as the size of the DAG increases. An observation supporting this that we don't believe has been remarked upon elsewhere is that the longest path estimates computed by the forward and backward variants of the two heuristics can vary considerably. For example, we found that for Cholesky schedule DAGs, the variance as computed by both Sculli's method and CorLCA was always smaller in the backward case. We attribute this to the fact that the average number of task children exceeds the average number of task parents so more pairwise maximizations are performed when moving forward and the approximation error is therefore greater...   
-
-      \begin{table}
-	\caption{Sculli's method and CorLCA compared for Cholesky graph set. Metric is percentage deviation from reference solutions.} 
-	\begin{center}	
-		\begin{tabular}{c c c c c c}
-                  \toprule
-                  & \multicolumn{2}{c}{Sculli} && \multicolumn{2}{c}{CorLCA} \\
-                  \cmidrule{2-3} \cmidrule{5-6}
-                  DAG size &  Mean(\%) & Var.(\%) && Mean(\%) & Var.(\%) \\
-                  \cmidrule{1-6}
-                  $35$ & $0.3$ & $25.0$ && $0.0$ & $0.8$ \\
-                  $220$ & $0.3$ & $62.6$ && $0.2$ & $10.1$ \\              
-                  $680$ & $0.5$ & $82.4$ && $0.2$ & $12.4$ \\
-                  $1540$ & $0.4$ & $96.0$ && $0.1$ & $82.5$ \\
-                  $2925$ & $0.1$ & $96.5$ && $0.1$ & $82.3$ \\
-                  $4960$ & $0.0$ & $98.7$ && $0.1$ & $93.4$ \\
-                  $7770$ & $0.1$ & $99.1$ && $0.2$ & $96.2$ \\
-                  $11480$ & $0.1$ & $99.3$ && $0.2$ & $95.8$ \\
-		\bottomrule
-		\end{tabular}
-		\label{tb.sculli_corlca}
-	\end{center}	
-      \end{table}
       
 
 \subsection{Path reduction}

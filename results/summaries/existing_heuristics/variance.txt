@@ -1,0 +1,161 @@
+TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.
+
+
+
+---------------------------------
+NUMBER OF TASKS: 35
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 153.02371333811203
+Kamburowski lower (%): 0.3670619031802734
+Kamburowski upper (%): 278.91869124457486
+Sculli (%): 75.00308382408008
+CorLCA (%): 99.22862305295882
+
+GAMMA COSTS
+Reference solution: 154.83866105888444
+Kamburowski lower (%): 0.36275937201652175
+Kamburowski upper (%): 275.649334357262
+Sculli (%): 74.12393209862277
+CorLCA (%): 98.06551067512147
+
+
+
+---------------------------------
+NUMBER OF TASKS: 220
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 301.98873911472737
+Kamburowski lower (%): 0.1859975826060884
+Kamburowski upper (%): 478.4400045482103
+Sculli (%): 37.4430151167906
+CorLCA (%): 89.91454322046927
+
+GAMMA COSTS
+Reference solution: 317.1181433898892
+Kamburowski lower (%): 0.17712381527329174
+Kamburowski upper (%): 455.6140880842615
+Sculli (%): 35.656644564392295
+CorLCA (%): 85.62480608951468
+
+
+
+---------------------------------
+NUMBER OF TASKS: 680
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 895.2855646087439
+Kamburowski lower (%): 0.06273883738329561
+Kamburowski upper (%): 458.1474260374893
+Sculli (%): 17.58981261595093
+CorLCA (%): 87.59713186620593
+
+GAMMA COSTS
+Reference solution: 955.9533511989152
+Kamburowski lower (%): 0.05875723473238002
+Kamburowski upper (%): 429.07195887706814
+Sculli (%): 16.473508147111254
+CorLCA (%): 82.03794417644566
+
+
+
+---------------------------------
+NUMBER OF TASKS: 1540
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 2393.9025101922934
+Kamburowski lower (%): 0.023463434793377664
+Kamburowski upper (%): 449.72517646306255
+Sculli (%): 3.9868580938002336
+CorLCA (%): 17.478874673207425
+
+GAMMA COSTS
+Reference solution: 2564.6164095949357
+Kamburowski lower (%): 0.02190158935248782
+Kamburowski upper (%): 419.7891836002247
+Sculli (%): 3.7214725612850135
+CorLCA (%): 16.31539196231554
+
+
+
+---------------------------------
+NUMBER OF TASKS: 2925
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 4621.587693413983
+Kamburowski lower (%): 0.20682338265746694
+Kamburowski upper (%): 429.76847895926716
+Sculli (%): 3.5249411634597614
+CorLCA (%): 17.723477385069653
+
+GAMMA COSTS
+Reference solution: 4830.473826958386
+Kamburowski lower (%): 0.19787963546463802
+Kamburowski upper (%): 411.18382678952594
+Sculli (%): 3.372510706948986
+CorLCA (%): 16.957053883659228
+
+
+
+---------------------------------
+NUMBER OF TASKS: 4960
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 8363.626743272675
+Kamburowski lower (%): 0.006715887398344258
+Kamburowski upper (%): 355.6950919536112
+Sculli (%): 1.3044084192279548
+CorLCA (%): 6.570109659072394
+
+GAMMA COSTS
+Reference solution: 8443.148580688434
+Kamburowski lower (%): 0.006652633779070614
+Kamburowski upper (%): 352.34497593923544
+Sculli (%): 1.2921228419641784
+CorLCA (%): 6.508229048170025
+
+
+
+---------------------------------
+NUMBER OF TASKS: 7770
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 13342.441121237613
+Kamburowski lower (%): 0.004209812502765601
+Kamburowski upper (%): 336.4009868593065
+Sculli (%): 0.900220154455491
+CorLCA (%): 3.7656292162212233
+
+GAMMA COSTS
+Reference solution: 13383.38489882267
+Kamburowski lower (%): 0.004196933427098937
+Kamburowski upper (%): 335.37183561771195
+Sculli (%): 0.8974661117330963
+CorLCA (%): 3.7541090300902606
+
+
+
+---------------------------------
+NUMBER OF TASKS: 11480
+---------------------------------
+
+NORMAL COSTS
+Reference solution: 19913.1905179916
+Kamburowski lower (%): 0.048000966953858346
+Kamburowski upper (%): 309.82477150784393
+Sculli (%): 0.6992296647917168
+CorLCA (%): 4.224961172707956
+
+GAMMA COSTS
+Reference solution: 20235.156181569804
+Kamburowski lower (%): 0.04723721385805717
+Kamburowski upper (%): 304.89508689081373
+Sculli (%): 0.6881040801410148
+CorLCA (%): 4.157736960779114
