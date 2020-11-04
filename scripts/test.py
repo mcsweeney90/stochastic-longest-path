@@ -20,8 +20,8 @@ n_tasks = [35, 220, 680]#, 1540, 2925, 4960, 7770, 11480]
 # Timings.
 # =============================================================================
 
-with open('../results/before_runtime.dill', 'rb') as file:
-    before = dill.load(file)
+# with open('../results/before_runtime.dill', 'rb') as file:
+#     before = dill.load(file)
 
 
 for nt in n_tasks:
@@ -29,29 +29,32 @@ for nt in n_tasks:
         G = dill.load(file)
     H = SDAG(G)
     
-    start = timer()
-    # pert_est = H.CPM(variance=True)[H.top_sort[-1].ID]
-    intervals = H.bootstrap_confidence_intervals(samples=10, resamples=40000)
-    print(intervals)
-    elapsed = timer() - start
+    emp, paths = H.monte_carlo(samples=10, path_info=True)
+    print(len(paths))
     
-    print("\n\n\n---------------------------------")
-    print("NUMBER OF TASKS: {}".format(nt)) 
-    print("---------------------------------")
+    # start = timer()
+    # # pert_est = H.CPM(variance=True)[H.top_sort[-1].ID]
+    # intervals = H.bootstrap_confidence_intervals(samples=10, resamples=40000)
+    # print(intervals)
+    # elapsed = timer() - start
     
-    print("\nREFERENCE SOLUTION: {}".format(before[nt]["MCN"][-1])) 
+    # print("\n\n\n---------------------------------")
+    # print("NUMBER OF TASKS: {}".format(nt)) 
+    # print("---------------------------------")
     
-    print("\nBOUNDS") 
-    print("PERT-CPM bound on mean: {}".format(before[nt]["PERT"]))
-    print("Kamburowski bounds on mean: ({}, {})".format(before[nt]["KML"], before[nt]["KMU"]))
-    print("Kamburowski bounds on variance: ({}, {})".format(before[nt]["KVL"], before[nt]["KVU"]))
+    # print("\nREFERENCE SOLUTION: {}".format(before[nt]["MCN"][-1])) 
     
-    print("\nAPPROXIMATIONS") 
-    # print("PERT estimate: {}".format(pert_est))
-    print("Sculli forward: {}".format(before[nt]["SCULLI"]))
-    print("Sculli backward: {}".format(before[nt]["SCULLI-R"]))
-    print("CorLCA forward: {}".format(before[nt]["CorLCA"]))
-    print("CorLCA backward: {}".format(before[nt]["CorLCA-R"]))    
+    # print("\nBOUNDS") 
+    # print("PERT-CPM bound on mean: {}".format(before[nt]["PERT"]))
+    # print("Kamburowski bounds on mean: ({}, {})".format(before[nt]["KML"], before[nt]["KMU"]))
+    # print("Kamburowski bounds on variance: ({}, {})".format(before[nt]["KVL"], before[nt]["KVU"]))
+    
+    # print("\nAPPROXIMATIONS") 
+    # # print("PERT estimate: {}".format(pert_est))
+    # print("Sculli forward: {}".format(before[nt]["SCULLI"]))
+    # print("Sculli backward: {}".format(before[nt]["SCULLI-R"]))
+    # print("CorLCA forward: {}".format(before[nt]["CorLCA"]))
+    # print("CorLCA backward: {}".format(before[nt]["CorLCA-R"]))    
         
     # # Realize half the tasks.    
     # # Z, fixed = H.partially_realize(fraction=0.5, percentile=0.9999999, return_info=True)
@@ -153,5 +156,5 @@ for nt in n_tasks:
     # print("Correlation-based update: {}".format(corr_update))
     # print("Update CorLCA: {}".format(up_corlca))
     
-    print("\nTime taken: {}".format(elapsed))
+    # print("\nTime taken: {}".format(elapsed))
     

@@ -261,8 +261,7 @@ class SDAG:
         Realize all cost RVs between node with index first and node with index last (inclusive).
         Notes:
             1. Doesn't allow costs to be realized from different distribution types but may extend in future.
-        """
-                
+        """                
         for t in self.top_sort:
             if t.ID not in fixed:
                 t.realization = None
@@ -273,36 +272,52 @@ class SDAG:
                     except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
                         pass
                     
-    def real_longest_path(self):
+    def real_longest_path(self, return_path=False):
         """
         Computes the realized longest path of the DAG. 
         Notes:
             - disjunctive edges make the code slightly uglier since can't just do start_time = max(parent realizations).
         """            
-        Z = {}       
+        Z = {} 
+        if return_path:
+            path = {}
         for t in self.top_sort:
             start_length = 0.0
+            if return_path:
+                path[t.ID] = [t.ID]
             for p in self.graph.predecessors(t):
                 st = Z[p.ID]
                 try:
                     st += self.graph[p][t]['weight'].realization
                 except AttributeError: # Disjunctive edge.
                     pass
-                start_length = max(start_length, st)              
-            Z[t.ID] = t.realization  + start_length                                           
+                start_length = max(start_length, st) 
+                if return_path and start_length == st:
+                    path[t.ID] = path[p.ID] + [t.ID]                    
+            Z[t.ID] = t.realization + start_length  
+        if return_path:
+            return Z[self.top_sort[-1].ID], path[self.top_sort[-1].ID]                                                     
         return Z[self.top_sort[-1].ID]   # Assumes single exit task.  
     
-    def monte_carlo(self, samples, dist="NORMAL", fixed={}):
+    def monte_carlo(self, samples, dist="NORMAL", fixed={}, path_info=False):
         """
-        Monte Carlo sampling method to estimate the makespan distribution of the longest path. 
-        """
+        Monte Carlo method to estimate the distribution of the longest path. 
+        """        
         
-        longest_paths = []        
+        longest_paths = []     
+        if path_info:
+            path_counts = defaultdict(int)
         for _ in range(samples):
             self.realize(dist=dist, fixed=fixed)
-            lp = self.real_longest_path()
+            if path_info:
+                lp, path = self.real_longest_path(return_path=True)
+                path_counts[tuple(path)] += 1
+            else:
+                lp = self.real_longest_path()
             longest_paths.append(lp)
         self.reset(fixed=fixed)
+        if path_info:
+            return longest_paths, path_counts
         return longest_paths
     
     def pert_cpm(self, variance=False):
@@ -732,6 +747,21 @@ class SDAG:
         q = deltas[9*s - 1]
         intervals[95] = (mu - q, mu - p)        
         return intervals
+    
+    def number_of_paths(self):
+        """
+        Count the number of paths through DAG.
+        (Typically only used to show how enormous and impractical it is.)
+        """        
+        paths = {}
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
+            if not parents:
+                paths[t.ID] = 1
+            else:
+                paths[t.ID] = sum(paths[p.ID] for p in parents)                
+        return paths
+        
     
     def get_longest_paths(self, epsilon):
         """TODO."""
