@@ -760,11 +760,19 @@ class SDAG:
                 paths[t.ID] = 1
             else:
                 paths[t.ID] = sum(paths[p.ID] for p in parents)                
-        return paths
-        
+        return paths        
     
     def get_longest_paths(self, epsilon):
         """TODO."""
+        
+        candidates = {}        
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
+            if not parents:
+                candidates[t.ID] = [Path(t.mu, t.var, [t.ID])]
+            else:                
+                # Find expected longest path.
+                exp_lp = 0       
         return
     
     def max_paths(self, paths, method="Cordyn"):

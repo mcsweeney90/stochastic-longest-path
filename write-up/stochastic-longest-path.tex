@@ -531,54 +531,22 @@ The node and edge weights of the schedule graph are modeled as random variables 
 % not explained well.
 % Only one set of graphs?
 
-\subsection{Empirical distributions}
+\subsection{The empirical distribution}
 \label{subsect.empirical_distribution}
 
-In order to evaluate the quality of the bounds and heuristics considered later in this investigation, we need to compute the actual longest path distributions for the graphs in our test set---or at least a very good approximation. The natural choice is to use the Monte Carlo method with a large number of samples, which is precisely what we do. However, we need to specify the distributions the weights follow in order to do this. We consider only two different cases here: when all weights are normally distributed and when they all follow a Gamma distribution. The normal distribution was chosen as a ``best-case scenario'' for the CLT-based heuristics we consider, since all path lengths are exactly normally distributed in that case, whereas the Gamma distribution is used as that is a more realistic choice for the kind of distribution that costs are likely to follow in practice, based on our own experience. Since the CLT-based bounds and heuristics are agnostic of the weight distribution, this leads to the interesting situation in which there are two ``reference'' solutions for each graph---clearly, we should hope these are very similar! If this is not the case then the normality assumption of the CLT approach is unlikely to be useful for the given graph; we consider whether or not this is true for the Cholesky graphs below.
-% Don't just consider normal and Gamma. We want to establish how much variation we can expect from different distributions assuming we only know the weight means and variances. Can probably at least restrict the range of distributions they can follow...
+In this section we analyze several different empirical longest path distributions for the graphs in the Cholesky test set, corresponding to different choices for the distributions that the weights follow. These empirical distributions are obtained using the Monte Carlo method with a large number of samples. Ultimately our aim is to gauge how reasonable the normality assumption underlying the CLT-based heuristics is for these graphs. Other studies, such as \cite{can16}, have thoroughly investigated how accurate the normality assumption is for a much wider range of graphs---with the conclusions typically being that it is usually, but by no means always, a good approximation---so our investigation here for a single family of DAGs is by design much narrower in scope and not intended to suggest anything in the general case.
 
-The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the simple analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples. At any rate, time constraints restricted us to a maximum of $100$,$000$ samples for the largest graph in the test set, so we used that number of samples for all of the graphs. Van Slyke's analysis suggests that the computed mean and variance estimates are therefore likely to be within about $1\%$ of the true values. They will however be assumed to be exact in comparisons with other heuristic solutions in later sections.
-%(As an aside, Van Slyke's analysis, albeit only rough, does not depend at all on the size of the graph, which seems counterintuitive. There are other approaches as well, but they also largely suffer from this apparent issue...)  
+For convenience we assume that all weights follow the same type of distribution and consider four different choices: normal, Gamma, beta and exponential. The normal distribution was chosen as a ``best-case scenario'' for the CLT-based approach, since all path lengths are also exactly normal themselves in that case, while the other distributions are considered as they are all widely-used to model event times. For each choice of weight distribution, the means and variances of the individual weights remain the same so realizations are simulated in the MC method by sampling from a distribution of the chosen type with the specified mean and variance. Since the CLT-based heuristics are agnostic of the weight distributions, clearly they will be of little use for a given graph if the longest path distribution varies widely depending on which is chosen, so it will be helpful going forward to establish how much variation we see for the Cholesky graphs. 
 
-We have largely avoided discussing runtimes for the various algorithms implemented in this thesis so far because our code is not---and is not intended to be---optimized. However, this is an area in which at least some baseline comparisons are necessary. Therefore in Table \ref{tb.mc_timings} we show how the runtime of our MC function for computing the reference solution---i.e., with $100$,$000$ samples---increases with the size of the graph. (Note that we use the {\tt normal} and {\tt gamma} functions from the {\tt numpy} {\tt random} module in order to sample from the distributions so it is interesting to see that the time also varies significantly based on which is used.) Although this very much depends on the application, we can easily imagine how runtimes for the larger graphs may be impractical based on the timings in the table; indeed, in many cases, even the time taken for the smaller graphs may be excessive. 
+Time constraints restricted us to a maximum of about $100$,$000$ realizations for the largest graph in the test set, so we took that as the limit for all of the graphs. The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the basic analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples $N$. For $N = 100$,$000$, Van Slyke's analysis suggests that the computed mean and variance estimates are likely to be within about $1\%$ of the true values. (As an aside, Van Slyke's analysis, albeit only intended to be rough, does not depend at all on the size of the graph, which seems counterintuitive. We therefore don't assume that the stated precision is necessarily correct but simply that the estimates are likely very good.)
 
-\begin{table}
-	\caption{Time needed to obtain reference makespan distributions.} 
-	\begin{center}	
-		\begin{tabular}{c c c}
-                  \toprule
-                  DAG size & Weight Dist. &  Time (hours, minutes, seconds)\\
-                  \cmidrule{1-3}
-                  \multirow{2}{*}{$35$} & Normal & $41$s \\
-                           & Gamma & $48$s\\
-                  \multirow{2}{*}{$220$} & Normal & $5$m $43$s \\
-                           & Gamma & $6$m $47$s \\
-                  \multirow{2}{*}{$680$} & Normal & $20$m $44$s \\
-                  & Gamma &  $24$m $47$s\\
-                  \multirow{2}{*}{$1540$} & Normal & $49$m $56$s \\
-                           & Gamma & $1$h $0$m $5$s \\
-                  \multirow{2}{*}{$2925$} & Normal & $1$h $39$m $54$s \\
-                           & Gamma & $1$h $59$m $45$s \\
-                  \multirow{2}{*}{$4960$} & Normal & $2$h $55$m $35$s \\
-                           & Gamma & $3$h $29$m $44$s \\
-                  \multirow{2}{*}{$7770$} & Normal & $4$h $49$m $42$s \\
-                           & Gamma & $5$h $42$m $56$s \\
-                  \multirow{2}{*}{$11480$} & Normal & $7$h $39$m $4$s \\
-                           & Gamma & $9$h $0$m $40$s \\
-		\bottomrule
-		\end{tabular}
-		\label{tb.mc_timings}
-	\end{center}	
-      \end{table}
-      % Move this to afterward. Just normal costs and include other MC solutions.
+\subsubsection{How normal is the empirical distribution?}
+\label{subsubsect.how_normal}
 
-      Other studies have thoroughly investigated how reasonable the normality assumption on the longest path distribution actually is for both real and randomly-generated graphs, with the conclusions typically being that it is fairly reasonable, so we only treat this topic very briefly here. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets\footnote{We did apply all three of the aforementioned tests to the data, with normality being rejected in all cases.}, so in Table \ref{tb.emp_summary} we present instead some summary statistics for the empirical distributions (with normal and Gamma weights) in order to convey a more intuitive understanding. Informally, we see that the data may well be close to normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero. Inspecting the visualizations of the distributions in Figure \ref{plot.emp_hists}, we see that the distributions for the larger graphs in particular are clearly not normal but they are at least broadly similar. Indeed, it is interesting that the distributions for the smaller graphs appear to be closer to normal than the larger one, when we would perhaps expect the opposite to be the case. A possible explanation for this is that for small graphs only a few paths may be the longest, so the distribution more closely resembles an individual path length distribution---which is either normal, if the weights are as well, or roughly so by the CLT---whereas this may not be the case for the larger graphs.    
+ There are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets\footnote{We did apply all three of the aforementioned tests to the data, with normality being rejected in all cases.}, so in Table \ref{tb.emp_summary} we present instead some summary statistics for the empirical distributions in order to convey a more intuitive understanding. Informally, all of the distributions may be at least roughly normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero. Inspecting the visualizations of the distributions in Figure \ref{plot.emp_hists}, we see that the distributions for the larger graphs in particular are clearly not normal, but they are broadly similar. Interestingly, the distributions for the smaller graphs appear to be closer to normality than the larger ones, when we would perhaps expect the opposite to be the case. A possible explanation for this is that for small graphs only a few paths may be the longest, so the distribution more closely resembles an individual path length distribution---which is either normal, if the weights are as well, or roughly so by the CLT---whereas this may not be the case for the larger graphs.  
 
-      Leaving aside the question of how close to normal the longest path distributions actually are, perhaps the more important takeaway from the table and the figure is that they appear to be very similar for both choices of weight distribution, as we would hope. Now, it should also be emphasized that they aren't identical: there will always be a range---however narrow---of distributions that the ``true'' solution can take under the assumption that only the first two moments of the weight distributions are known. However, given the great similarity between the two, for the remainder of this investigation we will use only the reference solution obtained with normally distributed weights. 
-      % should we quantify how similar the two distributions are?
-
-      \begin{table}
-	\caption{Summary statistics for empirical distributions.} 
+ \begin{table}
+	\caption{Summary statistics for empirical distributions (with $100$,$000$ samples).} 
 	\begin{center}	
 		\begin{tabular}{c c c c c c c}
                   \toprule
@@ -622,10 +590,48 @@ We have largely avoided discussing runtimes for the various algorithms implement
 	\label{plot.emp_hists} 
       \end{figure}
 
+Leaving aside the question of how close to normal the longest path distributions actually are, perhaps the more important takeaway from the table and the figure is that they appear to be very similar for all choices of weight distribution. Of course, it should also be emphasized that they aren't identical: there will always be a range---however narrow---of distributions that the longest path can assume if only the first two moments of the weight distributions are known. However, given the similarity between the distributions, for the remainder of this investigation we will assume for convenience that all weights are normally distributed. 
+
+\subsubsection{How many samples do we need?}
+\label{subsubsect.samples}
+
+Although we have largely avoided discussing runtimes in this thesis so far because our code is not---and is not intended to be---optimal, this is an area in which at least some baseline comparisons are necessary. Table \ref{tb.mc_timings} illustrates how the runtime of our implementation of the MC method increases with the size of the graph and the number of samples. The timings presented are for normally distributed weights, as that was always the most efficient of those we considered. Although it is obviously application-specific, one can easily imagine from the data presented in the table how using many samples for the larger graphs may be impractical. 
+
+\begin{table}
+	\caption{Time needed for MC implementation.} 
+	\begin{center}	
+		\begin{tabular}{c c c c c c}
+                  \toprule
+                  & \multicolumn{5}{c}{\# Samples}     \\
+                  \cmidrule{2-6}
+                  DAG size & 10 & 100 & 1000 & 10000 & 100000\\
+                  \cmidrule{1-6}
+                  $35$ & - & - & - & - & $41$s\\
+                  $220$ & - & - & - & - & $5$m $43$s\\
+                  $680$ & - & - & - & - & $20$m $44$s\\
+                  $1540$ & - & - & - & - & $49$m $56$s\\
+                  $2925$ & - & - & - & - & $1$h $39$m $54$s\\
+                  $4960$ & - & - & - & - & $2$h $55$m $35$s\\
+                  $7770$ & - & - & - & - & $4$h $49$m $42$s\\
+                  $11480$ & - & - & - & - & $7$h $39$m $4$s\\
+		\bottomrule
+		\end{tabular}
+		\label{tb.mc_timings}
+	\end{center}	
+      \end{table}
+      % Move this to afterward. Just normal costs and include other MC solutions.
+
+      Assuming that the longest path distribution is at least roughly normal, it is sufficient to obtain good estimates of its first two moments. This prompts the question: how many samples do we actually need to do this? For the Cholesky DAG set, this was largely a tale of two different moments. Taking the expected values and variances obtained for the full set of $100$,$000$ samples as a reference, we found that, for all of the graphs, the MC method was well within $1\%$ of the expected value after as few as $10$ samples (representing a runtime X times smaller for the largest DAG, as shown in Table \ref{tb.mc_timings}). The picture was slightly more complex for the variance, as illustrated in Figure X, but we still see that it was usually fairly tight after about 1000 samples....
+      % Usual reminder that this is a single application...
+
+
+
       % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
       % More extensive testing with lots of different weight distributions?
       % Comment somewhere about how this is technically a truncated normal but never had to make correction because of the mean and sd values.
       % "There are surely combinations of weight distribution and mean, variance pairs that lead to much more divergent behavior (and DAG topology of course) but for this particular application we're going to take it that they will be extremely similar..."
+      % They will however be assumed to be exact in comparisons with other heuristic solutions in later sections.
+      % Can probably at least restrict the range of distributions they can follow...
 
 \subsection{Existing bounds and heuristics}
 \label{subsect.results_existing}
@@ -673,20 +679,20 @@ Since both heuristics assume that the longest path distribution is normal, in or
       \begin{table}
 	\caption{Variance estimates for forward and backward variants of Sculli's method and CorLCA.} 
 	\begin{center}	
-		\begin{tabular}{c c c c c c}
+		\begin{tabular}{c c c c c c c}
                   \toprule
-                  & \multicolumn{2}{c}{Sculli} && \multicolumn{2}{c}{CorLCA} \\
-                  \cmidrule{2-3} \cmidrule{5-6}
-                  DAG size & Forward & Backward && Forward & Backward \\
-                  \cmidrule{1-6}
-                  $35$ & $114.8$ & $96.9$ && $151.8$ & $152.8$\\
-                  $220$ & $113.1$ & $89.2$ && $271.5$ & $219.2$ \\
-                  $680$ & $157.5$ & $104.7$ && $784.2$ &  $482.0$\\
-                  $1540$ & $95.4$ & $105.9$ && $418.4$ & $704.7$ \\
-                  $2925$ & $162.9$ & $105.8$ && $819.1$ & $878.5$ \\
-                  $4960$ & $109.1$ & $105.9$ && $549.5$ & $1137.9$ \\
-                  $7770$ & $120.1$ & $105.8$ && $502.4$ & $1243.6$ \\
-                  $11480$ & $139.2$ & $105.8$ && $841.3$ & $1419.2$ \\
+                  && \multicolumn{2}{c}{Sculli} && \multicolumn{2}{c}{CorLCA} \\
+                  \cmidrule{3-4} \cmidrule{6-7}
+                  DAG size & Actual & Forward & Backward && Forward & Backward \\
+                  \cmidrule{1-7}
+                  $35$ & $153.0$ & $114.8$ & $96.9$ && $151.8$ & $152.8$\\
+                  $220$ & $302.0$ & $113.1$ & $89.2$ && $271.5$ & $219.2$ \\
+                  $680$ & $895.3$ &$157.5$ & $104.7$ && $784.2$ &  $482.0$\\
+                  $1540$ & $2393.9$ & $95.4$ & $105.9$ && $418.4$ & $704.7$ \\
+                  $2925$ & $4621.6$ & $162.9$ & $105.8$ && $819.1$ & $878.5$ \\
+                  $4960$ & $8363.6$ & $109.1$ & $105.9$ && $549.5$ & $1137.9$ \\
+                  $7770$ & $13342.4$ &$120.1$ & $105.8$ && $502.4$ & $1243.6$ \\
+                  $11480$ & $19913.2$ &$139.2$ & $105.8$ && $841.3$ & $1419.2$ \\
 		\bottomrule
 		\end{tabular}
 		\label{tb.direction_var}

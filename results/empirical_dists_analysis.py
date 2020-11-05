@@ -78,40 +78,78 @@ with open('empirical_dists.dill', 'rb') as file:
 #             print("MAXIMUM: {}".format(mx), file=dest)
 #             mn = min(empirical[nt][dist])
 #             print("MINIMUM: {}".format(mn), file=dest)
+
+with open("{}/samples.txt".format(summary_path), "w") as dest:
+    print("QUALITY OF MOMENT ESTIMATES FOR MONTE CARLO METHOD WITH INCREASING NUMBERS OF SAMPLES.", file=dest) 
+    print("REFERENCE SOLUTION COMPUTED WITH 100,000 SAMPLES.", file=dest)
+    
+    for nt in n_tasks:
+        print("\n\n\n---------------------------------", file=dest)
+        print("NUMBER OF TASKS: {}".format(nt), file=dest)
+        print("---------------------------------", file=dest)
+        for dist in ["NORMAL", "GAMMA"]: 
+            print("\n{} WEIGHTS".format(dist), file=dest)
+            mu = np.mean(empirical[nt][dist])
+            print("REFERENCE MEAN: {}".format(mu), file=dest)
+            for s in [10, 100, 1000, 10000]:
+                m = np.mean(empirical[nt][dist][:s])
+                diff = 100 - (m/mu)*100
+                print("{} SAMPLES (value, %diff) : ({}, {})".format(s, m, diff), file=dest)
+            print("---------------------------------", file=dest)
+            var = np.var(empirical[nt][dist])
+            print("REFERENCE VARIANCE: {}".format(var), file=dest)
+            for s in [10, 100, 1000, 10000]:
+                v = np.var(empirical[nt][dist][:s])
+                diff = 100 - (v/var)*100
+                print("{} SAMPLES (value, %diff) : ({}, {})".format(s, v, diff), file=dest)
+            
+            # var = np.var(empirical[nt][dist])
+            # print("VARIANCE/STD: {} / {}".format(var, np.sqrt(var)), file=dest)
+
             
 # =============================================================================
-# Histograms of distributions.
+# Plots.
 # =============================================================================
 
-for dist in ["NORMAL", "GAMMA"]:
-    fig = plt.figure(dpi=400) 
-    ax = fig.add_subplot(111, frameon=False)
-    # hide tick and tick label of the big axes
-    plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
-    w = len(n_tasks) / 2
-    for i, nt in enumerate(n_tasks):
-        ax1 = fig.add_subplot(w*100 + 21 + i)
-        ax1.hist(empirical[nt][dist], color='#348ABD', density=True, bins='auto', align='mid')
-        plt.axvline(np.mean(empirical[nt][dist]), color='#E24A33', linestyle='solid', linewidth=1, label='MEAN')
-        ax1.xaxis.grid(False)
-        ax1.yaxis.grid(False) 
-        
-        lft = min(empirical[nt][dist]) - 5
-        rt = max(empirical[nt][dist]) + 5
-        ax1.set_xlim(left=lft, right=rt)
-        
-        
-        if i == 0:
-            ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white')
-        
-        plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
-        ax1.set_title("n = {}".format(nt), weight='bold')
-    
-    plt.subplots_adjust(wspace=0)
-        
-    plt.savefig('{}/histograms_{}'.format(plot_path, dist), bbox_inches='tight') 
-    plt.close(fig) 
+
+# Histograms of distributions.
+# for dist in ["NORMAL", "GAMMA"]:
+#     fig = plt.figure(dpi=400) 
+#     ax = fig.add_subplot(111, frameon=False)
+#     # hide tick and tick label of the big axes
+#     plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
+#     w = len(n_tasks) / 2
+#     for i, nt in enumerate(n_tasks):
+#         ax1 = fig.add_subplot(w*100 + 21 + i)
+#         ax1.hist(empirical[nt][dist], color='#348ABD', density=True, bins='auto', align='mid')
+#         plt.axvline(np.mean(empirical[nt][dist]), color='#E24A33', linestyle='solid', linewidth=1, label='MEAN')
+#         ax1.xaxis.grid(False)
+#         ax1.yaxis.grid(False)         
+#         lft = min(empirical[nt][dist]) - 5
+#         rt = max(empirical[nt][dist]) + 5
+#         ax1.set_xlim(left=lft, right=rt)
+#         if i == 0:
+#             ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white')        
+#         plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
+#         ax1.set_title("n = {}".format(nt), weight='bold')    
+#     plt.subplots_adjust(wspace=0)        
+#     plt.savefig('{}/histograms_{}'.format(plot_path, dist), bbox_inches='tight') 
+#     plt.close(fig) 
             
-        
+
+# # Variance.
+# empirical_vars = list(np.var(empirical[nt]["NORMAL"]) for nt in n_tasks)
+# fig = plt.figure(dpi=400)
+# ax1 = fig.add_subplot(111)
+# ax1.plot(n_tasks, empirical_vars, color='#E24A33', label="ACTUAL")
+# ax1.plot(n_tasks, list(existing[nt]["SCULLI"].var for nt in n_tasks), color='#8EBA42', label="SCULLI")
+# ax1.plot(n_tasks, list(existing[nt]["CorLCA"].var for nt in n_tasks), color='#988ED5', label="CorLCA")
+# ax1.fill_between(n_tasks, list(existing[nt]["KVL"] for nt in n_tasks), list(existing[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.3)
+# plt.yscale('log')
+# ax1.set_xlabel("DAG SIZE", labelpad=5)
+# ax1.set_ylabel("VARIANCE", labelpad=5)
+# ax1.legend(handlelength=3, handletextpad=0.4, ncol=3, loc='upper left', fancybox=True, facecolor='white') 
+# plt.savefig('{}/variance_bounds'.format(plot_path), bbox_inches='tight') 
+# plt.close(fig) 
 
             
