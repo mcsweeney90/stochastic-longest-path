@@ -79,33 +79,30 @@ with open('empirical_dists.dill', 'rb') as file:
 #             mn = min(empirical[nt][dist])
 #             print("MINIMUM: {}".format(mn), file=dest)
 
-with open("{}/samples.txt".format(summary_path), "w") as dest:
-    print("QUALITY OF MOMENT ESTIMATES FOR MONTE CARLO METHOD WITH INCREASING NUMBERS OF SAMPLES.", file=dest) 
-    print("REFERENCE SOLUTION COMPUTED WITH 100,000 SAMPLES.", file=dest)
+# with open("{}/samples.txt".format(summary_path), "w") as dest:
+#     print("QUALITY OF MOMENT ESTIMATES FOR MONTE CARLO METHOD WITH INCREASING NUMBERS OF SAMPLES.", file=dest) 
+#     print("REFERENCE SOLUTION COMPUTED WITH 100,000 SAMPLES.", file=dest)
     
-    for nt in n_tasks:
-        print("\n\n\n---------------------------------", file=dest)
-        print("NUMBER OF TASKS: {}".format(nt), file=dest)
-        print("---------------------------------", file=dest)
-        for dist in ["NORMAL", "GAMMA"]: 
-            print("\n{} WEIGHTS".format(dist), file=dest)
-            mu = np.mean(empirical[nt][dist])
-            print("REFERENCE MEAN: {}".format(mu), file=dest)
-            for s in [10, 100, 1000, 10000]:
-                m = np.mean(empirical[nt][dist][:s])
-                diff = 100 - (m/mu)*100
-                print("{} SAMPLES (value, %diff) : ({}, {})".format(s, m, diff), file=dest)
-            print("---------------------------------", file=dest)
-            var = np.var(empirical[nt][dist])
-            print("REFERENCE VARIANCE: {}".format(var), file=dest)
-            for s in [10, 100, 1000, 10000]:
-                v = np.var(empirical[nt][dist][:s])
-                diff = 100 - (v/var)*100
-                print("{} SAMPLES (value, %diff) : ({}, {})".format(s, v, diff), file=dest)
+#     for nt in n_tasks:
+#         print("\n\n\n---------------------------------", file=dest)
+#         print("NUMBER OF TASKS: {}".format(nt), file=dest)
+#         print("---------------------------------", file=dest)
+#         for dist in ["NORMAL", "GAMMA"]: 
+#             print("\n{} WEIGHTS".format(dist), file=dest)
+#             mu = np.mean(empirical[nt][dist])
+#             print("REFERENCE MEAN: {}".format(mu), file=dest)
+#             for s in [10, 100, 1000, 10000]:
+#                 m = np.mean(empirical[nt][dist][:s])
+#                 diff = 100 - (m/mu)*100
+#                 print("{} SAMPLES (value, %diff) : ({}, {})".format(s, m, diff), file=dest)
+#             print("---------------------------------", file=dest)
+#             var = np.var(empirical[nt][dist])
+#             print("REFERENCE VARIANCE: {}".format(var), file=dest)
+#             for s in [10, 100, 1000, 10000]:
+#                 v = np.var(empirical[nt][dist][:s])
+#                 diff = 100 - (v/var)*100
+#                 print("{} SAMPLES (value, %diff) : ({}, {})".format(s, v, diff), file=dest)
             
-            # var = np.var(empirical[nt][dist])
-            # print("VARIANCE/STD: {} / {}".format(var, np.sqrt(var)), file=dest)
-
             
 # =============================================================================
 # Plots.
@@ -137,19 +134,25 @@ with open("{}/samples.txt".format(summary_path), "w") as dest:
 #     plt.close(fig) 
             
 
-# # Variance.
-# empirical_vars = list(np.var(empirical[nt]["NORMAL"]) for nt in n_tasks)
-# fig = plt.figure(dpi=400)
-# ax1 = fig.add_subplot(111)
-# ax1.plot(n_tasks, empirical_vars, color='#E24A33', label="ACTUAL")
-# ax1.plot(n_tasks, list(existing[nt]["SCULLI"].var for nt in n_tasks), color='#8EBA42', label="SCULLI")
-# ax1.plot(n_tasks, list(existing[nt]["CorLCA"].var for nt in n_tasks), color='#988ED5', label="CorLCA")
-# ax1.fill_between(n_tasks, list(existing[nt]["KVL"] for nt in n_tasks), list(existing[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.3)
+# Variance.
+diffs = defaultdict(list)
+for nt in n_tasks:
+    var = np.var(empirical[nt]["NORMAL"])
+    for s in [10, 100, 1000, 10000]:        
+        v = np.var(empirical[nt]["NORMAL"][:s])
+        d = 100 - (v/var)*100
+        diffs[s].append(d)
+colors = {10 : '#E24A33', 100 : '#348ABD', 1000 : '#988ED5', 10000 : '#FBC15E'}
+
+fig = plt.figure(dpi=400)
+ax1 = fig.add_subplot(111)
+for s in [10, 100, 1000, 10000]:
+    ax1.plot(n_tasks, diffs[s], color=colors[s], label=s)
 # plt.yscale('log')
-# ax1.set_xlabel("DAG SIZE", labelpad=5)
-# ax1.set_ylabel("VARIANCE", labelpad=5)
-# ax1.legend(handlelength=3, handletextpad=0.4, ncol=3, loc='upper left', fancybox=True, facecolor='white') 
-# plt.savefig('{}/variance_bounds'.format(plot_path), bbox_inches='tight') 
-# plt.close(fig) 
+ax1.set_xlabel("DAG SIZE", labelpad=5)
+ax1.set_ylabel("VARIANCE DEVIATION (%)", labelpad=5)
+ax1.legend(handlelength=3, handletextpad=0.4, ncol=2, loc='best', fancybox=True, facecolor='white', title='#SAMPLES') 
+plt.savefig('{}/mc_variance'.format(plot_path), bbox_inches='tight') 
+plt.close(fig) 
 
             

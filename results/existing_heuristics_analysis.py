@@ -139,7 +139,7 @@ with open("{}/all.txt".format(summary_path), "w") as dest:
 # Plots.
 # =============================================================================
 
-# print(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+print(plt.rcParams['axes.prop_cycle'].by_key()['color'])
             
 # # Variance.
 # empirical_vars = list(np.var(empirical[nt]["NORMAL"]) for nt in n_tasks)

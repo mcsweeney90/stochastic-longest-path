@@ -12,9 +12,9 @@ from scipy.stats import norm
 sys.path.append('../') 
 from src import RV, SDAG
 
-chol_dag_path = '../graphs/cholesky_heft_accelerated'
+chol_dag_path = '../graphs/cholesky'
 nb = 128
-n_tasks = [35, 220, 680]#, 1540, 2925, 4960, 7770, 11480]
+n_tasks = [35]#, 220, 680]#, 1540, 2925, 4960, 7770, 11480]
 
 # =============================================================================
 # Timings.
@@ -29,8 +29,19 @@ for nt in n_tasks:
         G = dill.load(file)
     H = SDAG(G)
     
-    emp, paths = H.monte_carlo(samples=10, path_info=True)
-    print(len(paths))
+    for t in H.top_sort:
+        for p in H.graph.predecessors(t):
+            e = H.graph[p][t]['weight']
+            print(e)
+            try:
+                sd = np.sqrt(e.var)
+                print("CoV = {}".format(sd / e.mu))
+            except AttributeError:
+                pass
+                
+    
+    # emp, paths = H.monte_carlo(samples=10, path_info=True)
+    # print(len(paths))
     
     # start = timer()
     # # pert_est = H.CPM(variance=True)[H.top_sort[-1].ID]

@@ -364,7 +364,7 @@ By definition, the longest path through a graph is exactly that: the longest of 
   \label{eq.lp_definition}
   L_n = \max_{a = 1, \dots, q} P_a.
 \end{align}
-Since all path lengths are approximately normal by the CLT---or exactly normal if all weight distributions are as well---this reduces to the problem of finding the maximum of a set of dependent, differently distributed (DDD) normal RVs. Of course, the problem with this approach is that $q$ is usually impractically large; it is rare that we can even efficiently generate all of the possible paths, let alone evaluate their maximum. The dynamic programming approach defined by \eqref{eq.Li} is therefore (usually) the only possible option. In that case we also have to deal with finding the maximum of sets of normal path length RVs, but they are much smaller so we can apply Clark's equations in any of the flavors---Sculli's method, CorLCA, Cordyn---described previously. However, one potential downside is that approximation errors can propagate through the DAG. An illustration of this principle is provided by the fact that the longest path distribution computed by the forward and backward variants of Sculli's method and CorLCA can be quite different (see Section \ref{subsect.results_correlations}). But if we could somehow reduce the set of paths that need to be considered to a smaller, more manageable size we could apply Clark's equations directly to the path lengths and hopefully alleviate this effect. In other words: can we identify a subset of paths that are (in some reasonable sense) the most likely to be the longest?
+Since all path lengths are approximately normal by the CLT---or exactly normal if all weight distributions are as well---this reduces to the problem of finding the maximum of a set of dependent, differently distributed (DDD) normal RVs. Of course, the problem with this approach is that $q$ is usually impractically large; it is rare that we can even efficiently generate all of the possible paths, let alone evaluate their maximum. The dynamic programming approach defined by \eqref{eq.Li} is therefore (usually) the only possible option. In that case we also have to deal with finding the maximum of sets of normal path length RVs, but they are much smaller so we can apply Clark's equations in any of the flavors---Sculli's method, CorLCA, Cordyn---described previously. However, one potential downside is that approximation errors can propagate through the DAG. An illustration of this principle is provided by the fact that the longest path distribution computed by the forward and backward variants of Sculli's method and CorLCA can be quite different (see Section X). But if we could somehow reduce the set of paths that need to be considered to a smaller, more manageable size we could apply Clark's equations directly to the path lengths and hopefully alleviate this effect. In other words: can we identify a subset of paths that are (in some reasonable sense) the most likely to be the longest?
 
 This problem has been considered before. For example, Dodin \cite{dod84} presented a polynomial time algorithm for determining the $K$ {\em most critical} paths in a PERT network, where criticality is defined in terms of the probability that a path will be greater than all others. A modified version of Dodin's algorithm was used by Ludwig, M{\"o}hring and Stork \cite{lud01} in conjunction with the normality assumption as a heuristic bound on the distribution function: paths were generated according to the algorithm and their length distributions were then multiplied together to (heuristically) bound the longest path distribution. As noted in Section \ref{sect.bounds}, this heuristic performed well in comparison to other methods, even though multiplying the path length distributions treats them as though they were independent.
 
@@ -536,7 +536,8 @@ The node and edge weights of the schedule graph are modeled as random variables 
 
 In this section we analyze several different empirical longest path distributions for the graphs in the Cholesky test set, corresponding to different choices for the distributions that the weights follow. These empirical distributions are obtained using the Monte Carlo method with a large number of samples. Ultimately our aim is to gauge how reasonable the normality assumption underlying the CLT-based heuristics is for these graphs. Other studies, such as \cite{can16}, have thoroughly investigated how accurate the normality assumption is for a much wider range of graphs---with the conclusions typically being that it is usually, but by no means always, a good approximation---so our investigation here for a single family of DAGs is by design much narrower in scope and not intended to suggest anything in the general case.
 
-For convenience we assume that all weights follow the same type of distribution and consider four different choices: normal, Gamma, beta and exponential. The normal distribution was chosen as a ``best-case scenario'' for the CLT-based approach, since all path lengths are also exactly normal themselves in that case, while the other distributions are considered as they are all widely-used to model event times. For each choice of weight distribution, the means and variances of the individual weights remain the same so realizations are simulated in the MC method by sampling from a distribution of the chosen type with the specified mean and variance. Since the CLT-based heuristics are agnostic of the weight distributions, clearly they will be of little use for a given graph if the longest path distribution varies widely depending on which is chosen, so it will be helpful going forward to establish how much variation we see for the Cholesky graphs. 
+For convenience we assume that all weights follow the same type of distribution and consider four different choices: normal and Gamma. The normal distribution was chosen as a ``best-case scenario'' for the CLT-based approach, since all path lengths are also exactly normal themselves in that case, while the Gamma distribution is considered as it is widely-used to model event times. For each choice of weight distribution, the means and variances of the individual weights remain the same so realizations are simulated in the MC method by sampling from a distribution of the chosen type with the specified mean and variance. Since the CLT-based heuristics are agnostic of the weight distributions, clearly they will be of little use for a given graph if the longest path distribution varies widely depending on which is chosen, so it will be helpful going forward to establish how much variation we see for the Cholesky graphs.
+%"consider four different choices: normal, Gamma, beta and exponential."
 
 Time constraints restricted us to a maximum of about $100$,$000$ realizations for the largest graph in the test set, so we took that as the limit for all of the graphs. The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the basic analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples $N$. For $N = 100$,$000$, Van Slyke's analysis suggests that the computed mean and variance estimates are likely to be within about $1\%$ of the true values. (As an aside, Van Slyke's analysis, albeit only intended to be rough, does not depend at all on the size of the graph, which seems counterintuitive. We therefore don't assume that the stated precision is necessarily correct but simply that the estimates are likely very good.)
 
@@ -606,14 +607,14 @@ Although we have largely avoided discussing runtimes in this thesis so far becau
                   \cmidrule{2-6}
                   DAG size & 10 & 100 & 1000 & 10000 & 100000\\
                   \cmidrule{1-6}
-                  $35$ & - & - & - & - & $41$s\\
-                  $220$ & - & - & - & - & $5$m $43$s\\
-                  $680$ & - & - & - & - & $20$m $44$s\\
-                  $1540$ & - & - & - & - & $49$m $56$s\\
-                  $2925$ & - & - & - & - & $1$h $39$m $54$s\\
-                  $4960$ & - & - & - & - & $2$h $55$m $35$s\\
-                  $7770$ & - & - & - & - & $4$h $49$m $42$s\\
-                  $11480$ & - & - & - & - & $7$h $39$m $4$s\\
+                  $35$ & $<0.1$s & $<0.1$s & $0.4$s & $4$s & $41$s\\
+                  $220$  & $<0.1$s & $0.5$s & $3$s & $36$s & $5$m $43$s\\
+                  $680$ & $0.2$s & $1$s & $12$s & $2$m $9$s & $20$m $44$s\\
+                  $1540$ & $0.4$s & $3$s & $32$s & $5$m $22$s & $49$m $56$s\\
+                  $2925$ & $0.6$s & $6$s & $1$m $3$s & $10$m $17$s & $1$h $39$m $54$s\\
+                  $4960$ & $1$s & $12$s & $1$m $59$s & $17$m $57$s & $2$h $55$m $35$s\\
+                  $7770$ & $2$s & $19$s & $3$m $2$s & $29$m $59$s & $4$h $49$m $42$s\\
+                  $11480$ & $3$s & $28$s & $4$m $36$s & $46$m $40$s & $7$h $39$m $4$s\\
 		\bottomrule
 		\end{tabular}
 		\label{tb.mc_timings}
@@ -621,10 +622,15 @@ Although we have largely avoided discussing runtimes in this thesis so far becau
       \end{table}
       % Move this to afterward. Just normal costs and include other MC solutions.
 
-      Assuming that the longest path distribution is at least roughly normal, it is sufficient to obtain good estimates of its first two moments. This prompts the question: how many samples do we actually need to do this? For the Cholesky DAG set, this was largely a tale of two different moments. Taking the expected values and variances obtained for the full set of $100$,$000$ samples as a reference, we found that, for all of the graphs, the MC method was well within $1\%$ of the expected value after as few as $10$ samples (representing a runtime X times smaller for the largest DAG, as shown in Table \ref{tb.mc_timings}). The picture was slightly more complex for the variance, as illustrated in Figure X, but we still see that it was usually fairly tight after about 1000 samples....
+      Assuming that the longest path distribution is at least roughly normal, it is sufficient to obtain good estimates of its first two moments. This prompts the question: how many samples do we actually need to do this? For the Cholesky DAG set, this was largely a tale of two different moments. Taking the expected values and variances obtained for the full set of $100$,$000$ samples as a reference, we found that, for all of the graphs, the MC method was well within $1\%$ of the expected value after as few as $10$ samples (representing a runtime more than $9000$ times smaller than the full MC method, see Table \ref{tb.mc_timings}). The picture was more complex for the variance, as illustrated in Figure \ref{plot.mc_variance}, but we see that it was usually fairly tight after about 1000 samples as well. Of course, the Cholesky graphs considered here only represent a single family of schedules based on a single application. However, this does serve to demonstrate that it is often possible to converge to the mean and expected value of the longest path distribution after a fairly small number of samples.
       % Usual reminder that this is a single application...
 
-
+      \begin{figure}
+	\centering	
+	\includegraphics[scale=1.0]{mc_variance.png}
+	\caption{Percentage deviation of sample variances from reference solutions.}	
+	\label{plot.mc_variance}
+      \end{figure}
 
       % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
       % More extensive testing with lots of different weight distributions?
@@ -640,7 +646,7 @@ Several bounds on both the moments and distribution function of the longest path
 
 Through extensive numerical experiments, Canon and Jeannot showed that the correlation-aware heuristics CorLCA and Cordyn, and the very similar canonical method, all achieved better approximations to the longest path distribution than Sculli's method, on average, for a diverse collection of stochastic graphs. However, they were all more expensive as well. The question is, is the gain in accuracy worth the extra cost in a scheduling context? After all, as we will see in the next chapter, there are examples of stochastic scheduling heuristics that take correlations into account, such as Rob-HEFT \cite{can10}, while there are others that do not, such as {\em stochastic dynamic level scheduling} (SDLS) \cite{li15}. Now, of the three correlation-aware heuristics considered by Canon and Jeannot, CorLCA arguably achieved the best balance of speed and accuracy, so we consider only that as an alternative to Sculli's method here.
 
-Since both heuristics assume that the longest path distribution is normal, in order to evaluate the quality of their solutions for the Cholesky DAG set we compare the computed moments with the corresponding statistics derived from the empirical distribution (with normally distributed weights) obtained in Section \ref{subsect.empirical_distribution}. This also allows us to compare the quality of the approximations with Kamburowski's bounds. We found that this was very much a tale of two moments, with the bounds and approximations being far more accurate for the mean than the variance in all cases. This is demonstrated by Table \ref{tb.mean_existing}, which summarizes the mean bounds and approximations as a percentage of the reference solution, and Figure \ref{plot.variance_existing} which illustrates how close the bounds and approximations were to the variance (note the logarithmic scale on the $y$-axis). The classic CPM lower bound is also included in the table for comparison since it is the cheapest and most widely-applicable bound on the mean. 
+Since both heuristics assume that the longest path distribution is normal, in order to evaluate the quality of their solutions for the Cholesky DAG set we compare the computed moments with the corresponding statistics derived from the full empirical distribution (with normally distributed weights) obtained in Section \ref{subsect.empirical_distribution}. This also allows us to compare the quality of the approximations with Kamburowski's bounds. As in the previous section, we observed different behavior for the two moment estimates, in that the bounds and approximations were much more accurate for the mean than the variance in all cases. This is demonstrated by Table \ref{tb.mean_existing}, which summarizes the mean bounds and approximations as a percentage of the reference solution, and Figure \ref{plot.variance_existing} which illustrates how close the bounds and approximations were to the variance (note the logarithmic scale on the $y$-axis). The classic CPM lower bound is also included in the table for comparison since it is the cheapest and most widely-applicable bound on the mean. Moreover, the mean and variance estimates obtained by the MC method with $10$ samples are also included in both the table and the figure since in all cases our implementation was cheaper than either the bounds or heuristics (see below). 
 
 \begin{table}
 	\caption{Bounds and approximations to the expected value for Cholesky DAGs, as a percentage of the reference solution.} 
@@ -656,6 +662,7 @@ Since both heuristics assume that the longest path distribution is normal, in or
                   K. upper & $100.9$ & $104.0$ & $110.2$ & $118.5$ & $116.6$ & $114.0$ & $112.4$ & $111.5$\\
                   Sculli & $100.3$ & $100.3$ & $100.5$ & $100.4$ & $100.1$ & $100.0$ & $100.0$ & $99.9$\\
                   CorLCA & $100.0$ & $100.0$ & $99.8$ & $100.1$ & $99.9$ & $99.9$ & $99.9$ & $99.8$\\
+                  MC-10 & $100.0$ & $100.0$ & $99.8$ & $100.1$ & $99.9$ & $99.9$ & $99.9$ & $99.8$\\ % TODO. Remove entire table (except K bounds)?
 			\bottomrule
 		\end{tabular}
 		\label{tb.mean_existing}
@@ -709,7 +716,7 @@ Since both heuristics assume that the longest path distribution is normal, in or
       \end{figure}
  
 
-
+% One of the advantages is supposed to be if we don't know the distribution, but note that the CLT also says it doesn't matter so we can just take them to be normal. 
       
 
 \subsection{Path reduction}
