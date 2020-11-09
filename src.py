@@ -167,6 +167,9 @@ class Path:
     def __floordiv__(self, c): 
         return RV(self.mu / c, self.var / (c * c))
     __rfloordiv__ = __floordiv__ 
+    
+    def pmax(self, other):
+        return
 
 class CRV:
     """
@@ -237,6 +240,29 @@ class SDAG:
         self.graph = graph
         self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.  
         self.size = len(self.top_sort)
+        
+    def set_weights(self, cov, dis_prob):
+        """
+        Used for setting weights for DAGs from the STG.
+        """
+        
+        mubar = np.random.uniform(1, 100)        
+        for t in self.top_sort:
+            mu = np.random.gamma(shape=1.0, scale=mubar)
+            t.mu = mu
+            eps = np.random.uniform(0.9, 1.1)
+            sig = eps * cov * mu
+            t.var = sig**2
+            for p in self.graph.predecessors(t):
+                r = np.random.uniform(0, 1)
+                if r < dis_prob:
+                    self.graph[p][t]['weight'] = 0.0
+                else:
+                    mu = np.random.gamma(shape=1.0, scale=mubar)
+                    eps = np.random.uniform(0.9, 1.1)
+                    sig = eps * cov * mu
+                    var = sig**2
+                    self.graph[p][t]['weight'] = RV(mu, var)
         
     def realize(self, static=False, dist="NORMAL", percentile=None, fixed=set()):  
         """
@@ -773,14 +799,7 @@ class SDAG:
             else:                
                 # Find expected longest path.
                 exp_lp = 0       
-        return
-    
-    def max_paths(self, paths, method="Cordyn"):
-        """TODO."""
-        return        
-        
-        
-        
+        return           
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """

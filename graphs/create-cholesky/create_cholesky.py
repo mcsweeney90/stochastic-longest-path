@@ -149,7 +149,7 @@ for nb in nbs:
     # Load costs (for variances):
     with open('skylake_V100_samples/no_adt_nb{}.dill'.format(nb), 'rb') as file:
         comp_data, comm_data = dill.load(file)
-        
+                
     variances = {}        
     for kernel in ["GEMM", "POTRF", "SYRK", "TRSM"]:
         variances[kernel] = {}

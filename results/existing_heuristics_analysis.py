@@ -54,62 +54,66 @@ with open('empirical_dists.dill', 'rb') as file:
 # Summaries.
 # =============================================================================
 
-# Print full summary.
-with open("{}/all.txt".format(summary_path), "w") as dest:
-    print("BOUNDS AND APPROXIMATIONS TO THE LONGEST PATH DISTRIBUTION.", file=dest) 
-    print("GRAPHS REPRESENT STOCHASTIC SCHEDULES FOR CHOLESKY TASK DAGS.", file=dest)
-    print("SCHEDULES COMPUTED USING THE (STATIC) HEURISTIC HEFT FOR AN ACCELERATED TARGET PLATFORM WITH 7 CPU RESOURCES AND 1 GPU.", file=dest)
-    for nt in n_tasks:   
-        print("\n\n\n---------------------------------", file=dest)
-        print("NUMBER OF TASKS: {}".format(nt), file=dest) 
-        print("---------------------------------", file=dest)
-        print("\nREFERENCE SOLUTIONS", file=dest)
-        print("NORMAL WEIGHTS: RV({}, {})".format(np.mean(empirical[nt]["NORMAL"]), np.var(empirical[nt]["NORMAL"])), file=dest)
-        print("GAMMA WEIGHTS: RV({}, {})".format(np.mean(empirical[nt]["GAMMA"]), np.var(empirical[nt]["GAMMA"])), file=dest)
-        print("\nBOUNDS", file=dest) 
-        print("PERT-CPM bound on mean: {}".format(existing[nt]["PERT"]), file=dest)
-        print("Kamburowski bounds on mean: ({}, {})".format(existing[nt]["KML"], existing[nt]["KMU"]), file=dest)
-        print("Kamburowski bounds on variance: ({}, {})".format(existing[nt]["KVL"], existing[nt]["KVU"]), file=dest)
-        print("\nAPPROXIMATIONS", file=dest) 
-        print("Sculli forward: {}".format(existing[nt]["SCULLI"]), file=dest)
-        print("Sculli backward: {}".format(existing[nt]["SCULLI-R"]), file=dest)
-        print("CorLCA forward: {}".format(existing[nt]["CorLCA"]), file=dest)
-        print("CorLCA backward: {}".format(existing[nt]["CorLCA-R"]), file=dest)
-        print("\nMONTE CARLO - NORMAL COSTS", file=dest)
-        m = 10
-        for mcn in existing[nt]["MCN"][:-1]:
-            print("{} SAMPLES: {}".format(m, mcn), file=dest) 
-            m *= 10
-        print("\nMONTE CARLO - GAMMA COSTS", file=dest)
-        m = 10
-        for mcg in existing[nt]["MCG"][:-1]:
-            print("{} SAMPLES: {}".format(m, mcg), file=dest) 
-            m *= 10
-
-# #Expected value.
-# with open("{}/mean.txt".format(summary_path), "w") as dest:
-#     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE EXPECTED VALUE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
-#     for nt in n_tasks: 
+# # Print full summary.
+# with open("{}/all.txt".format(summary_path), "w") as dest:
+#     print("BOUNDS AND APPROXIMATIONS TO THE LONGEST PATH DISTRIBUTION.", file=dest) 
+#     print("GRAPHS REPRESENT STOCHASTIC SCHEDULES FOR CHOLESKY TASK DAGS.", file=dest)
+#     print("SCHEDULES COMPUTED USING THE (STATIC) HEURISTIC HEFT FOR AN ACCELERATED TARGET PLATFORM WITH 7 CPU RESOURCES AND 1 GPU.", file=dest)
+#     for nt in n_tasks:   
 #         print("\n\n\n---------------------------------", file=dest)
 #         print("NUMBER OF TASKS: {}".format(nt), file=dest) 
 #         print("---------------------------------", file=dest)
-#         print("\nNORMAL COSTS", file=dest)
-#         ref = np.mean(empirical[nt]["NORMAL"])
-#         print("Reference solution: {}".format(ref), file=dest)
-#         print("PERT-CPM (%): {}".format((existing[nt]["PERT"] /ref)*100), file=dest)
-#         print("Kamburowski lower (%): {}".format((existing[nt]["KML"] /ref)*100), file=dest)
-#         print("Kamburowski upper (%): {}".format((existing[nt]["KMU"] /ref)*100), file=dest)
-#         print("Sculli (%): {}".format((existing[nt]["SCULLI"].mu /ref)*100), file=dest)
-#         print("CorLCA (%): {}".format((existing[nt]["CorLCA"].mu /ref)*100), file=dest)
+#         print("\nREFERENCE SOLUTIONS", file=dest)
+#         print("NORMAL WEIGHTS: RV({}, {})".format(np.mean(empirical[nt]["NORMAL"]), np.var(empirical[nt]["NORMAL"])), file=dest)
+#         print("GAMMA WEIGHTS: RV({}, {})".format(np.mean(empirical[nt]["GAMMA"]), np.var(empirical[nt]["GAMMA"])), file=dest)
+#         print("\nBOUNDS", file=dest) 
+#         print("PERT-CPM bound on mean: {}".format(existing[nt]["PERT"]), file=dest)
+#         print("Kamburowski bounds on mean: ({}, {})".format(existing[nt]["KML"], existing[nt]["KMU"]), file=dest)
+#         print("Kamburowski bounds on variance: ({}, {})".format(existing[nt]["KVL"], existing[nt]["KVU"]), file=dest)
+#         print("\nAPPROXIMATIONS", file=dest) 
+#         print("Sculli forward: {}".format(existing[nt]["SCULLI"]), file=dest)
+#         print("Sculli backward: {}".format(existing[nt]["SCULLI-R"]), file=dest)
+#         print("CorLCA forward: {}".format(existing[nt]["CorLCA"]), file=dest)
+#         print("CorLCA backward: {}".format(existing[nt]["CorLCA-R"]), file=dest)
+#         print("\nMONTE CARLO - NORMAL COSTS", file=dest)
+#         m = 10
+#         for mcn in existing[nt]["MCN"][:-1]:
+#             print("{} SAMPLES: {}".format(m, mcn), file=dest) 
+#             m *= 10
+#         print("\nMONTE CARLO - GAMMA COSTS", file=dest)
+#         m = 10
+#         for mcg in existing[nt]["MCG"][:-1]:
+#             print("{} SAMPLES: {}".format(m, mcg), file=dest) 
+#             m *= 10
+
+#Expected value.
+with open("{}/mean.txt".format(summary_path), "w") as dest:
+    print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE EXPECTED VALUE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
+    for nt in n_tasks: 
+        print("\n\n\n---------------------------------", file=dest)
+        print("NUMBER OF TASKS: {}".format(nt), file=dest) 
+        print("---------------------------------", file=dest)
+        print("\nNORMAL COSTS", file=dest)
+        ref = np.mean(empirical[nt]["NORMAL"])
+        print("Reference solution: {}".format(ref), file=dest)
+        print("PERT-CPM (%): {}".format((existing[nt]["PERT"] /ref)*100), file=dest)
+        print("Kamburowski lower (%): {}".format((existing[nt]["KML"] /ref)*100), file=dest)
+        print("Kamburowski upper (%): {}".format((existing[nt]["KMU"] /ref)*100), file=dest)
+        print("Sculli (%): {}".format((existing[nt]["SCULLI"].mu /ref)*100), file=dest)
+        print("CorLCA (%): {}".format((existing[nt]["CorLCA"].mu /ref)*100), file=dest)
+        m = np.mean(empirical[nt]["NORMAL"][:10])
+        print("MC-10 (%): {}".format((m /ref)*100), file=dest)
         
-#         print("\nGAMMA COSTS", file=dest)
-#         ref = np.mean(empirical[nt]["GAMMA"])
-#         print("Reference solution: {}".format(ref), file=dest)
-#         print("PERT-CPM (%): {}".format((existing[nt]["PERT"] /ref)*100), file=dest)
-#         print("Kamburowski lower (%): {}".format((existing[nt]["KML"] /ref)*100), file=dest)
-#         print("Kamburowski upper (%): {}".format((existing[nt]["KMU"] /ref)*100), file=dest)
-#         print("Sculli (%): {}".format((existing[nt]["SCULLI"].mu /ref)*100), file=dest)
-#         print("CorLCA (%): {}".format((existing[nt]["CorLCA"].mu /ref)*100), file=dest)
+        print("\nGAMMA COSTS", file=dest)
+        ref = np.mean(empirical[nt]["GAMMA"])
+        print("Reference solution: {}".format(ref), file=dest)
+        print("PERT-CPM (%): {}".format((existing[nt]["PERT"] /ref)*100), file=dest)
+        print("Kamburowski lower (%): {}".format((existing[nt]["KML"] /ref)*100), file=dest)
+        print("Kamburowski upper (%): {}".format((existing[nt]["KMU"] /ref)*100), file=dest)
+        print("Sculli (%): {}".format((existing[nt]["SCULLI"].mu /ref)*100), file=dest)
+        print("CorLCA (%): {}".format((existing[nt]["CorLCA"].mu /ref)*100), file=dest)
+        m = np.mean(empirical[nt]["GAMMA"][:10])
+        print("MC-10 (%): {}".format((m /ref)*100), file=dest)
         
 # #Variance.
 # with open("{}/variance.txt".format(summary_path), "w") as dest:
@@ -139,7 +143,7 @@ with open("{}/all.txt".format(summary_path), "w") as dest:
 # Plots.
 # =============================================================================
 
-print(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+# print(plt.rcParams['axes.prop_cycle'].by_key()['color'])
             
 # # Variance.
 # empirical_vars = list(np.var(empirical[nt]["NORMAL"]) for nt in n_tasks)

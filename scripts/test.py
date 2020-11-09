@@ -13,7 +13,7 @@ sys.path.append('../')
 from src import RV, SDAG
 
 chol_dag_path = '../graphs/cholesky'
-nb = 128
+nb = 1024
 n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 
 # =============================================================================
@@ -28,16 +28,16 @@ for nt in n_tasks:
         G = dill.load(file)
     H = SDAG(G)
     
-    total, dis = 0, 0
-    for t in H.top_sort:
-        for p in H.graph.predecessors(t):
-            total += 1
-            e = H.graph[p][t]['weight']
-            try:
-                m = e.mu
-            except AttributeError:
-                dis += 1
-    print("Edge ratio: {}".format(dis/total))
+    # total, dis = 0, 0
+    # for t in H.top_sort:
+    #     for p in H.graph.predecessors(t):
+    #         total += 1
+    #         e = H.graph[p][t]['weight']
+    #         try:
+    #             m = e.mu
+    #         except AttributeError:
+    #             dis += 1
+    # print("Edge ratio: {}".format(dis/total))
                 
     
     # emp, paths = H.monte_carlo(samples=10, path_info=True)

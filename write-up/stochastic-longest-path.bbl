@@ -39,7 +39,7 @@ C.~T. Clingen.
 
 \bibitem{dod84}
 Bajis Dodin.
-\newblock \href{https://doi.org/10.1287/opre.32.4.859}{Determining the k most
+\newblock \href{https://doi.org/10.1287/opre.32.4.859}{Determining the {K} most
   critical paths in {PERT} networks}.
 \newblock {\em Operations Research}, 32\penalty0 (4):\penalty0 859--877, 1984.
 
@@ -149,6 +149,12 @@ H.~M. Soroush.
   a {PERT} network}.
 \newblock {\em Journal of the Operational Research Society}, 45\penalty0
   (3):\penalty0 287--300, 1994.
+
+\bibitem{tob02}
+Takao Tobita and Hironori Kasahara.
+\newblock \href{https://doi.org/10.1002/jos.116}{A standard task graph set for
+  fair evaluation of multiprocessor scheduling algorithms}.
+\newblock {\em Journal of Scheduling}, 5\penalty0 (5):\penalty0 379--394.
 
 \bibitem{van63}
 Richard~M. Van~Slyke.

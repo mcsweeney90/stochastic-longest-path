@@ -154,6 +154,7 @@ s = 0
 for orig in os.listdir(src):    
     if orig.endswith('.stg'):  
         print("\n{}".format(orig))
+        s += 1
         G = nx.DiGraph()       
         with open("{}/{}".format(src, orig)) as f:
             next(f) # Skip first line.            
@@ -163,7 +164,7 @@ for orig in os.listdir(src):
                 # Remove all whitespace - there is probably a nicer way to do this...
                 info = " ".join(re.split("\s+", row, flags=re.UNICODE)).strip().split() 
                 # Create task.   
-                nd = RV(0, 0)
+                nd = RV()
                 nd.ID = int(info[0])
                 if info[2] == '0':
                     G.add_node(nd)
@@ -172,13 +173,17 @@ for orig in os.listdir(src):
                 predecessors = list(n for n in G if str(n.ID) in info[3:])
                 for p in predecessors:
                     G.add_edge(p, nd)                  
-                    
+        
         # Convert G to an SDAG object. 
-        S = SDAG(G)                            
-        # Save DAG.
-        with open('{}/{}.dill'.format(dest, s), 'wb') as handle:
-            dill.dump(S, handle)    
-        s += 1
+        S = SDAG(G) 
+        
+        for c in [0.1, 0.3, 0.5]:
+            for d in [0.1, 0.3, 0.5]:
+                # Set weights.
+                S.set_weights(c, d)                           
+                # Save DAG.
+                with open('{}/T{}_C{}_D{}.dill'.format(dest, s, c, d), 'wb') as handle:
+                    dill.dump(S, handle)    
         
 elapsed = timer() - start     
 print("Time taken: {} seconds".format(elapsed))  
