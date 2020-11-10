@@ -717,7 +717,6 @@ Although obviously desirable, the fact that all of the bounds and approximations
       %Figure \ref{plot.variance_existing} which illustrates how close the bounds and approximations were to the variance (note the logarithmic scale on the $y$-axis). The classic CPM lower bound is also included in the table for comparison since it is the cheapest and most widely-applicable bound on the mean. Moreover, the mean and variance estimates obtained by the MC method with $10$ samples are also included in both the table and the figure since in all cases our implementation was cheaper than either the bounds or heuristics (see below). 
 
       Unfortunately, the bounds and approximations to the variance were generally much less accurate, as shown for the Cholesky DAGs in Figure \ref{plot.variance_existing}. Kamburowski's upper bound is loose, although at most no more than about five times larger than the true value, while the lower is far more so. Depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions. With regard to the heuristics, CorLCA is consistently better than Sculli's method and does quite well for the smallest three DAGs, but after this its performance declines, returning variance estimates that are orders of magnitude smaller than the true value for the larger graphs. Moreover, the Monte Carlo method with 30 samples was consistently superior to both, in addition to being cheaper to compute in our implementation.
-      % add MC throughout?
 
       \begin{figure}
 	\centering	
@@ -750,14 +749,15 @@ Although obviously desirable, the fact that all of the bounds and approximations
 		\label{tb.direction_var}
 	\end{center}	
       \end{table}
+      % TODO: check weird Sculli backward values.
 
-      Of course, as well as accuracy, the other key consideration when evaluating bounds and approximations is how long they take to compute. As always, this depends to an extent on the details of the implementation but for what it's worth, in Figure \ref{plot.existing_timings} we illustrate the runtimes of our own. We see that computing the bounds is consistently more expensive than either of the heuristics, typically taking about twice as long as Sculli's method in particular. It should however be noted that the mean bounds depend on the variance bounds but not vice versa; the former are much more expensive since they require repeated evaluation of the unit normal cdf, so if only the variance is required then the runtime would be considerably reduced. Given that the mean estimates achieved by the heuristics are typically very good but the variances less so, this might be a practical option. With regard to the two heuristics, CorLCA was on average about $15\%$ more expensive than Sculli's method. Given the relatively small benefits observed for the Cholesky DAG set as a whole, overall we must conclude that the additional cost does not appear to be worthwhile. However, for the three smallest DAGs significant gains were apparent with regards to the variance, so again a more thorough experimental investigation may be warranted.  
+      Of course, as well as accuracy, the other key consideration when evaluating bounds and approximations is how long they take to compute. As always, this depends to an extent on the details of the implementation but for what it's worth, in Figure \ref{plot.chol_existing_timings} we illustrate the runtimes of our own. We see that computing the bounds is consistently more expensive than either of the heuristics, typically taking about twice as long as Sculli's method in particular. It should however be noted that the mean bounds depend on the variance bounds but not vice versa; the former are much more expensive since they require repeated evaluation of the unit normal cdf, so if only the variance is required then the runtime would be considerably reduced. Given that the mean estimates achieved by the heuristics are typically very good but the variances less so, this might be a practical option. With regard to the two heuristics, CorLCA was on average about $15\%$ more expensive than Sculli's method. Given the relatively small benefits observed for the Cholesky DAG set as a whole, overall we must conclude that the additional cost does not appear to be worthwhile. However, for the three smallest DAGs significant gains were apparent with regards to the variance, so again a more thorough experimental investigation may be warranted.  
 
       \begin{figure}
 	\centering	
-	\includegraphics[scale=1.0]{existing_timings.png}
+	\includegraphics[scale=1.0]{chol_existing_timings.png}
 	\caption{Runtimes for Kamburowski's bounds, Sculli's method and CorLCA.}	
-	\label{plot.existing_timings}
+	\label{plot.chol_existing_timings}
       \end{figure}
  
 

@@ -135,41 +135,29 @@ class RV:
 class Path:
     """
     Path class - basically a collection of RVs.
-    TODO.
     """
-    def __init__(self, mu=0.0, var=0.0, realization=None, ID=None): 
+    def __init__(self, mu=0.0, var=0.0, members=None): 
         self.mu = mu
         self.var = var
-        self.ID = ID
-        self.realization = realization
+        self.members = members
+        self.member_ids = list(m.ID for m in self.members) # TODO: edges.
     def __repr__(self):
-        return "RV(mu = {}, var = {})".format(self.mu, self.var)
+        return list(t.ID for t in self.members)
     # Overload addition operator.
     def __add__(self, other): 
-        if isinstance(other, float) or isinstance(other, int):
-            return RV(self.mu + other, self.var)
-        return RV(self.mu + other.mu, self.var + other.var) 
-    __radd__ = __add__ 
-    # Overload subtraction operator.
-    def __sub__(self, other):
-        if isinstance(other, float) or isinstance(other, int):
-            return RV(self.mu - other, self.var)
-        return RV(self.mu - other.mu, self.var + other.var)
-    __rsub__ = __sub__ 
-    # Overload multiplication operator.
-    def __mul__(self, c):
-        return RV(c * self.mu, c * c * self.var)
-    __rmul__ = __mul__ 
-    # Overload division operators.
-    def __truediv__(self, c): 
-        return RV(self.mu / c, self.var / (c * c))
-    __rtruediv__ = __truediv__ 
-    def __floordiv__(self, c): 
-        return RV(self.mu / c, self.var / (c * c))
-    __rfloordiv__ = __floordiv__ 
-    
-    def pmax(self, other):
-        return
+        if isinstance(other, RV):
+            self.members.append(other)
+            P = Path(self.mu + other.mu, self.var + other.var, self.members)
+            P.member_ids = list(m.ID for m in P.members)
+            return P
+        return 
+    __radd__ = __add__     
+    def get_rho(self, other):
+        common_var = 0.0
+        for sm in self.members:
+            if sm.ID in other.members:
+                common_var += sm.var          
+        return common_var**2 / (np.sqrt(self.var)*np.sqrt(other.var))
 
 class CRV:
     """
@@ -788,8 +776,11 @@ class SDAG:
                 paths[t.ID] = sum(paths[p.ID] for p in parents)                
         return paths        
     
-    def get_longest_paths(self, epsilon):
+    def get_longest_paths(self, mc=True, samples=None, epsilon=None):
         """TODO."""
+        
+        if mc:
+            return
         
         candidates = {}        
         for t in self.top_sort:
