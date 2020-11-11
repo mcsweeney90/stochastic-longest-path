@@ -135,7 +135,7 @@ with open('data/stg_empirical.dill', 'rb') as file:
 # Variance bounds/approximations for Cholesky (plot).
 # =============================================================================
 
-# empirical_vars = list(np.var(chol_empirical[nt]["NORMAL"]) for nt in n_tasks)
+# empirical_vars = list(np.var(chol_empirical[nt]["GAMMA"]) for nt in n_tasks)
 # fig = plt.figure(dpi=400)
 # ax1 = fig.add_subplot(111)
 # ax1.plot(n_tasks, empirical_vars, color='#E24A33', label="ACTUAL")
@@ -173,22 +173,24 @@ with open('data/stg_empirical.dill', 'rb') as file:
 # Mean estimates for STG set.
 # =============================================================================
 
+# devs = {p : [] for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]}      
+# abs_devs = {p : [] for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]}
+# for dname in stg_empirical:
+#     ref = stg_empirical[dname]["GAMMA"][0]
+#     for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
+#         try:
+#             m = stg_existing[dname][p].mu
+#         except AttributeError:
+#             m = stg_existing[dname][p]
+#         d = 100 - (m / ref)*100
+#         devs[p].append(d)
+#         abs_devs[p].append(abs(d))
+
+# # Summary.
 # with open("{}/stg_mean.txt".format(summary_path), "w") as dest:
 #     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE EXPECTED VALUE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
-#     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
-    
-#     devs = {p : [] for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]}      
-#     abs_devs = {p : [] for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]}
-#     for dname in stg_empirical:
-#         ref = stg_empirical[dname]["NORMAL"][0]
-#         for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
-#             try:
-#                 m = stg_existing[dname][p].mu
-#             except AttributeError:
-#                 m = stg_existing[dname][p]
-#             d = 100 - (m / ref)*100
-#             devs[p].append(d)
-#             abs_devs[p].append(abs(d))
+#     print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
+#     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)    
             
 #     print("\n\n\nAVERAGE DEVIATIONS (%) FROM TRUE MEAN\n", file=dest)
 #     for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
@@ -206,27 +208,43 @@ with open('data/stg_empirical.dill', 'rb') as file:
 #     print("UPPER: {}".format(upper_viols), file=dest)
 #     print("LOWER: {}".format(lower_viols), file=dest)
     
+# # Histogram.
+# sols = ["PERT", "KML", "SCULLI", "CorLCA", "MC30"]
+# avgs = [np.mean(abs_devs[p]) for p in sols]    
+# x = np.arange(len(sols))
+# colors = ['#E24A33', '#348ABD', '#8EBA42', '#988ED5', '#FBC15E']
+# fig = plt.figure(dpi=400)
+# ax1 = fig.add_subplot(111)
+# ax1.bar(sols, avgs, color=colors, edgecolor='white')             
+# ax1.set_xticks(x)
+# ax1.set_xticklabels(["CPM", "K. LOWER", "SCULLI", "CorLCA", "MC30"]) 
+# ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
+# ax1.set_title("MEAN", weight='bold')
+# plt.savefig('{}/stg_existing_mean'.format(plot_path), bbox_inches='tight') 
+# plt.close(fig) 
+    
 # =============================================================================
 # Variance estimates for STG set.
 # =============================================================================
 
+devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
+abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
+for dname in stg_empirical:
+    ref = stg_empirical[dname]["GAMMA"][1]
+    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+        try:
+            v = stg_existing[dname][p].var
+        except AttributeError:
+            v = stg_existing[dname][p]
+        d = 100 - (v / ref)*100
+        devs[p].append(d)
+        abs_devs[p].append(abs(d))
+
 with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
+    print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
-    
-    devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
-    abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
-    for dname in stg_empirical:
-        ref = stg_empirical[dname]["NORMAL"][1]
-        for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
-            try:
-                v = stg_existing[dname][p].var
-            except AttributeError:
-                v = stg_existing[dname][p]
-            d = 100 - (v / ref)*100
-            devs[p].append(d)
-            abs_devs[p].append(abs(d))
-            
+                
     print("\n\n\nAVERAGE DEVIATIONS (%) FROM TRUE VARIANCE\n", file=dest)
     for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
         avg = np.mean(abs_devs[p])
@@ -242,6 +260,19 @@ with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
     print("\n\n\nNUMBER OF TIMES KAMBUROWSKI'S BOUNDS VIOLATED\n", file=dest)
     print("UPPER: {}".format(upper_viols), file=dest)
     print("LOWER: {}".format(lower_viols), file=dest)        
-    
-                
+
+# Histogram.
+sols = ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]
+avgs = [np.mean(abs_devs[p]) for p in sols]    
+x = np.arange(len(sols))
+colors = ['#E24A33', '#348ABD', '#8EBA42', '#988ED5', '#FBC15E']
+fig = plt.figure(dpi=400)
+ax1 = fig.add_subplot(111)
+ax1.bar(sols, avgs, color=colors, edgecolor='white')             
+ax1.set_xticks(x)
+ax1.set_xticklabels(["K. LOWER", "K. UPPER", "SCULLI", "CorLCA", "MC30"]) 
+ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
+ax1.set_title("VARIANCE", weight='bold')
+plt.savefig('{}/stg_existing_var'.format(plot_path), bbox_inches='tight') 
+plt.close(fig) 
             
