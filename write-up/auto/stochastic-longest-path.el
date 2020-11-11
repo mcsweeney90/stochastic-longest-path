@@ -5,13 +5,13 @@
                      '(("article" "12pt")))
    (TeX-add-to-alist 'LaTeX-provided-package-options
                      '(("hyperref" "colorlinks" "urlcolor=blue" "linkcolor=blue" "citecolor=hotpink") ("babel" "british") ("algorithm2e" "linesnumbered" "ruled") ("tcolorbox" "most" "minted")))
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "url")
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "path")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "url")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
    (add-to-list 'LaTeX-verbatim-macros-with-delims-local "path")
    (TeX-run-style-hooks
     "latex2e"
@@ -97,18 +97,22 @@
     "tb.cholesky_samples"
     "subsubsect.stg"
     "subsect.empirical_distribution"
+    "subsubsect.generating"
     "subsubsect.how_normal"
     "tb.emp_summary"
     "plot.hist_normal"
     "plot.hist_gamma"
     "plot.emp_hists"
-    "subsubsect.samples"
+    "subsubsect.sensitive"
+    "subsubsect.runtime"
     "tb.mc_timings"
-    "plot.mc_variance"
     "subsect.results_existing"
+    "subsubsect.existing_mean"
     "tb.mean_existing"
+    "subsubsect.existing_variance"
     "plot.variance_existing"
     "tb.direction_var"
+    "subsubsect.existing_practical"
     "plot.chol_existing_timings"
     "subsect.results_path_reduction"
     "subsect.results_updating"

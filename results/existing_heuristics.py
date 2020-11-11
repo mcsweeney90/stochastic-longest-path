@@ -19,63 +19,72 @@ data_dest = "data"
 # Cholesky.
 # =============================================================================
 
-chol_dag_path = '../graphs/cholesky'
-n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
+# chol_dag_path = '../graphs/cholesky'
+# n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 
-info = {}
-for nt in n_tasks:
-    info[nt] = {}
-timings = defaultdict(list)
+# info = {}
+# for nt in n_tasks:
+#     info[nt] = {}
+# timings = defaultdict(list)
 
-for nt in n_tasks:
-    with open('{}/nb128/{}tasks.dill'.format(chol_dag_path, nt), 'rb') as file:
-        G = dill.load(file)
-    H = SDAG(G)
+# for nt in n_tasks:
+#     with open('{}/nb128/{}tasks.dill'.format(chol_dag_path, nt), 'rb') as file:
+#         G = dill.load(file)
+#     H = SDAG(G)
     
-    # PERT bound on the mean.
-    start = timer()
-    pb = H.pert_cpm()[H.top_sort[-1].ID]
-    elapsed = timer() - start
-    timings["PERT"].append(elapsed)
-    info[nt]["PERT"] = pb
+#     # PERT bound on the mean.
+#     start = timer()
+#     pb = H.pert_cpm()[H.top_sort[-1].ID]
+#     elapsed = timer() - start
+#     timings["PERT"].append(elapsed)
+#     info[nt]["PERT"] = pb
     
-    # Kamburowski.
-    start = timer()
-    lm, um, ls, us = H.kamburowski()
-    elapsed = timer() - start
-    timings["KAMBUROWSKI"].append(elapsed)
-    info[nt]["KML"] = lm[H.top_sort[-1].ID]
-    info[nt]["KMU"] = um[H.top_sort[-1].ID]
-    info[nt]["KVL"] = ls[H.top_sort[-1].ID]
-    info[nt]["KVU"] = us[H.top_sort[-1].ID]
+#     # Kamburowski.
+#     start = timer()
+#     lm, um, ls, us = H.kamburowski()
+#     elapsed = timer() - start
+#     timings["KAMBUROWSKI"].append(elapsed)
+#     info[nt]["KML"] = lm[H.top_sort[-1].ID]
+#     info[nt]["KMU"] = um[H.top_sort[-1].ID]
+#     info[nt]["KVL"] = ls[H.top_sort[-1].ID]
+#     info[nt]["KVU"] = us[H.top_sort[-1].ID]
     
-    # Sculli.
-    start = timer()
-    SL = H.sculli()
-    elapsed = timer() - start
-    timings["SCULLI"].append(elapsed)
-    SR = H.sculli(remaining=True)    
-    sculli_forward = SL[H.top_sort[-1].ID]
-    sculli_backward = SR[H.top_sort[0].ID] + H.top_sort[0]
-    info[nt]["SCULLI"] = sculli_forward
-    info[nt]["SCULLI-R"] = sculli_backward
+#     # Sculli.
+#     start = timer()
+#     SL = H.sculli()
+#     elapsed = timer() - start
+#     timings["SCULLI"].append(elapsed)
+#     SR = H.sculli(remaining=True)    
+#     sculli_forward = SL[H.top_sort[-1].ID]
+#     sculli_backward = SR[H.top_sort[0].ID] + H.top_sort[0]
+#     info[nt]["SCULLI"] = sculli_forward
+#     info[nt]["SCULLI-R"] = sculli_backward
     
-    # CorLCA.
-    start = timer()
-    CL = H.corLCA()
-    elapsed = timer() - start
-    timings["CorLCA"].append(elapsed)
-    CR = H.corLCA(remaining=True)
-    corlca_forward = CL[H.top_sort[-1].ID]
-    corlca_backward = CR[H.top_sort[0].ID] + H.top_sort[0]
-    info[nt]["CorLCA"] = corlca_forward
-    info[nt]["CorLCA-R"] = corlca_backward      
+#     # CorLCA.
+#     start = timer()
+#     CL = H.corLCA()
+#     elapsed = timer() - start
+#     timings["CorLCA"].append(elapsed)
+#     CR = H.corLCA(remaining=True)
+#     corlca_forward = CL[H.top_sort[-1].ID]
+#     corlca_backward = CR[H.top_sort[0].ID] + H.top_sort[0]
+#     info[nt]["CorLCA"] = corlca_forward
+#     info[nt]["CorLCA-R"] = corlca_backward      
     
-# Save the info dict.
-with open('{}/chol_existing.dill'.format(data_dest), 'wb') as handle:
-    dill.dump(info, handle)  
-with open('{}/chol_existing_timings.dill'.format(data_dest), 'wb') as handle:
-    dill.dump(timings, handle) 
+#     # MC30.
+#     start = timer()
+#     mc_dist = H.monte_carlo(samples=30)
+#     mu = np.mean(mc_dist)
+#     var = np.var(mc_dist)
+#     elapsed = timer() - start
+#     timings["MC30"].append(elapsed)
+#     info[nt]["MC30"] = RV(mu, var)
+    
+# # Save the info dict.
+# with open('{}/chol_existing.dill'.format(data_dest), 'wb') as handle:
+#     dill.dump(info, handle)  
+# with open('{}/chol_existing_timings.dill'.format(data_dest), 'wb') as handle:
+#     dill.dump(timings, handle) 
     
 # =============================================================================
 # STG.
@@ -124,6 +133,15 @@ for dname in os.listdir(stg_dag_path):
     timings["CorLCA"] += elapsed
     corlca_forward = CL[H.top_sort[-1].ID]
     info[dname]["CorLCA"] = corlca_forward
+    
+    # MC30.
+    start = timer()
+    mc_dist = H.monte_carlo(samples=30)
+    mu = np.mean(mc_dist)
+    var = np.var(mc_dist)
+    elapsed = timer() - start
+    timings["MC30"] += elapsed
+    info[dname]["MC30"] = RV(mu, var)
         
 # Save the info dict.
 with open('{}/stg_existing.dill'.format(data_dest), 'wb') as handle:

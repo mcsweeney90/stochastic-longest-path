@@ -16,13 +16,18 @@
 \BOOKMARK [2][-]{subsection.5.2}{Update the makespan directly}{section.5}% 16
 \BOOKMARK [2][-]{subsection.5.3}{Do the computation again}{section.5}% 17
 \BOOKMARK [1][-]{section.6}{Numerical experiments}{}% 18
-\BOOKMARK [2][-]{subsection.6.1}{Graph test sets}{section.6}% 19
+\BOOKMARK [2][-]{subsection.6.1}{Graph sets}{section.6}% 19
 \BOOKMARK [3][-]{subsubsection.6.1.1}{Cholesky}{subsection.6.1}% 20
 \BOOKMARK [3][-]{subsubsection.6.1.2}{STG}{subsection.6.1}% 21
-\BOOKMARK [2][-]{subsection.6.2}{Analyzing the empirical distributions}{section.6}% 22
-\BOOKMARK [3][-]{subsubsection.6.2.1}{How normal is the empirical distribution?}{subsection.6.2}% 23
-\BOOKMARK [3][-]{subsubsection.6.2.2}{How many samples do we need?}{subsection.6.2}% 24
-\BOOKMARK [2][-]{subsection.6.3}{Existing bounds and heuristics}{section.6}% 25
-\BOOKMARK [2][-]{subsection.6.4}{Path reduction}{section.6}% 26
-\BOOKMARK [2][-]{subsection.6.5}{Updating the finish time}{section.6}% 27
-\BOOKMARK [1][-]{section.7}{Conclusions}{}% 28
+\BOOKMARK [2][-]{subsection.6.2}{The assumptions of the CLT approach}{section.6}% 22
+\BOOKMARK [3][-]{subsubsection.6.2.1}{Generating empirical distributions}{subsection.6.2}% 23
+\BOOKMARK [3][-]{subsubsection.6.2.2}{How normal is the longest path distribution?}{subsection.6.2}% 24
+\BOOKMARK [3][-]{subsubsection.6.2.3}{How sensitive is the longest path distribution?}{subsection.6.2}% 25
+\BOOKMARK [3][-]{subsubsection.6.2.4}{Runtime}{subsection.6.2}% 26
+\BOOKMARK [2][-]{subsection.6.3}{Existing bounds and heuristics}{section.6}% 27
+\BOOKMARK [3][-]{subsubsection.6.3.1}{Expected value}{subsection.6.3}% 28
+\BOOKMARK [3][-]{subsubsection.6.3.2}{Variance}{subsection.6.3}% 29
+\BOOKMARK [3][-]{subsubsection.6.3.3}{Practical considerations}{subsection.6.3}% 30
+\BOOKMARK [2][-]{subsection.6.4}{Path reduction}{section.6}% 31
+\BOOKMARK [2][-]{subsection.6.5}{Updating the finish time}{section.6}% 32
+\BOOKMARK [1][-]{section.7}{Conclusions}{}% 33

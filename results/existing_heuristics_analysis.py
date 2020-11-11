@@ -51,6 +51,10 @@ with open('data/chol_empirical.dill', 'rb') as file:
     chol_empirical = dill.load(file) 
     
 # STG.
+with open('data/stg_existing.dill', 'rb') as file:
+    stg_existing = dill.load(file) 
+with open('data/stg_empirical.dill', 'rb') as file:
+    stg_empirical = dill.load(file) 
 
 
 # =============================================================================
@@ -103,8 +107,9 @@ with open('data/chol_empirical.dill', 'rb') as file:
 #             print("Kamburowski upper (%): {}".format((chol_existing[nt]["KMU"] /ref)*100), file=dest)
 #             print("Sculli (%): {}".format((chol_existing[nt]["SCULLI"].mu /ref)*100), file=dest)
 #             print("CorLCA (%): {}".format((chol_existing[nt]["CorLCA"].mu /ref)*100), file=dest)
+#             print("MC30 (%): {}".format((chol_existing[nt]["MC30"].mu /ref)*100), file=dest)
 #             m = np.mean(chol_empirical[nt][dist][:10])
-#             print("MC-10 (%): {}".format((m /ref)*100), file=dest)        
+#             print("MC10 (%): {}".format((m /ref)*100), file=dest)        
         
 # =============================================================================
 # Cholesky variance summary.
@@ -124,19 +129,19 @@ with open('data/chol_empirical.dill', 'rb') as file:
 #             print("Kamburowski upper (%): {}".format((chol_existing[nt]["KVU"] /ref)*100), file=dest)
 #             print("Sculli (%): {}".format((chol_existing[nt]["SCULLI"].var /ref)*100), file=dest)
 #             print("CorLCA (%): {}".format((chol_existing[nt]["CorLCA"].var /ref)*100), file=dest)
+#             print("MC30 (%): {}".format((chol_existing[nt]["MC30"].var /ref)*100), file=dest)
 
 # =============================================================================
 # Variance bounds/approximations for Cholesky (plot).
 # =============================================================================
 
 # empirical_vars = list(np.var(chol_empirical[nt]["NORMAL"]) for nt in n_tasks)
-# mc30_vars = list(np.var(chol_empirical[nt]["NORMAL"][:30]) for nt in n_tasks)
 # fig = plt.figure(dpi=400)
 # ax1 = fig.add_subplot(111)
 # ax1.plot(n_tasks, empirical_vars, color='#E24A33', label="ACTUAL")
 # ax1.plot(n_tasks, list(chol_existing[nt]["SCULLI"].var for nt in n_tasks), color='#8EBA42', label="SCULLI")
 # ax1.plot(n_tasks, list(chol_existing[nt]["CorLCA"].var for nt in n_tasks), color='#988ED5', label="CorLCA")
-# ax1.plot(n_tasks, mc30_vars, color='#FBC15E', label="MC30")
+# ax1.plot(n_tasks, list(chol_existing[nt]["MC30"].var for nt in n_tasks), color='#FBC15E', label="MC30")
 # ax1.fill_between(n_tasks, list(chol_existing[nt]["KVL"] for nt in n_tasks), list(chol_existing[nt]["KVU"] for nt in n_tasks), color='#348ABD', alpha=0.3)
 # plt.yscale('log')
 # ax1.set_xlabel("DAG SIZE", labelpad=5)
@@ -146,30 +151,97 @@ with open('data/chol_empirical.dill', 'rb') as file:
 # plt.close(fig) 
 
 # =============================================================================
-# 
+# Timing plots for Cholesky. 
 # =============================================================================
 
 # with open('data/chol_existing_timings.dill', 'rb') as file:
 #     chol_timings = dill.load(file) 
 
-# Timings.
-chol_timings = {"KAMBUROWSKI" : [0.016005605459213257, 0.17476089671254158, 0.6470920592546463, 1.5658568777143955, 3.069533459842205, 5.308403853327036, 8.511513352394104, 12.796787660568953],
-            "SCULLI" : [0.007865753024816513, 0.08773763850331306, 0.329572681337595, 0.7906846031546593, 1.5681733973324299, 2.6994655318558216, 4.334559187293053, 6.578559648245573],
-            "CorLCA" : [0.008354179561138153, 0.09211373329162598, 0.3452003374695778, 0.8503920026123524, 1.7388480640947819, 3.15724578499794, 5.352320522069931, 8.862768094986677],
-            "MC30" : [0.012329817000136245, 0.10397172600096383, 0.35158641899943177, 0.8688381270021637, 1.7252937270022812, 2.984788098003264, 5.028647627997998, 7.78117984200253]
-            }
+# colors = {"KAMBUROWSKI" : '#348ABD', "SCULLI" : '#8EBA42', "CorLCA" : '#988ED5', "MC30" : '#FBC15E'}
+# fig = plt.figure(dpi=400)
+# ax1 = fig.add_subplot(111)
+# for p in ["KAMBUROWSKI", "SCULLI", "CorLCA", "MC30"]:    
+#     ax1.plot(n_tasks, chol_timings[p], color=colors[p], label=p)
+# # plt.yscale('log')
+# ax1.set_xlabel("DAG SIZE", labelpad=5)
+# ax1.set_ylabel("TIME (SECONDS)", labelpad=5)
+# ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white') 
+# plt.savefig('{}/chol_existing_timings'.format(plot_path), bbox_inches='tight') 
+# plt.close(fig)
 
-colors = {"KAMBUROWSKI" : '#348ABD', "SCULLI" : '#8EBA42', "CorLCA" : '#988ED5', "MC30" : '#FBC15E'}
-fig = plt.figure(dpi=400)
-ax1 = fig.add_subplot(111)
-for p in ["KAMBUROWSKI", "SCULLI", "CorLCA", "MC30"]:    
-    ax1.plot(n_tasks, chol_timings[p], color=colors[p], label=p)
-# plt.yscale('log')
-ax1.set_xlabel("DAG SIZE", labelpad=5)
-ax1.set_ylabel("TIME (SECONDS)", labelpad=5)
-ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white') 
-plt.savefig('{}/chol_existing_timings'.format(plot_path), bbox_inches='tight') 
-plt.close(fig)
+# =============================================================================
+# Mean estimates for STG set.
+# =============================================================================
 
-                  
+# with open("{}/stg_mean.txt".format(summary_path), "w") as dest:
+#     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE EXPECTED VALUE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
+#     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
+    
+#     devs = {p : [] for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]}      
+#     abs_devs = {p : [] for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]}
+#     for dname in stg_empirical:
+#         ref = stg_empirical[dname]["NORMAL"][0]
+#         for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
+#             try:
+#                 m = stg_existing[dname][p].mu
+#             except AttributeError:
+#                 m = stg_existing[dname][p]
+#             d = 100 - (m / ref)*100
+#             devs[p].append(d)
+#             abs_devs[p].append(abs(d))
+            
+#     print("\n\n\nAVERAGE DEVIATIONS (%) FROM TRUE MEAN\n", file=dest)
+#     for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
+#         avg = np.mean(abs_devs[p])
+#         print("{} : {}".format(p, avg), file=dest)
+        
+#     print("\n\n\nMAXIMUM DEVIATIONS (%) FROM TRUE MEAN\n", file=dest)
+#     for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
+#         avg = max(abs_devs[p])
+#         print("{} : {}".format(p, avg), file=dest)
+    
+#     lower_viols = sum(1 for d in devs["KML"] if d < 0.0)
+#     upper_viols = sum(1 for d in devs["KMU"] if d > 0.0)
+#     print("\n\n\nNUMBER OF TIMES KAMBUROWSKI'S BOUNDS VIOLATED\n", file=dest)
+#     print("UPPER: {}".format(upper_viols), file=dest)
+#     print("LOWER: {}".format(lower_viols), file=dest)
+    
+# =============================================================================
+# Variance estimates for STG set.
+# =============================================================================
+
+with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
+    print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
+    print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
+    
+    devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
+    abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
+    for dname in stg_empirical:
+        ref = stg_empirical[dname]["NORMAL"][1]
+        for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+            try:
+                v = stg_existing[dname][p].var
+            except AttributeError:
+                v = stg_existing[dname][p]
+            d = 100 - (v / ref)*100
+            devs[p].append(d)
+            abs_devs[p].append(abs(d))
+            
+    print("\n\n\nAVERAGE DEVIATIONS (%) FROM TRUE VARIANCE\n", file=dest)
+    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+        avg = np.mean(abs_devs[p])
+        print("{} : {}".format(p, avg), file=dest)
+    
+    print("\n\n\nMAXIMUM DEVIATIONS (%) FROM TRUE VARIANCE\n", file=dest)
+    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+        avg = max(abs_devs[p])
+        print("{} : {}".format(p, avg), file=dest)
+    
+    lower_viols = sum(1 for d in devs["KVL"] if d < 0.0)
+    upper_viols = sum(1 for d in devs["KVU"] if d > 0.0)
+    print("\n\n\nNUMBER OF TIMES KAMBUROWSKI'S BOUNDS VIOLATED\n", file=dest)
+    print("UPPER: {}".format(upper_viols), file=dest)
+    print("LOWER: {}".format(lower_viols), file=dest)        
+    
+                
             
