@@ -573,7 +573,7 @@ In addition to the Cholesky DAG set, we also consider a set of randomly-generate
 
   This procedure yields a set of $180 \times 9 = 1620$ graphs. This is small compared to other empirical studies, reflecting the narrower scope of our investigation.
 
-\subsection{The assumptions of the CLT approach}
+\subsection{Investigating the CLT approach}
 \label{subsect.empirical_distribution}
 
 In this section we analyze different empirical longest path distributions for the graphs in our test sets, corresponding to different choices for the distributions that the weights follow. These empirical distributions are obtained using the Monte Carlo method with a large number of samples. Ultimately the aim of this investigation is to gauge how reasonable the assumptions underlying the CLT-based heuristics are for these graphs.   
@@ -581,12 +581,12 @@ In this section we analyze different empirical longest path distributions for th
 \subsubsection{Generating empirical distributions}
 \label{subsubsect.generating}
 
-For convenience we assume that all weights follow the same type of distribution and consider two different choices: normal and Gamma. The former was chosen as a ``best-case scenario'' for the CLT-based approach, since all path lengths are also exactly normal themselves in that case, while the latter is considered as it was a better fit for the Cholesky task timing distributions that we actually observed (see above). For each choice of weight distribution, the means and variances of the individual weights remain the same so realizations are simulated in the MC method by sampling from a distribution of the chosen type with the specified mean and variance. 
+For convenience we assume that all weights follow the same type of distribution and consider two different choices: normal and Gamma. The former was chosen as a ``best-case scenario'' for the CLT-based approach, since all path lengths are also exactly normal themselves in that case, while the latter is considered as it was a better fit for the Cholesky task timing distributions that we actually observed (see above). For each choice of weight distribution, the means and variances of the individual weights remain the same so realizations are simulated in the MC method by sampling from a distribution of the chosen type with the specified mean and variance. Since we assume all weights are non-negative, in the normal case, we resample until we get a valid value, so that technically the weights follow truncated normal distributions. This was never relevant for the Cholesky graphs since the weight means are typically much greater than the standard deviations, however it was often necessary for the STG graphs with larger coefficients of variation.     
 %"consider four different choices: normal, Gamma, beta and exponential."
 
 Time constraints restricted us to a maximum of about $100$,$000$ realizations for the largest graph in the Cholesky set, so we used that many samples for all of them. However, given the smaller size of the DAGs in the STG set, and with runtime constraints again in mind, we instead used only $10$,$000$ realizations of each graph in that case.
 
-The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the basic analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples $N$. For $N > 10$,$000$, Van Slyke's analysis suggests that the computed mean and variance estimates are likely to be within about $1\%$ of the true values. (As an aside, Van Slyke's analysis, albeit only intended to be rough, does not depend at all on the size of the graph, which seems counterintuitive. We therefore don't assume that the stated precision is necessarily correct but simply that the estimates are likely very good.)
+The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the basic analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples $N$. For $N > 10$,$000$, Van Slyke's analysis suggests that the computed mean and variance estimates are likely to be within about $1\%$ of the true values. (As an aside, Van Slyke's analysis, albeit only intended as a guide, does not depend at all on the size of the graph, which seems counterintuitive. We therefore don't assume that the stated precision is necessarily correct but simply that the estimates are likely very good.)
 
 % Truncated normal.
 
@@ -678,6 +678,7 @@ Although we have largely avoided discussing runtimes in this thesis so far becau
 		\label{tb.mc_timings}
 	\end{center}	
       \end{table}
+      % TODO: Should probably be timings for Gamma weights since that is the reference.
 
 %      Assuming that the longest path distribution is at least roughly normal, it is sufficient to obtain good estimates of its first two moments. This prompts the question: how many samples do we actually need to do this? For the Cholesky DAG set, this was largely a tale of two different moments. Taking the expected values and variances obtained for the full set of $100$,$000$ samples as a reference, we found that, for all of the graphs, the MC method was well within $1\%$ of the expected value after as few as $10$ samples (representing a runtime more than $9000$ times smaller than the full MC method, see Table \ref{tb.mc_timings}). The picture was more complex for the variance, as illustrated in Figure \ref{plot.mc_variance}, but we see that it was usually fairly tight after about 1000 samples as well. Of course, the Cholesky graphs considered here only represent a single family of schedules based on a single application. However, this does serve to demonstrate that it is often possible to converge to the mean and expected value of the longest path distribution after a fairly small number of samples.
 
@@ -691,18 +692,20 @@ Although we have largely avoided discussing runtimes in this thesis so far becau
 \subsection{Existing bounds and heuristics}
 \label{subsect.results_existing}
 
-Several bounds on both the moments and distribution function of the longest path were discussed in Section \ref{sect.bounds}. Given the conclusions of the previous section, from now on we will assume that the longest path distribution is at least roughly normal, so we are most interested in the former. Our experience in the previous chapter with Fulkerson's bound on the expected value suggests that in a scheduling context that approach can be impractically expensive, so we focus here largely on Kamburowski's bounds, since they have also received less attention in the literature. Furthermore, they are the only bounds we are aware of on the variance, which is of clear importance in tandem with the normality assumption. Note that although the bounds technically only hold for normally distributed weights, the CLT suggests that they may still be useful heuristically when that is not the case, since the longest path distribution is likely to be similar in any event, a conclusion largely supported by our results in the previous section. The reference solutions used here are based on Gamma weights (see below), so we also evaluate how useful they may be in that case.
+Several bounds on both the moments and distribution function of the longest path were discussed in Section \ref{sect.bounds}. Given the conclusions of the previous section, from now on we will assume that the longest path distribution is at least roughly normal, so we are most interested in the former. Our experience in the previous chapter with Fulkerson's bound on the expected value suggests that in a scheduling context that approach can be impractically expensive, so we focus here largely on Kamburowski's bounds, since they have also received less attention in the literature. Furthermore, they are the only bounds we are aware of on the variance, which is of clear importance in tandem with the normality assumption. Note that although the bounds technically only hold for normally distributed weights, the CLT suggests that they may still be useful heuristically when that is not the case, since the longest path distribution is likely to be similar in any event, a conclusion largely supported by our results in the previous section. The reference solutions used here assume Gamma weights, so we also evaluate how useful they may be in that case.
 
 Through extensive numerical experiments, Canon and Jeannot showed that the correlation-aware heuristics CorLCA and Cordyn, and the very similar canonical method, all achieved better approximations to the longest path distribution than Sculli's method, on average, for a diverse collection of stochastic graphs. However, they were all more expensive as well. The question is, is the gain in accuracy worth the extra cost in a scheduling context? After all, as we will see in the next chapter, there are examples of stochastic scheduling heuristics that take correlations into account, such as Rob-HEFT \cite{can10}, while there are others that do not, such as {\em stochastic dynamic level scheduling} (SDLS) \cite{li15}. Now, of the three correlation-aware heuristics considered by Canon and Jeannot, CorLCA arguably achieved the best balance of speed and accuracy, so we consider only that as an alternative to Sculli's method here.
 
 Since both heuristics assume that the longest path distribution is normal, in order to evaluate the quality of their solutions we consider the mean and variance estimates separately. This also allows us to compare the quality of the approximations with Kamburowski's bounds. As reference solutions, we use the sample means and variances of the full empirical distributions (with Gamma distributed weights) obtained in Section \ref{subsect.empirical_distribution}; all of the provisos offered there with regards to their quality should therefore always be borne in mind.
-% Normal or Gamma weights for reference solutions?
-% Mention MC30 here and specify it's with normal weights since faster.
+% Mention MC30 here and specify it's with normal weights since faster. Assumption is that distribution isn't known so will use the fastest.
 
 \subsubsection{Expected value}
 \label{subsubsect.existing_mean}
 
-First, the mean. Table \ref{tb.mean_existing} summarizes the three formal bounds as a percentage of the reference solution for the Cholesky graph set. We see that both lower bounds are very tight. Kamburowski's bound improves on the CPM but the gains are negligible. The upper bound is looser, although even in the worst case it was no more than $19\%$ greater than the true value. The heuristic solutions are omitted from the table because they were almost always within $0.1\%$ of the reference mean. Despite this seemingly impressive accuracy, it should be noted they were actually less precise than the Monte Carlo method with as few as $10$ samples, even when the weight distributions are assumed to be normal for the simulations; this alternative was also cheaper in our implementation (more on this later). It is also interesting to observe that Sculli's method obtained superior estimates than CorLCA for the four largest DAGs. It isn't clear if this is just a fluke because of how close both solutions are to the true mean, or if it suggests that the accumulation of approximation errors can negatively influence CorLCA for larger DAGs. 
+First, the mean. Table \ref{tb.mean_existing} summarizes the three formal bounds as a percentage of the reference solution for the Cholesky graph set. We see that both lower bounds are very tight. Kamburowski's bound improves on the CPM but the gains are negligible. The upper bound is looser, although even in the worst case it was no more than $19\%$ greater than the true value. Note that despite the fact that the reference solutions do not assume normal weights, both the upper and lower bounds actually hold for all of the graphs.
+
+The heuristic solutions are omitted from the table because they were almost always within $0.1\%$ of the reference mean. Although all three were therefore very good, MC30 was consistently superior to the others; indeed, even the Monte Carlo solution with as few as $10$ samples was more accurate than Sculli's method and CorLCA. It is also interesting to observe that Sculli's method obtained superior estimates than CorLCA for the four largest DAGs. It isn't clear if this is just a fluke because of how close both solutions are to the true mean, or if it suggests that the accumulation of approximation errors can negatively influence CorLCA for larger DAGs.
+% Straight to MC30 (which is defined above)?
 
 \begin{table}
 	\caption{Bounds on the expected value for Cholesky DAGs, as a percentage of the reference solution.} 
@@ -713,16 +716,16 @@ First, the mean. Table \ref{tb.mean_existing} summarizes the three formal bounds
                   \cmidrule{2-9}
 			& $35$ & $220$ & $680$ & $1540$ & $2925$ & $4960$ & $7770$ & $11480$\\
 			\cmidrule{1-9}
-			CPM & $99.5$ & $98.9$ & $98.5$ & $98.7$ & $99.2$ & $99.2$ & $99.4$ & $99.5$\\
-                  K. lower & $99.9$ & $99.3$ & $98.8$ & $99.1$ & $99.4$ & $99.3$ & $99.5$ & $99.6$\\
-                  K. upper & $100.9$ & $104.0$ & $110.2$ & $118.5$ & $116.6$ & $114.0$ & $112.4$ & $111.5$\\
+			CPM & $99.5$ & $99.1$ & $98.6$ & $98.9$ & $99.2$ & $99.3$ & $99.4$ & $99.5$\\
+                  K. lower & $99.9$ & $99.4$ & $98.9$ & $99.2$ & $99.4$ & $99.4$ & $99.5$ & $99.6$\\
+                  K. upper & $100.9$ & $104.2$ & $110.3$ & $118.7$ & $116.6$ & $114.1$ & $112.4$ & $111.5$\\
 			\bottomrule
 		\end{tabular}
 		\label{tb.mean_existing}
 	\end{center}	
       \end{table}
 
-      Although obviously desirable, the fact that all of the bounds and approximations do so well for the Cholesky set makes evaluating their relative performance difficult. To gauge how they perform in the general case, we repeated the comparison for the STG set. Overall, the comparative performance was similar, as can be seen from Figure \ref{plot.stg_mean}, which shows the average deviation (in magnitude) from the true mean for the bounds and heuristics across the entire set of $1620$ graphs. Kamburowski's upper bound is omitted from the figure as it was significantly worse than the others at just under $19\%$. The biggest takeaway from the figure is that, on average, CorLCA does improve on both Sculli's method and MC30 this time.
+      Although obviously desirable, the fact that all of the bounds and approximations do so well for the Cholesky set makes evaluating their relative performance difficult. To gauge how they perform in the general case, we repeated the comparison for the STG set. Overall, the comparative performance was somewhat similar, as can be seen from Figure \ref{plot.stg_mean}, which shows the average deviation (in magnitude) from the true mean for the bounds and heuristics across the entire set of $1620$ graphs. However, this time CorLCA is superior on average to Sculli's method and MC30. Furthermore, it obtained better estimates of the mean for $97\%$ and $76\%$ of the graphs, respectively. Note that Kamburowski's upper bound is omitted from the figure as the average deviation was significantly higher than the others at $19\%$. The lower bound however is typically tight, actually providing a better estimate of the mean on average than Sculli's method. As stated above, Kamburowski's bounds do not actually hold here since the reference solution assumes Gamma weights, and they were both occasionally violated: the upper about $0.5\%$ of the time and the lower for just over $7\%$ of DAGs. Violations were also more severe for the lower ``bound'', which in the worst case was actually about $7\%$ greater than the reference solution.     
 
       \begin{figure}
 	\centering	
@@ -733,17 +736,15 @@ First, the mean. Table \ref{tb.mean_existing} summarizes the three formal bounds
       \end{figure}
 
 
-      % Violations...
 
 
       \subsubsection{Variance}
 \label{subsubsect.existing_variance}
 
-Unfortunately, the bounds and approximations to the variance were generally much less accurate than for the mean, as shown for the Cholesky DAGs in Figure \ref{plot.variance_existing} (note the logarithmic scale on the $y$-axis) and the STG graphs in Figure \ref{plot.stg_var}. Kamburowski's lower bound in particular is extremely loose, generally being only about $1\%$ of the true value in all cases. The upper bound is somewhat tighter, although it was still about five times larger than the true value for the Cholesky graphs and on average more than $60\%$ greater for the STG graphs. Depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions.
-% Comment here how often they're violated? Looking on the bright side, one advantage of their lassitude is that they're almost never violated even when weights aren't normal: we recorded only seven violations of the upper bound for Gamma weights and none for the lower...
+Unfortunately, the bounds and approximations to the variance were much less accurate than for the mean, as shown for the Cholesky DAGs in Figure \ref{plot.variance_existing} (note the logarithmic scale on the $y$-axis) and the STG graphs in Figure \ref{plot.stg_var}. Kamburowski's lower bound in particular is extremely loose, generally being only about $1\%$ of the true value in all cases. The upper bound is somewhat tighter, although it was still about five times larger than the true value for the Cholesky graphs and on average more than $60\%$ greater for the STG graphs. Depending on the application, these bounds may still be useful but this seems unlikely to be the case when making scheduling decisions. Looking on the bright side, one advantage of their lassitude is that they were almost never violated even though our reference solutions assume Gamma weights: we recorded only seven small violations of the upper bound and none for the lower.
+% Violated by how much?
 
-With regard to the heuristics, CorLCA is consistently better than Sculli's method. It also betters MC30 on average for the STG graphs. However, although it does quite well for the smallest three Cholesky DAGs, after this its performance declines, returning variance estimates that are orders of magnitude smaller than the true value for the larger graphs (albeit still better than Sculli's). There are several possible explanations for this apparent poor behavior for large graphs. The simplest is that this is illusory and in fact the problem is that the reference solutions do not represent enough samples to capture the true variance of large graphs. Disregarding this possibility for the moment, it may be that the accumulation of approximation errors becomes much more significant as the size of the DAG increases. An observation supporting this is that the longest path estimates computed by the forward and backward variants of the two heuristics can vary considerably, especially with regards to the variance... As noted in Section \ref{sect.path_heuristic}, this effect can perhaps be alleviated by considering paths through the DAG in their entirety, an approach we evaluate empirically in the next section. 
-% Could also be similar length paths...
+With regard to the heuristics, CorLCA is consistently better than Sculli's method. It also betters MC30 on average for the STG graphs. However, although it does quite well for the smallest three Cholesky DAGs, after this its performance declines, returning variance estimates that are orders of magnitude smaller than the true value for the larger graphs (albeit still better than Sculli's). There are several possible explanations for this apparent poor behavior for large graphs. The simplest is that this is illusory and in fact the problem is that the reference solutions do not represent enough samples to capture the true variance of large graphs. Disregarding this possibility for the moment, the cause could instead be the accumulation of approximation errors when computing maximizations. An observation supporting this is that the variance estimates computed by the forward and backward variants of CorLCA can vary considerably, as shown in Table \ref{tb.corlca_direction}. As noted in Section \ref{sect.path_heuristic}, this effect can perhaps be alleviated by considering paths through the DAG in their entirety, an approach we consider in Section \ref{subsect.results_paths}. 
 
       \begin{figure}
 	\centering	
@@ -753,29 +754,26 @@ With regard to the heuristics, CorLCA is consistently better than Sculli's metho
       \end{figure}
       %MC30 denotes the Monte Carlo solution with 30 realizations.
 
-      %\begin{table}
-	% \caption{Variance estimates for forward and backward variants of Sculli's method and CorLCA.} 
-      %   \begin{center}	
-      %   	\begin{tabular}{c c c c c c c}
-      %             \toprule
-      %             && \multicolumn{2}{c}{Sculli} && \multicolumn{2}{c}{CorLCA} \\
-      %             \cmidrule{3-4} \cmidrule{6-7}
-      %             DAG size & Actual & Forward & Backward && Forward & Backward \\
-      %             \cmidrule{1-7}
-      %             $35$ & $153.0$ & $114.8$ & $96.9$ && $151.8$ & $152.8$\\
-      %             $220$ & $302.0$ & $113.1$ & $89.2$ && $271.5$ & $219.2$ \\
-      %             $680$ & $895.3$ &$157.5$ & $104.7$ && $784.2$ &  $482.0$\\
-      %             $1540$ & $2393.9$ & $95.4$ & $105.9$ && $418.4$ & $704.7$ \\
-      %             $2925$ & $4621.6$ & $162.9$ & $105.8$ && $819.1$ & $878.5$ \\
-      %             $4960$ & $8363.6$ & $109.1$ & $105.9$ && $549.5$ & $1137.9$ \\
-      %             $7770$ & $13342.4$ &$120.1$ & $105.8$ && $502.4$ & $1243.6$ \\
-      %             $11480$ & $19913.2$ &$139.2$ & $105.8$ && $841.3$ & $1419.2$ \\
-      %   	\bottomrule
-      %   	\end{tabular}
-      %   	\label{tb.direction_var}
-      %   \end{center}	
-      % \end{table}
-      % TODO: check weird Sculli backward values.
+      \begin{table}
+	\caption{Variance estimates for Cholesky DAGs computed by forward and backward variants of CorLCA.} 
+        \begin{center}	
+        	\begin{tabular}{c c c c}
+                  \toprule
+                  DAG size & Reference & Forward & Backward \\
+                  \cmidrule{1-4}
+                  $35$ & $153.0$ & $151.8$ & $152.8$\\
+                  $220$ & $302.0$ & $271.5$ & $219.2$ \\
+                  $680$ & $895.3$ & $784.2$ & $482.0$\\
+                  $1540$ & $2393.9$ & $418.4$ & $704.7$ \\
+                  $2925$ & $4621.6$ & $819.1$ & $878.5$ \\
+                  $4960$ & $8363.6$ & $549.5$ & $1137.9$ \\
+                  $7770$ & $13342.4$ & $502.4$ & $1243.6$ \\
+                  $11480$ & $19913.2$ & $841.3$ & $1419.2$ \\
+        	\bottomrule
+        	\end{tabular}
+        	\label{tb.corlca_direction}
+        \end{center}	
+      \end{table}
 
       \subsubsection{Practical considerations}
 \label{subsubsect.existing_practical}
@@ -793,7 +791,7 @@ With regard to the heuristics, CorLCA is consistently better than Sculli's metho
 % (note the logarithmic scale on the $y$-axis)
 
 \subsection{Path reduction}
-\label{subsect.results_path_reduction}
+\label{subsect.results_paths}
 
 Compare path based alternatives...
 

@@ -192,21 +192,27 @@ with open('data/stg_empirical.dill', 'rb') as file:
 #     print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
 #     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)    
             
-#     print("\n\n\nAVERAGE DEVIATIONS (%) FROM TRUE MEAN\n", file=dest)
+#     print("\n\n\nDEVIATIONS (%) FROM TRUE MEAN", file=dest)
 #     for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
 #         avg = np.mean(abs_devs[p])
-#         print("{} : {}".format(p, avg), file=dest)
-        
-#     print("\n\n\nMAXIMUM DEVIATIONS (%) FROM TRUE MEAN\n", file=dest)
-#     for p in ["PERT", "KML", "KMU", "SCULLI", "CorLCA", "MC30"]:
-#         avg = max(abs_devs[p])
-#         print("{} : {}".format(p, avg), file=dest)
+#         mx = max(abs_devs[p])
+#         print("{} : avg = {}, max = {}".format(p, avg, mx), file=dest)
+    
+#     print("\n\n\nPERCENTAGE OF TIMES BETTER", file=dest)         
+#     cvs = sum(1 for c, s in zip(abs_devs["CorLCA"], abs_devs["SCULLI"]) if c < s)
+#     print("CorLCA vs SCULLI : {}".format((cvs/1620)*100), file=dest)
+#     cvm = sum(1 for c, mc in zip(abs_devs["CorLCA"], abs_devs["MC30"]) if c < mc)
+#     print("CorLCA vs MC30 : {} ".format((cvm/1620)*100), file=dest)
+#     mvs = sum(1 for mc, s in zip(abs_devs["MC30"], abs_devs["SCULLI"]) if mc < s)
+#     print("MC30 vs Sculli : {} ".format((mvs/1620)*100), file=dest)
     
 #     lower_viols = sum(1 for d in devs["KML"] if d < 0.0)
+#     max_lower_viol = abs(min(devs["KML"]))
 #     upper_viols = sum(1 for d in devs["KMU"] if d > 0.0)
-#     print("\n\n\nNUMBER OF TIMES KAMBUROWSKI'S BOUNDS VIOLATED\n", file=dest)
-#     print("UPPER: {}".format(upper_viols), file=dest)
-#     print("LOWER: {}".format(lower_viols), file=dest)
+#     max_upper_viol = max(devs["KMU"])
+#     print("\n\n\nVIOLATIONS OF KAMBUROWSKI'S BOUNDS (%, worst)", file=dest)
+#     print("UPPER: ({}, {})".format((upper_viols/1620)*100, max_upper_viol), file=dest)
+#     print("LOWER: ({}, {})".format((lower_viols/1620)*100, max_lower_viol), file=dest)
     
 # # Histogram.
 # sols = ["PERT", "KML", "SCULLI", "CorLCA", "MC30"]
@@ -245,34 +251,40 @@ with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
     print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
                 
-    print("\n\n\nAVERAGE DEVIATIONS (%) FROM TRUE VARIANCE\n", file=dest)
+    print("\n\n\nDEVIATIONS (%) FROM TRUE VARIANCE", file=dest)
     for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
         avg = np.mean(abs_devs[p])
-        print("{} : {}".format(p, avg), file=dest)
-    
-    print("\n\n\nMAXIMUM DEVIATIONS (%) FROM TRUE VARIANCE\n", file=dest)
-    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
-        avg = max(abs_devs[p])
-        print("{} : {}".format(p, avg), file=dest)
+        mx = max(abs_devs[p])
+        print("{} : avg = {}, max = {}".format(p, avg, mx), file=dest)   
+        
+    print("\n\n\nPERCENTAGE OF TIMES BETTER", file=dest)         
+    cvs = sum(1 for c, s in zip(abs_devs["CorLCA"], abs_devs["SCULLI"]) if c < s)
+    print("CorLCA vs SCULLI : {}".format((cvs/1620)*100), file=dest)
+    cvm = sum(1 for c, mc in zip(abs_devs["CorLCA"], abs_devs["MC30"]) if c < mc)
+    print("CorLCA vs MC30 : {} ".format((cvm/1620)*100), file=dest)
+    mvs = sum(1 for mc, s in zip(abs_devs["MC30"], abs_devs["SCULLI"]) if mc < s)
+    print("MC30 vs Sculli : {} ".format((mvs/1620)*100), file=dest)
     
     lower_viols = sum(1 for d in devs["KVL"] if d < 0.0)
+    max_lower_viol = abs(min(devs["KVL"]))
     upper_viols = sum(1 for d in devs["KVU"] if d > 0.0)
-    print("\n\n\nNUMBER OF TIMES KAMBUROWSKI'S BOUNDS VIOLATED\n", file=dest)
-    print("UPPER: {}".format(upper_viols), file=dest)
-    print("LOWER: {}".format(lower_viols), file=dest)        
+    max_upper_viol = max(devs["KVU"])
+    print("\n\n\nVIOLATIONS OF KAMBUROWSKI'S BOUNDS (%, worst)", file=dest)
+    print("UPPER: ({}, {})".format((upper_viols/1620)*100, max_upper_viol), file=dest)
+    print("LOWER: ({}, {})".format((lower_viols/1620)*100, max_lower_viol), file=dest)      
 
-# Histogram.
-sols = ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]
-avgs = [np.mean(abs_devs[p]) for p in sols]    
-x = np.arange(len(sols))
-colors = ['#E24A33', '#348ABD', '#8EBA42', '#988ED5', '#FBC15E']
-fig = plt.figure(dpi=400)
-ax1 = fig.add_subplot(111)
-ax1.bar(sols, avgs, color=colors, edgecolor='white')             
-ax1.set_xticks(x)
-ax1.set_xticklabels(["K. LOWER", "K. UPPER", "SCULLI", "CorLCA", "MC30"]) 
-ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
-ax1.set_title("VARIANCE", weight='bold')
-plt.savefig('{}/stg_existing_var'.format(plot_path), bbox_inches='tight') 
-plt.close(fig) 
+# # Histogram.
+# sols = ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]
+# avgs = [np.mean(abs_devs[p]) for p in sols]    
+# x = np.arange(len(sols))
+# colors = ['#E24A33', '#348ABD', '#8EBA42', '#988ED5', '#FBC15E']
+# fig = plt.figure(dpi=400)
+# ax1 = fig.add_subplot(111)
+# ax1.bar(sols, avgs, color=colors, edgecolor='white')             
+# ax1.set_xticks(x)
+# ax1.set_xticklabels(["K. LOWER", "K. UPPER", "SCULLI", "CorLCA", "MC30"]) 
+# ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
+# ax1.set_title("VARIANCE", weight='bold')
+# plt.savefig('{}/stg_existing_var'.format(plot_path), bbox_inches='tight') 
+# plt.close(fig) 
             
