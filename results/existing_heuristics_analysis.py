@@ -233,45 +233,45 @@ with open('data/stg_empirical.dill', 'rb') as file:
 # Variance estimates for STG set.
 # =============================================================================
 
-devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
-abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
-for dname in stg_empirical:
-    ref = stg_empirical[dname]["GAMMA"][1]
-    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
-        try:
-            v = stg_existing[dname][p].var
-        except AttributeError:
-            v = stg_existing[dname][p]
-        d = 100 - (v / ref)*100
-        devs[p].append(d)
-        abs_devs[p].append(abs(d))
+# devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
+# abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
+# for dname in stg_empirical:
+#     ref = stg_empirical[dname]["GAMMA"][1]
+#     for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+#         try:
+#             v = stg_existing[dname][p].var
+#         except AttributeError:
+#             v = stg_existing[dname][p]
+#         d = 100 - (v / ref)*100
+#         devs[p].append(d)
+#         abs_devs[p].append(abs(d))
 
-with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
-    print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
-    print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
-    print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
+# with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
+#     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
+#     print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
+#     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
                 
-    print("\n\n\nDEVIATIONS (%) FROM TRUE VARIANCE", file=dest)
-    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
-        avg = np.mean(abs_devs[p])
-        mx = max(abs_devs[p])
-        print("{} : avg = {}, max = {}".format(p, avg, mx), file=dest)   
+#     print("\n\n\nDEVIATIONS (%) FROM TRUE VARIANCE", file=dest)
+#     for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+#         avg = np.mean(abs_devs[p])
+#         mx = max(abs_devs[p])
+#         print("{} : avg = {}, max = {}".format(p, avg, mx), file=dest)   
         
-    print("\n\n\nPERCENTAGE OF TIMES BETTER", file=dest)         
-    cvs = sum(1 for c, s in zip(abs_devs["CorLCA"], abs_devs["SCULLI"]) if c < s)
-    print("CorLCA vs SCULLI : {}".format((cvs/1620)*100), file=dest)
-    cvm = sum(1 for c, mc in zip(abs_devs["CorLCA"], abs_devs["MC30"]) if c < mc)
-    print("CorLCA vs MC30 : {} ".format((cvm/1620)*100), file=dest)
-    mvs = sum(1 for mc, s in zip(abs_devs["MC30"], abs_devs["SCULLI"]) if mc < s)
-    print("MC30 vs Sculli : {} ".format((mvs/1620)*100), file=dest)
+#     print("\n\n\nPERCENTAGE OF TIMES BETTER", file=dest)         
+#     cvs = sum(1 for c, s in zip(abs_devs["CorLCA"], abs_devs["SCULLI"]) if c < s)
+#     print("CorLCA vs SCULLI : {}".format((cvs/1620)*100), file=dest)
+#     cvm = sum(1 for c, mc in zip(abs_devs["CorLCA"], abs_devs["MC30"]) if c < mc)
+#     print("CorLCA vs MC30 : {} ".format((cvm/1620)*100), file=dest)
+#     mvs = sum(1 for mc, s in zip(abs_devs["MC30"], abs_devs["SCULLI"]) if mc < s)
+#     print("MC30 vs Sculli : {} ".format((mvs/1620)*100), file=dest)
     
-    lower_viols = sum(1 for d in devs["KVL"] if d < 0.0)
-    max_lower_viol = abs(min(devs["KVL"]))
-    upper_viols = sum(1 for d in devs["KVU"] if d > 0.0)
-    max_upper_viol = max(devs["KVU"])
-    print("\n\n\nVIOLATIONS OF KAMBUROWSKI'S BOUNDS (%, worst)", file=dest)
-    print("UPPER: ({}, {})".format((upper_viols/1620)*100, max_upper_viol), file=dest)
-    print("LOWER: ({}, {})".format((lower_viols/1620)*100, max_lower_viol), file=dest)      
+#     lower_viols = sum(1 for d in devs["KVL"] if d < 0.0)
+#     max_lower_viol = abs(min(devs["KVL"]))
+#     upper_viols = sum(1 for d in devs["KVU"] if d > 0.0)
+#     max_upper_viol = max(devs["KVU"])
+#     print("\n\n\nVIOLATIONS OF KAMBUROWSKI'S BOUNDS (%, worst)", file=dest)
+#     print("UPPER: ({}, {})".format((upper_viols/1620)*100, max_upper_viol), file=dest)
+#     print("LOWER: ({}, {})".format((lower_viols/1620)*100, max_lower_viol), file=dest)      
 
 # # Histogram.
 # sols = ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]

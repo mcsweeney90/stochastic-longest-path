@@ -27,7 +27,7 @@
 \BOOKMARK [2][-]{subsection.6.3}{Existing bounds and heuristics}{section.6}% 27
 \BOOKMARK [3][-]{subsubsection.6.3.1}{Expected value}{subsection.6.3}% 28
 \BOOKMARK [3][-]{subsubsection.6.3.2}{Variance}{subsection.6.3}% 29
-\BOOKMARK [3][-]{subsubsection.6.3.3}{Practical considerations}{subsection.6.3}% 30
+\BOOKMARK [3][-]{subsubsection.6.3.3}{Efficiency}{subsection.6.3}% 30
 \BOOKMARK [2][-]{subsection.6.4}{Path reduction}{section.6}% 31
 \BOOKMARK [2][-]{subsection.6.5}{Updating the finish time}{section.6}% 32
 \BOOKMARK [1][-]{section.7}{Conclusions}{}% 33

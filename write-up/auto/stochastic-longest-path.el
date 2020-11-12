@@ -115,7 +115,7 @@
     "subsubsect.existing_variance"
     "plot.variance_existing"
     "tb.corlca_direction"
-    "subsubsect.existing_practical"
+    "subsubsect.existing_efficiency"
     "plot.chol_existing_timings"
     "subsect.results_paths"
     "subsect.results_updating"
