@@ -125,7 +125,7 @@ class RV:
         cdf_minus = norm.cdf(-b)
         pdf_b = norm.pdf(b) 
         
-        mu = mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
+        mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
         var = (self.mu**2 + self.var) * cdf_minus
         var += (other.mu**2 + other.var) * cdf_b
         var -= (self.mu + other.mu) * a * pdf_b
@@ -135,29 +135,54 @@ class RV:
 class Path:
     """
     Path class - basically a collection of RVs.
+    members is an (ordered) dict {task/edge ID : RV}
     """
-    def __init__(self, mu=0.0, var=0.0, members=None): 
-        self.mu = mu
-        self.var = var
+    def __init__(self, length=RV(0.0, 0.0), members={}): 
+        self.length = length
         self.members = members
-        self.member_ids = list(m.ID for m in self.members) # TODO: edges.
-    def __repr__(self):
-        return list(t.ID for t in self.members)
-    # Overload addition operator.
-    def __add__(self, other): 
-        if isinstance(other, RV):
-            self.members.append(other)
-            P = Path(self.mu + other.mu, self.var + other.var, self.members)
-            P.member_ids = list(m.ID for m in P.members)
-            return P
-        return 
-    __radd__ = __add__     
+    def __repr__(self): # TODO.
+        rep = ""
+        for k in self.members.keys():
+            if type(k) == tuple:
+                continue
+            rep += (str(k) + "-") 
+        return rep  
+    def __add__(self, other): # TODO: create new path?
+        new = Path()
+        new.length = self.length + other # Float, int or RV...
+        new.members = {k:v for k, v in self.members.items()}
+        try:
+            new.members[other.ID] = RV(other.mu, other.var) # Biggest issue is that edges don't have IDs...
+        except AttributeError:
+            pass            
+        return new
+    __radd__ = __add__ 
     def get_rho(self, other):
         common_var = 0.0
-        for sm in self.members:
-            if sm.ID in other.members:
-                common_var += sm.var          
-        return common_var**2 / (np.sqrt(self.var)*np.sqrt(other.var))
+        for k in self.members:
+            try:
+                common_var += other.members[k].var
+            except KeyError:
+                pass         
+        return common_var**2 / (np.sqrt(self.length.var)*np.sqrt(other.length.var))
+    def get_max_rho(self, maximand):
+        if len(maximand) == 2:
+            eps, nu = maximand
+            r = eps.get_rho(nu)
+            a = np.sqrt(eps.length.var + nu.length.var - 2 * np.sqrt(eps.length.var) * np.sqrt(nu.length.var) * r)
+            b = (eps.length.mu - nu.length.mu) / a
+            cdf_b = norm.cdf(b)
+            cdf_minus = norm.cdf(-b)
+            pdf_b = norm.pdf(b)             
+            mu = eps.length.mu * cdf_b + nu.length.mu * cdf_minus + a * pdf_b      
+            var = (eps.length.mu**2 + eps.length.var) * cdf_b
+            var += (nu.length.mu**2 + nu.length.var) * cdf_minus
+            var += (eps.length.mu + nu.length.mu) * a * pdf_b
+            var -= mu**2 
+            r1 = self.get_rho(eps)
+            r2 = self.get_rho(nu)
+            return (np.sqrt(eps.length.var) * r1 * cdf_b + np.sqrt(nu.length.var) * r2 * cdf_minus)/var           
+            
 
 class CRV:
     """
@@ -250,7 +275,8 @@ class SDAG:
                     eps = np.random.uniform(0.9, 1.1)
                     sig = eps * cov * mu
                     var = sig**2
-                    self.graph[p][t]['weight'] = RV(mu, var)
+                    self.graph[p][t]['weight'] = RV(mu, var) 
+                    # TODO: add ID = (parent, child)? Would make some things easier but would have to re-run some code...
         
     def realize(self, static=False, dist="NORMAL", percentile=None, fixed=set()):  
         """
@@ -294,12 +320,14 @@ class SDAG:
         """            
         Z = {} 
         if return_path:
-            path = {}
+            paths = {} 
         for t in self.top_sort:
             start_length = 0.0
-            if return_path:
-                path[t.ID] = [t.ID]
-            for p in self.graph.predecessors(t):
+            parents = list(self.graph.predecessors(t))
+            if return_path and not len(parents):
+                P = Path() + t
+                paths[t.ID] = P
+            for p in parents:
                 st = Z[p.ID]
                 try:
                     st += self.graph[p][t]['weight'].realization
@@ -307,10 +335,15 @@ class SDAG:
                     pass
                 start_length = max(start_length, st) 
                 if return_path and start_length == st:
-                    path[t.ID] = path[p.ID] + [t.ID]                    
+                    edge_weight = self.graph[p][t]['weight'] # To handle fact that edge RVs don't have an ID. Will fix but would have to re-run code.
+                    try:
+                        edge_weight.ID = (p.ID, t.ID)
+                    except AttributeError:
+                        pass
+                    paths[t.ID] = paths[p.ID] + edge_weight + t   # TODO: create new path?   
             Z[t.ID] = t.realization + start_length  
         if return_path:
-            return Z[self.top_sort[-1].ID], path[self.top_sort[-1].ID]                                                     
+            return Z[self.top_sort[-1].ID], paths[self.top_sort[-1].ID]                                                     
         return Z[self.top_sort[-1].ID]   # Assumes single exit task.  
     
     def monte_carlo(self, samples, dist="NORMAL", fixed={}, path_info=False):
@@ -776,11 +809,22 @@ class SDAG:
                 paths[t.ID] = sum(paths[p.ID] for p in parents)                
         return paths        
     
-    def get_longest_paths(self, mc=True, samples=None, epsilon=None):
+    def get_longest_paths(self, mc=True, samples=30, epsilon=None):
         """TODO."""
         
         if mc:
-            return
+            longest_paths = []  
+            unique = set()
+            for _ in range(samples):
+                self.realize()
+                lp, P = self.real_longest_path(return_path=True)
+                check = tuple(P.members.keys()) 
+                # print(check)
+                if check not in unique:
+                    longest_paths.append(P)
+                    unique.add(check)                
+            self.reset()
+            return longest_paths        
         
         candidates = {}        
         for t in self.top_sort:
@@ -918,4 +962,45 @@ def fover(X):
     elif len(X) == 2:
         return h(X[0].mu, X[0].var, X[1].mu, X[1].var)
     else:
-        return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)              
+        return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)   
+
+def CFP(S, path_reduction="MC", samples=30, epsilon=0.01, max_type="SCULLI"):
+    """
+    Parameters
+    ----------
+    S : TYPE
+        DESCRIPTION.
+    path_reduction : TYPE, optional
+        DESCRIPTION. The default is "MC".
+    samples : TYPE, optional
+        DESCRIPTION. The default is 30.
+    epsilon : TYPE, optional
+        DESCRIPTION. The default is 0.01.
+
+    Returns
+    -------
+    None.
+    """          
+    
+    # Identify the paths.
+    candidates = S.get_longest_paths(samples=30)
+    
+    # Compute their maximization.
+    lp = candidates[0].length
+    if max_type == "SCULLI":
+        for path in candidates[1:]:
+            lp = lp.clark_max(path.length)
+    elif max_type == "CorLCA":
+        dom_path = candidates[0]
+        for path in candidates[1:]:
+            r = path.get_rho(dom_path)
+            if path.length.mu > lp.mu:
+                dom_path = path
+            lp = lp.clark_max(path.length, rho=r)
+    elif max_type == "CORDYN":
+        for i, path in enumerate(candidates[1:]):
+            r = path.get_max_rho(candidates[i + 1:]) # TODO.
+            lp = lp.clark_max(path.length, rho=r)            
+    return lp
+            
+    

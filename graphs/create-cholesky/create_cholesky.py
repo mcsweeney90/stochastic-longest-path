@@ -198,7 +198,7 @@ for nb in nbs:
                     target_type = platform.workers[s.where_scheduled].type 
                     mu = t.comm_costs[source_type + target_type][s.ID]
                     var = variances[s.type][source_type + target_type]
-                    w = RV(mu, var)
+                    w = RV(mu, var) # TODO: add ID = (parent, child)? Would make some things easier but would have to re-run some code...
                     G[n][c]['weight'] = w
         
         # Add transitive edges.

@@ -225,7 +225,7 @@ with open('data/stg_empirical.dill', 'rb') as file:
 # ax1.set_xticks(x)
 # ax1.set_xticklabels(["CPM", "K. LOWER", "SCULLI", "CorLCA", "MC30"]) 
 # ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
-# ax1.set_title("MEAN", weight='bold')
+# # ax1.set_title("MEAN", weight='bold')
 # plt.savefig('{}/stg_existing_mean'.format(plot_path), bbox_inches='tight') 
 # plt.close(fig) 
     
@@ -233,18 +233,18 @@ with open('data/stg_empirical.dill', 'rb') as file:
 # Variance estimates for STG set.
 # =============================================================================
 
-# devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
-# abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
-# for dname in stg_empirical:
-#     ref = stg_empirical[dname]["GAMMA"][1]
-#     for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
-#         try:
-#             v = stg_existing[dname][p].var
-#         except AttributeError:
-#             v = stg_existing[dname][p]
-#         d = 100 - (v / ref)*100
-#         devs[p].append(d)
-#         abs_devs[p].append(abs(d))
+devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]}      
+abs_devs = {p : [] for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]} 
+for dname in stg_empirical:
+    ref = stg_empirical[dname]["GAMMA"][1]
+    for p in ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]:
+        try:
+            v = stg_existing[dname][p].var
+        except AttributeError:
+            v = stg_existing[dname][p]
+        d = 100 - (v / ref)*100
+        devs[p].append(d)
+        abs_devs[p].append(abs(d))
 
 # with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
 #     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
@@ -273,18 +273,18 @@ with open('data/stg_empirical.dill', 'rb') as file:
 #     print("UPPER: ({}, {})".format((upper_viols/1620)*100, max_upper_viol), file=dest)
 #     print("LOWER: ({}, {})".format((lower_viols/1620)*100, max_lower_viol), file=dest)      
 
-# # Histogram.
-# sols = ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]
-# avgs = [np.mean(abs_devs[p]) for p in sols]    
-# x = np.arange(len(sols))
-# colors = ['#E24A33', '#348ABD', '#8EBA42', '#988ED5', '#FBC15E']
-# fig = plt.figure(dpi=400)
-# ax1 = fig.add_subplot(111)
-# ax1.bar(sols, avgs, color=colors, edgecolor='white')             
-# ax1.set_xticks(x)
-# ax1.set_xticklabels(["K. LOWER", "K. UPPER", "SCULLI", "CorLCA", "MC30"]) 
-# ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
+# Histogram.
+sols = ["KVL", "KVU", "SCULLI", "CorLCA", "MC30"]
+avgs = [np.mean(abs_devs[p]) for p in sols]    
+x = np.arange(len(sols))
+colors = ['#E24A33', '#348ABD', '#8EBA42', '#988ED5', '#FBC15E']
+fig = plt.figure(dpi=400)
+ax1 = fig.add_subplot(111)
+ax1.bar(sols, avgs, color=colors, edgecolor='white')             
+ax1.set_xticks(x)
+ax1.set_xticklabels(["K. LOWER", "K. UPPER", "SCULLI", "CorLCA", "MC30"]) 
+ax1.set_ylabel("AVERAGE DEVIATION (%)", labelpad=5)
 # ax1.set_title("VARIANCE", weight='bold')
-# plt.savefig('{}/stg_existing_var'.format(plot_path), bbox_inches='tight') 
-# plt.close(fig) 
+plt.savefig('{}/stg_existing_var'.format(plot_path), bbox_inches='tight') 
+plt.close(fig) 
             

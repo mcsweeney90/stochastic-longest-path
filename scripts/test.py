@@ -10,10 +10,10 @@ import networkx as nx
 from timeit import default_timer as timer
 from scipy.stats import norm
 sys.path.append('../') 
-from src import RV, SDAG
+from src import RV, SDAG, CFP
 
 chol_dag_path = '../graphs/cholesky'
-nb = 1024
+nb = 128
 n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 
 # =============================================================================
@@ -27,6 +27,12 @@ for nt in n_tasks:
     with open('{}/nb{}/{}tasks.dill'.format(chol_dag_path, nb, nt), 'rb') as file:
         G = dill.load(file)
     H = SDAG(G)
+    
+    longest_paths = H.get_longest_paths()
+    # print(longest_paths)
+    
+    lp = CFP(H)
+    print(lp)
     
     # total, dis = 0, 0
     # for t in H.top_sort:
