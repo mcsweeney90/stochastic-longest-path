@@ -10,29 +10,49 @@ import networkx as nx
 from timeit import default_timer as timer
 from scipy.stats import norm
 sys.path.append('../') 
-from src import RV, SDAG, CFP
+from src import RV, SDAG, Path
 
 chol_dag_path = '../graphs/cholesky'
 nb = 128
-n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
+n_tasks = [35, 220]#, 680]#, 1540, 2925, 4960, 7770, 11480]
 
 # =============================================================================
 # Timings.
 # =============================================================================
 
-# with open('../results/before_runtime.dill', 'rb') as file:
-#     before = dill.load(file)
 
 for nt in n_tasks:
     with open('{}/nb{}/{}tasks.dill'.format(chol_dag_path, nb, nt), 'rb') as file:
         G = dill.load(file)
     H = SDAG(G)
     
-    longest_paths = H.get_longest_paths()
-    # print(longest_paths)
+    print("\nNUMBER OF TASKS: {}".format(nt))
     
-    lp = CFP(H)
+    start = timer()
+    longest_paths = H.dodin_longest_paths()
+    elapsed = timer() - start
+    print("Time to find longest paths: {}".format(elapsed))
+    print(len(longest_paths))
+        
+    # start = timer()
+    # mc30 = H.monte_carlo(samples=30)
+    # elapsed = timer() - start
+    # print("Time for MC30: {}".format(elapsed))
+    
+    start = timer()
+    dom_path = longest_paths[0]
+    lp = longest_paths[0].length
+    for path in longest_paths[1:]:
+        r = path.get_rho(dom_path)
+        if path.length.mu > lp.mu:
+            dom_path = path
+        lp = lp.clark_max(path.length, rho=r)
+    elapsed = timer() - start
     print(lp)
+    print("Time for maximization: {}".format(elapsed))
+    
+    # lp = CFP(H)
+    # print(lp)
     
     # total, dis = 0, 0
     # for t in H.top_sort:

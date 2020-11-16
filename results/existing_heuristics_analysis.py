@@ -189,7 +189,7 @@ with open('data/stg_empirical.dill', 'rb') as file:
 # # Summary.
 # with open("{}/stg_mean.txt".format(summary_path), "w") as dest:
 #     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE EXPECTED VALUE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
-#     print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
+#     print("REFERENCE SOLUTIONS COMPUTED VIA MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
 #     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)    
             
 #     print("\n\n\nDEVIATIONS (%) FROM TRUE MEAN", file=dest)
@@ -248,7 +248,7 @@ for dname in stg_empirical:
 
 # with open("{}/stg_variance.txt".format(summary_path), "w") as dest:
 #     print("TIGHTNESS OF BOUNDS AND APPROXIMATIONS TO THE VARIANCE, RELATIVE TO REFERENCE SOLUTION.", file=dest)
-#     print("REFERENCE SOLUTIONS COMPUTED VIS MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
+#     print("REFERENCE SOLUTIONS COMPUTED VIA MC METHOD WITH 20,000 SAMPLES AND GAMMA WEIGHTS.", file=dest)
 #     print("1620 RANDOMLY-GENERATED DAGS BASED ON TOPOLOGIES FROM THE STG.", file=dest)
                 
 #     print("\n\n\nDEVIATIONS (%) FROM TRUE VARIANCE", file=dest)

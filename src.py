@@ -140,23 +140,27 @@ class Path:
     def __init__(self, length=RV(0.0, 0.0), members={}): 
         self.length = length
         self.members = members
-    def __repr__(self): # TODO.
-        rep = ""
-        for k in self.members.keys():
-            if type(k) == tuple:
-                continue
-            rep += (str(k) + "-") 
-        return rep  
-    def __add__(self, other): # TODO: create new path?
+        self.rep = None
+    def __repr__(self): 
+        return self.get_rep()  
+    def __add__(self, other): # TODO: can creating new path be avoided?
         new = Path()
         new.length = self.length + other # Float, int or RV...
-        new.members = {k:v for k, v in self.members.items()}
+        new.members = {k:v for k, v in self.members.items()} 
         try:
             new.members[other.ID] = RV(other.mu, other.var) # Biggest issue is that edges don't have IDs...
         except AttributeError:
             pass            
         return new
     __radd__ = __add__ 
+    def get_rep(self):
+        if self.rep is None:
+            self.rep = ""
+            for k in self.members.keys():
+                if type(k) != int:
+                    continue
+                self.rep += (str(k) + "-") 
+        return self.rep
     def get_rho(self, other):
         common_var = 0.0
         for k in self.members:
@@ -164,24 +168,24 @@ class Path:
                 common_var += other.members[k].var
             except KeyError:
                 pass         
-        return common_var**2 / (np.sqrt(self.length.var)*np.sqrt(other.length.var))
-    def get_max_rho(self, maximand):
-        if len(maximand) == 2:
-            eps, nu = maximand
-            r = eps.get_rho(nu)
-            a = np.sqrt(eps.length.var + nu.length.var - 2 * np.sqrt(eps.length.var) * np.sqrt(nu.length.var) * r)
-            b = (eps.length.mu - nu.length.mu) / a
-            cdf_b = norm.cdf(b)
-            cdf_minus = norm.cdf(-b)
-            pdf_b = norm.pdf(b)             
-            mu = eps.length.mu * cdf_b + nu.length.mu * cdf_minus + a * pdf_b      
-            var = (eps.length.mu**2 + eps.length.var) * cdf_b
-            var += (nu.length.mu**2 + nu.length.var) * cdf_minus
-            var += (eps.length.mu + nu.length.mu) * a * pdf_b
-            var -= mu**2 
-            r1 = self.get_rho(eps)
-            r2 = self.get_rho(nu)
-            return (np.sqrt(eps.length.var) * r1 * cdf_b + np.sqrt(nu.length.var) * r2 * cdf_minus)/var           
+        return common_var / (np.sqrt(self.length.var)*np.sqrt(other.length.var))
+    # def get_max_rho(self, maximand):
+    #     if len(maximand) == 2:
+    #         eps, nu = maximand
+    #         r = eps.get_rho(nu)
+    #         a = np.sqrt(eps.length.var + nu.length.var - 2 * np.sqrt(eps.length.var) * np.sqrt(nu.length.var) * r)
+    #         b = (eps.length.mu - nu.length.mu) / a
+    #         cdf_b = norm.cdf(b)
+    #         cdf_minus = norm.cdf(-b)
+    #         pdf_b = norm.pdf(b)             
+    #         mu = eps.length.mu * cdf_b + nu.length.mu * cdf_minus + a * pdf_b      
+    #         var = (eps.length.mu**2 + eps.length.var) * cdf_b
+    #         var += (nu.length.mu**2 + nu.length.var) * cdf_minus
+    #         var += (eps.length.mu + nu.length.mu) * a * pdf_b
+    #         var -= mu**2 
+    #         r1 = self.get_rho(eps)
+    #         r2 = self.get_rho(nu)
+    #         return (np.sqrt(eps.length.var) * r1 * cdf_b + np.sqrt(nu.length.var) * r2 * cdf_minus)/var           
             
 
 class CRV:
@@ -325,8 +329,7 @@ class SDAG:
             start_length = 0.0
             parents = list(self.graph.predecessors(t))
             if return_path and not len(parents):
-                P = Path() + t
-                paths[t.ID] = P
+                paths[t.ID] = Path() + t 
             for p in parents:
                 st = Z[p.ID]
                 try:
@@ -340,7 +343,7 @@ class SDAG:
                         edge_weight.ID = (p.ID, t.ID)
                     except AttributeError:
                         pass
-                    paths[t.ID] = paths[p.ID] + edge_weight + t   # TODO: create new path?   
+                    paths[t.ID] = paths[p.ID] + edge_weight + t   
             Z[t.ID] = t.realization + start_length  
         if return_path:
             return Z[self.top_sort[-1].ID], paths[self.top_sort[-1].ID]                                                     
@@ -809,32 +812,114 @@ class SDAG:
                 paths[t.ID] = sum(paths[p.ID] for p in parents)                
         return paths        
     
-    def get_longest_paths(self, mc=True, samples=30, epsilon=None):
+    def mc_longest_paths(self, samples=30):
         """TODO."""
         
-        if mc:
-            longest_paths = []  
-            unique = set()
-            for _ in range(samples):
-                self.realize()
-                lp, P = self.real_longest_path(return_path=True)
-                check = tuple(P.members.keys()) 
-                # print(check)
-                if check not in unique:
-                    longest_paths.append(P)
-                    unique.add(check)                
-            self.reset()
-            return longest_paths        
+        longest_paths = []  
+        unique = set()
+        for _ in range(samples):
+            self.realize()
+            lp, P = self.real_longest_path(return_path=True)
+            check = P.get_rep()
+            if check not in unique:
+                longest_paths.append(P)
+                unique.add(check)                
+        self.reset()
+        return longest_paths    
+    
+    def dodin_longest_paths(self, epsilon=0.1):
+        """
+        TODO.
+        Implementation is really poor atm since just proof of concept but will likely always be expensive...
+        """
         
         candidates = {}        
         for t in self.top_sort:
             parents = list(self.graph.predecessors(t))
+            all_paths = []
             if not parents:
-                candidates[t.ID] = [Path(t.mu, t.var, [t.ID])]
-            else:                
-                # Find expected longest path.
-                exp_lp = 0       
-        return           
+                candidates[t.ID] = [Path() + t]
+            else: 
+                # Concatenate all possible paths.
+                for p in parents:
+                    edge_weight = self.graph[p][t]['weight'] 
+                    try:
+                        edge_weight.ID = (p.ID, t.ID)
+                    except AttributeError:
+                        pass
+                    for pth in candidates[p.ID]:
+                        all_paths.append(pth + edge_weight + t)
+                # Identify path with greatest expected value.
+                max_path = all_paths[0]
+                for pth in all_paths[1:]:
+                    if pth.length.mu > max_path.length.mu:
+                        max_path = pth
+                # Filter set of paths.
+                candidates[t.ID] = []
+                for pth in all_paths:
+                    if pth == max_path:
+                        candidates[t.ID].append(pth)
+                    else:
+                        r = max_path.get_rho(pth)
+                        num = pth.length.mu - max_path.length.mu
+                        denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
+                        prob = norm.cdf(num/denom)
+                        if prob > epsilon:
+                            candidates[t.ID].append(pth)  
+                
+        return candidates[self.top_sort[-1].ID]      
+    
+    # def dodin_longest_paths(self, epsilon=0.1):
+    #     """
+    #     TODO.
+    #     Implementation is really poor atm since just proof of concept but will likely always be expensive...
+    #     """
+        
+    #     candidates = {}        
+    #     for t in self.top_sort:
+    #         parents = list(self.graph.predecessors(t))
+    #         if not parents:
+    #             candidates[t.ID] = [Path() + t]
+    #         else: 
+    #             # Find maximum path across all parents.
+    #             max_path = Path()
+    #             add_to_parent = {}
+    #             for p in parents:
+    #                 edge_weight = self.graph[p][t]['weight'] 
+    #                 try:
+    #                     edge_weight.ID = (p.ID, t.ID)
+    #                 except AttributeError:
+    #                     pass
+    #                 add_to_p = edge_weight + t
+    #                 add_to_parent[p.ID] = add_to_p
+    #                 pth = candidates[p.ID][0] + add_to_p
+    #                 if pth.length.mu > max_path.length.mu:
+    #                     max_path = pth
+                       
+    #             # Filter set of paths.
+    #             candidates[t.ID] = []
+    #             probs = {}
+    #             for p in parents:
+    #                 for ph in candidates[p.ID]:   
+    #                     pth = ph + add_to_parent[p.ID]                        
+    #                     if pth.get_rep() == max_path.get_rep():
+    #                         candidates[t.ID].append(pth)
+    #                         probs[pth] = 1.0
+    #                     else:
+    #                         r = max_path.get_rho(pth)
+    #                         num = pth.length.mu - max_path.length.mu
+    #                         denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
+    #                         prob = norm.cdf(num/denom)
+    #                         if prob > epsilon:
+    #                             candidates[t.ID].append(pth)  
+    #                             probs[pth] = prob
+    #                         else:
+    #                             break
+                            
+    #             # Sort candidates.
+    #             candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda p:probs[p])))
+                
+    #     return candidates[self.top_sort[-1].ID] 
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """
@@ -843,7 +928,7 @@ class SDAG:
         # Realize entire DAG.
         self.realize(dist=dist, percentile=percentile)
         # Compute makespan.
-        L = self.longest_path()
+        L = self.real_longest_path()
         # Find the "current" time.
         T = fraction * L[self.top_sort[-1].ID]
         # Determine which costs have been realized before time T.
@@ -964,43 +1049,43 @@ def fover(X):
     else:
         return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)   
 
-def CFP(S, path_reduction="MC", samples=30, epsilon=0.01, max_type="SCULLI"):
-    """
-    Parameters
-    ----------
-    S : TYPE
-        DESCRIPTION.
-    path_reduction : TYPE, optional
-        DESCRIPTION. The default is "MC".
-    samples : TYPE, optional
-        DESCRIPTION. The default is 30.
-    epsilon : TYPE, optional
-        DESCRIPTION. The default is 0.01.
+# def CFP(S, path_reduction="MC", samples=30, epsilon=0.01, max_type="SCULLI"):
+#     """
+#     Parameters
+#     ----------
+#     S : TYPE
+#         DESCRIPTION.
+#     path_reduction : TYPE, optional
+#         DESCRIPTION. The default is "MC".
+#     samples : TYPE, optional
+#         DESCRIPTION. The default is 30.
+#     epsilon : TYPE, optional
+#         DESCRIPTION. The default is 0.01.
 
-    Returns
-    -------
-    None.
-    """          
+#     Returns
+#     -------
+#     None.
+#     """          
     
-    # Identify the paths.
-    candidates = S.get_longest_paths(samples=30)
+#     # Identify the paths.
+#     candidates = S.get_longest_paths(samples=30)
     
-    # Compute their maximization.
-    lp = candidates[0].length
-    if max_type == "SCULLI":
-        for path in candidates[1:]:
-            lp = lp.clark_max(path.length)
-    elif max_type == "CorLCA":
-        dom_path = candidates[0]
-        for path in candidates[1:]:
-            r = path.get_rho(dom_path)
-            if path.length.mu > lp.mu:
-                dom_path = path
-            lp = lp.clark_max(path.length, rho=r)
-    elif max_type == "CORDYN":
-        for i, path in enumerate(candidates[1:]):
-            r = path.get_max_rho(candidates[i + 1:]) # TODO.
-            lp = lp.clark_max(path.length, rho=r)            
-    return lp
+#     # Compute their maximization.
+#     lp = candidates[0].length
+#     if max_type == "SCULLI":
+#         for path in candidates[1:]:
+#             lp = lp.clark_max(path.length)
+#     elif max_type == "CorLCA":
+#         dom_path = candidates[0]
+#         for path in candidates[1:]:
+#             r = path.get_rho(dom_path)
+#             if path.length.mu > lp.mu:
+#                 dom_path = path
+#             lp = lp.clark_max(path.length, rho=r)
+#     elif max_type == "CORDYN":
+#         for i, path in enumerate(candidates[1:]):
+#             r = path.get_max_rho(candidates[i + 1:]) # TODO.
+#             lp = lp.clark_max(path.length, rho=r)            
+#     return lp
             
     
