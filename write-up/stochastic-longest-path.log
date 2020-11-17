@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2020.9.13)  13 NOV 2020 12:00
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2020.9.13)  17 NOV 2020 13:07
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -1005,22 +1005,22 @@ runsystem(rm stochastic-longest-path.aex)...executed.
 (./stochastic-longest-path.aux)
 \openout1 = `stochastic-longest-path.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 146.
-LaTeX Font Info:    ... okay on input line 146.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 147.
+LaTeX Font Info:    ... okay on input line 147.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -1037,7 +1037,7 @@ LaTeX Font Info:    ... okay on input line 146.
 \everyMPtoPDFconversion=\toks41
 )
 \AtBeginShipoutBox=\box92
-Package hyperref Info: Link coloring ON on input line 146.
+Package hyperref Info: Link coloring ON on input line 147.
  (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2019/09/16 v2.46 Cross-referencing by name of section
 
@@ -1049,9 +1049,9 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count369
 )
-LaTeX Info: Redefining \ref on input line 146.
-LaTeX Info: Redefining \pageref on input line 146.
-LaTeX Info: Redefining \nameref on input line 146.
+LaTeX Info: Redefining \ref on input line 147.
+LaTeX Info: Redefining \pageref on input line 147.
+LaTeX Info: Redefining \nameref on input line 147.
 
 (./stochastic-longest-path.out) (./stochastic-longest-path.out)
 \@outlinefile=\write8
@@ -1074,13 +1074,13 @@ Package: inputenc 2018/08/11 v1.3c Input encoding file
 \inpenc@prehook=\toks42
 \inpenc@posthook=\toks43
 )
-LaTeX Font Info:    Trying to load font information for U+msa on input line 148
+LaTeX Font Info:    Trying to load font information for U+msa on input line 149
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 148
+LaTeX Font Info:    Trying to load font information for U+msb on input line 149
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
@@ -1089,83 +1089,80 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6] [7] [8
 ] [9] [10]
-[11] [12] [13] [14]
+[11]
 
-LaTeX Warning: Reference `subsect.results_heuristics' on page 15 undefined on i
-nput line 462.
+LaTeX Warning: Reference `subsect.results_heuristics' on page 12 undefined on i
+nput line 415.
 
-[15]
-Overfull \hbox (11.74017pt too wide) in paragraph at lines 495--496
-\OT1/cmr/m/n/12 Rather than up-dat-ing the fin-ish time of the exit task---and 
-there-fore the makespan---
- []
-
-[16] [17] [18] [19] [20]
-<images/histograms_NORMAL.png, id=406, 384.29573pt x 253.6677pt>
+[12] [13] [14] [15] [16] [17] [18] [19] [20]
+<images/histograms_NORMAL.png, id=402, 384.29573pt x 253.6677pt>
 File: images/histograms_NORMAL.png Graphic file (type png)
 <use images/histograms_NORMAL.png>
-Package pdftex.def Info: images/histograms_NORMAL.png  used on input line 641.
+Package pdftex.def Info: images/histograms_NORMAL.png  used on input line 660.
 (pdftex.def)             Requested size: 211.3633pt x 139.51765pt.
-<images/histograms_GAMMA.png, id=408, 383.21167pt x 253.6677pt>
+<images/histograms_GAMMA.png, id=404, 383.21167pt x 253.6677pt>
 File: images/histograms_GAMMA.png Graphic file (type png)
 <use images/histograms_GAMMA.png>
-Package pdftex.def Info: images/histograms_GAMMA.png  used on input line 642.
+Package pdftex.def Info: images/histograms_GAMMA.png  used on input line 661.
 (pdftex.def)             Requested size: 210.76707pt x 139.51765pt.
 
-Overfull \hbox (10.1916pt too wide) in paragraph at lines 641--643
+Overfull \hbox (10.1916pt too wide) in paragraph at lines 660--662
  [][][][] 
  []
 
-[21 <./images/histograms_NORMAL.png> <./images/histograms_GAMMA.png>] [22]
-[23] [24] [25]
-<images/stg_existing_mean.png, id=451, 376.70738pt x 247.34407pt>
+[21] [22 <./images/histograms_NORMAL.png> <./images/histograms_GAMMA.png>]
+[23] [24]
+<images/stg_existing_mean.png, id=438, 376.70738pt x 247.34407pt>
 File: images/stg_existing_mean.png Graphic file (type png)
 <use images/stg_existing_mean.png>
-Package pdftex.def Info: images/stg_existing_mean.png  used on input line 732.
+Package pdftex.def Info: images/stg_existing_mean.png  used on input line 751.
 (pdftex.def)             Requested size: 376.70645pt x 247.34346pt.
-<images/stg_existing_var.png, id=452, 385.9218pt x 247.34407pt>
+<images/stg_existing_var.png, id=439, 385.9218pt x 247.34407pt>
 File: images/stg_existing_var.png Graphic file (type png)
 <use images/stg_existing_var.png>
-Package pdftex.def Info: images/stg_existing_var.png  used on input line 733.
+Package pdftex.def Info: images/stg_existing_var.png  used on input line 752.
 (pdftex.def)             Requested size: 385.92085pt x 247.34346pt.
-<images/chol_variance.png, id=458, 394.5942pt x 263.24347pt>
+ [25] [26 <./images/stg_existing_mean.png> <./images/stg_existing_var.png>]
+
+LaTeX Warning: Reference `sect.path_heuristic' on page 27 undefined on input li
+ne 762.
+
+<images/chol_variance.png, id=460, 394.5942pt x 263.24347pt>
 File: images/chol_variance.png Graphic file (type png)
 <use images/chol_variance.png>
-Package pdftex.def Info: images/chol_variance.png  used on input line 747.
+Package pdftex.def Info: images/chol_variance.png  used on input line 766.
 (pdftex.def)             Requested size: 394.59322pt x 263.24281pt.
- [26] [27 <./images/stg_existing_mean.png> <./images/stg_existing_var.png>] [28
- <./images/chol_variance.png>]
-<images/chol_existing_timings.png, id=480, 391.34206pt x 261.79808pt>
+[27 <./images/chol_variance.png>]
+<images/chol_existing_timings.png, id=468, 391.34206pt x 261.79808pt>
 File: images/chol_existing_timings.png Graphic file (type png)
 <use images/chol_existing_timings.png>
-Package pdftex.def Info: images/chol_existing_timings.png  used on input line 7
-81.
+Package pdftex.def Info: images/chol_existing_timings.png  used on input line 8
+00.
 (pdftex.def)             Requested size: 391.3411pt x 261.79742pt.
- [29 <./images/chol_existing_timings.png>] (./stochastic-longest-path.bbl [30] 
-[31]) [32]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 810.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 810.
-
-(./stochastic-longest-path.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 810.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 810.
+ (./stochastic-longest-path.bbl [28] [29 <./images/chol_existing_timings.png>] 
+[30]) [31]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 829.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 829.
+ (./stochastic-longest-path.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 829.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 829.
 Package rerunfilecheck Info: File `stochastic-longest-path.out' has not changed
 .
-(rerunfilecheck)             Checksum: BED236A8E2CCD27A6C9DABE871A451B8;2331.
+(rerunfilecheck)             Checksum: 22E8AE176AF6F8EBBA9762025DED7825;2162.
 
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 810.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 829.
  ) 
 Here is how much of TeX's memory you used:
- 29681 strings out of 481239
- 595720 string characters out of 5920377
- 953826 words of memory out of 5000000
- 44237 multiletter control sequences out of 15000+600000
+ 29676 strings out of 481239
+ 595604 string characters out of 5920377
+ 950753 words of memory out of 5000000
+ 44235 multiletter control sequences out of 15000+600000
  543609 words of font info for 68 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 65i,12n,103p,1453b,493s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 65i,12n,103p,1453b,495s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/share/texli
 ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/tex
 mf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dis
@@ -1186,10 +1183,10 @@ ic/amsfonts/cm/cmtt12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
 fonts/symbols/msbm10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm0700
 .pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/tex
 mf/fonts/type1/public/cm-super/sfrm1200.pfb>
-Output written on stochastic-longest-path.pdf (32 pages, 814956 bytes).
+Output written on stochastic-longest-path.pdf (31 pages, 814022 bytes).
 PDF statistics:
- 646 PDF objects out of 1000 (max. 8388607)
- 549 compressed objects within 6 object streams
- 132 named destinations out of 1000 (max. 500000)
- 451 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 634 PDF objects out of 1000 (max. 8388607)
+ 538 compressed objects within 6 object streams
+ 129 named destinations out of 1000 (max. 500000)
+ 435 words of extra memory for PDF output out of 10000 (max. 10000000)
 

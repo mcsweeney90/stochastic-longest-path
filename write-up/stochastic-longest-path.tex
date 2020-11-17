@@ -62,6 +62,7 @@
 \def\C{\mathbb{C}}
 \def\P{\mathbb{P}}
 \def\E{\mathbb{E}}
+\def\Var{\operatorname{Var}}
 \def\nbyn{n \times n}
 \def\mbyn{m \times n}
 \def\l{\lambda}
@@ -166,17 +167,27 @@ for all other $i = 2, \dots, n$. The longest path of $G_\pi$ is then given by $L
 
 Unfortunately, in practice, schedule costs are almost never known precisely before runtime. Typically, the best we can do is estimate the probability distribution that we believe they follow---i.e., we model the costs as random variables (RVs)---based either on theoretical results or a relevant body of data. But if costs are RVs rather than fixed scalars, it is obviously impossible to specify the precise time at which each task should begin execution so at this point we need to redefine what we mean by a schedule: here, we assume that a schedule $\pi$ is a mapping from tasks to processors that specifies only which tasks each processor should execute and in what order; the processor then executes the next scheduled task as soon as it is able. Conceptually, we can view this as a processor being assigned an ordered queue of tasks before runtime and only being allowed to pop the task currently at the head of the queue. 
 
-This definition means that even though costs are stochastic, the disjunctive graph $G_\pi$ has the same topology as it would in the static case. However, since all costs are RVs, the longest path is also now an RV. Unfortunately, it is unclear how we should go about computing its distribution. Fundamentally, the problem is that even if all of the graph weights are independent of one another, path lengths typically aren't because of common nodes and edges. So if we attempt to apply \eqref{eq.Li} we soon run into difficulty because computing the maximum of a set of dependent RVs is intractable, with very rare exceptions. Furthermore, this presupposes that all individual cost distributions (and summations thereof) are fully known, which is rarely true in practice. Formalizing this intuitive difficulty, Hagstrom proved that computing the longest path distribution of a stochastic graph, or even just its expected value, is a $\#P$-complete problem when all weights are discrete RVs \cite{hag88}, and there is little reason to assume it is any easier in the continuous case.      
+This definition means that even though costs are stochastic, the disjunctive graph $G_\pi$ has the same topology as it would in the static case. However, since all graph weights are RVs, the longest path is also now an RV. Unfortunately, it is unclear how we should go about computing its distribution. Fundamentally, the problem is that even if all of the graph weights are independent of one another, path lengths typically aren't because of common nodes and edges. So if we attempt to apply \eqref{eq.Li} we soon run into difficulty because computing the maximum of a set of dependent RVs is intractable, with very rare exceptions. Furthermore, this presupposes that all individual weight distributions (and summations thereof) are fully known, which is rarely true in practice. Formalizing this intuitive difficulty, Hagstrom proved that computing the longest path distribution of a stochastic graph, or even just its expected value, is a $\#P$-complete problem when all weights are discrete RVs \cite{hag88}, and there is little reason to assume it is any easier in the continuous case.      
 
-Given the difficulty of the problem, bounds or heuristic approximations for the longest path distribution---and therefore the schedule makespan distribution---are typically needed instead. In this chapter, we give a brief overview of various methods that have been employed for this purpose, with a particular focus on a family of efficient heuristics which are likely the most practical approach in the context of stochastic scheduling. Although useful on its own merits, in the context of this research this chapter functions as a bridge between earlier chapters which focus on computing schedules when costs are assumed to be known exactly and the later chapters in which the aim is to compute a schedule that is robust to the effects of uncertain cost estimates. We will see that many of the techniques discussed here underlie both existing stochastic scheduling heuristics and the new heuristic that we propose in the next chapter. This chapter is intended primarily as an literature review so there is relatively little new research, although we do take an extended look at a problem that has rarely been addressed before: how do we quickly update a longest path estimate---i.e., an estimated schedule makespan---as realizations become apparent at runtime? 
+Given the difficulty of the problem, bounds or heuristic approximations for the longest path distribution---and therefore the schedule makespan distribution---are typically needed instead. In this chapter, we give a brief overview of various methods that have been employed for this purpose, with a particular focus on efficient heuristics which are likely the most practical approach in the context of stochastic scheduling. Although useful on its own merits, in the context of this research this chapter functions as a bridge between earlier chapters which focus on computing schedules when costs are assumed to be known exactly and the later chapters in which the aim is to compute a schedule that is robust to the effects of uncertain cost estimates. We will see that many of the techniques discussed here underlie both existing stochastic scheduling heuristics and the new heuristic that we propose in the next chapter. This chapter is intended primarily as an literature review so there is relatively little new research, although we do take an extended look at a problem that has rarely been addressed before: how do we quickly update a longest path estimate---i.e., an estimated schedule makespan---as realizations become apparent at runtime? 
 
-The problem of computing the distribution of the longest path through a DAG with stochastic weights was first studied in the context of {\em program evaluation review technique} (PERT) network analysis \cite{mal59}. Since a PERT network is essentially just what we have referred to here as a schedule graph, the longest path also typically represents an overall finish time---i.e., the makespan---and nodes tasks that must be completed. However, the stochastic longest path problem has also been studied in more dissimilar research areas such as digital circuit design \cite{bla08}, so in this chapter we typically use the more general {\em longest path} rather than {\em makespan}.  
-% better reference for digital circuit design? 
+The problem of computing the distribution of the longest path through a DAG with stochastic weights was first studied in the context of {\em program evaluation review technique} (PERT) network analysis \cite{mal59}. Since a PERT network is essentially just what we have referred to here as a schedule graph, the longest path also typically represents an overall finish time---i.e., the makespan---and nodes tasks that must be completed. However, the stochastic longest path problem has also been studied in more dissimilar research areas such as digital circuit design \cite{bla08}, so in this chapter we typically use the more general {\em longest path} and {\em weights} rather than {\em makespan} and {\em costs}.
+% better reference for digital circuit design?
+
+% Summary of chapter?
+%Rather than a formal bound, in many cases it may be more useful to simply obtain a good estimate of the longest path distribution. To that end, many heuristic approaches have been proposed. In this section we discuss some of those which may be of particular interest.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BOUNDS.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 \section{Bounds}
 \label{sect.bounds}
 
-Although computing the longest path distribution exactly is usually impossible, bounds on various quantities of interest may be computed much more cheaply. Depending of course on the context, these may be tight enough to be useful.
+Although computing the longest path distribution exactly is usually impossible, bounds on various quantities of interest may be computed much more cheaply. Depending on the context, these may be tight enough to be useful, a claim that we investigate empirically for certain bounds in Section \ref{sect.results}.
+
+\subsection{On the moments}
+\label{subsect.bounds_moments}
 
 Some of the oldest results are concerned with the expected value. In particular, as we have already seen in previous chapters, a lower bound which dates back to the earliest days of PERT analysis can be computed in $O(n^2)$ operations by replacing all weight RVs with their expected value and proceeding as in \eqref{eq.Li}---i.e., define $u_1 = \E[\pi_1]$ and
 \begin{align}
@@ -188,7 +199,10 @@ for all other $i = 2, \dots, n$, then we have $u_i \leq \E[L_i]$ and in particul
 
 All of those methods provide only lower bounds for the expected value. However, Dodin's lower bound on the distribution function also induces an upper bound on the expected value \cite{dod85} (see below).  Furthermore, if all graphs weights follow {\em New Better Than Used in Expectation} (NBUE)\footnote{A concept from reliability theory, referring to distributions representing object lifetimes such that, at any given time, the expected value of the remaining lifetime is smaller than the expected value of the entire lifetime. Certain common distributions such as Erlang and uniform are NBUE, as are many others such as Gamma under restricted parameter regimes.} distributions, then an upper bound can be computed by replacing all weights by exponentially distributed RVs with the same means and then performing a series-parallel reduction \cite{kam85a, yaz91}. This approach has the advantage that only the expected values of all graph weights are necessary. 
 
-Alternatively, if all node and edge weights are normally distributed, then Kamburowski \cite{kam85} was able to prove both lower and upper bounds on the expected value. However, his bounds---although exact when weights are normal---are conceptually very similar to a class of heuristics discussed in the following section, so will be described in more detail there. Kamburowski also proved a lower bound on the variance, as well as a conjectured upper bound, for the case of normally distributed weights. These are the only formal bounds on moments higher than the first that we are aware of, although the upper is unproven and the lower is very loose.
+Alternatively, if all node and edge weights are normally distributed, then Kamburowski \cite{kam85} was able to prove both lower and upper bounds on the expected value. However, his bounds are conceptually very similar to a class of heuristics discussed in the following section, so will be described in more detail there. Kamburowski also proved a lower bound on the variance, as well as a conjectured upper bound, for the case of normally distributed weights. These are the only formal bounds on moments higher than the first that we are aware of, although the upper is unproven and, as we shall see, the lower is very loose.
+
+\subsection{On the distribution function}
+\label{subsect.bounds_distribution}
 
 Rather than just the moments, we may be more interested in bounds on the cumulative distribution function (cdf) $F_{L_n}$ of the longest path, where the bounds indicate (first-order) {\em stochastically dominant} relationships between the underlying RVs. In particular, we say that $B$ stochastically dominates $L_n$ if $F_{L_n}(z) = \P[L_n \leq z] \leq \P[B \leq z] = F_B(z) \; \forall z$. For convenience, from now on we simply write $F_{L_n} \leq F_B$ to represent the previous expression, so that the aim here is to determine $F_b$ and $F_B$ such that $F_b \leq F_{L_n} \leq F_B$.
 
@@ -206,35 +220,37 @@ both of which can be readily approximated through standard numerical methods. Kl
 
 Inspired by the observation that Kleindorfer's upper bound is exact when all path lengths are independent, Dodin \cite{dod85} combined the method with a sequence of series-parallel reductions such that the graph is transformed to a single edge whose associated distribution function bounds the longest path distribution from above. If the graph is already series-parallel then the bound is exact. Moreover, Dodin showed that the bound is tighter than Kleindorfer's, and, as noted above, that a corresponding lower bound on the expected value can be inferred.
 
-Exhaustive empirical investigations by Ludwig, M{\"o}hring and Stork \cite{lud01} and Canon and Jeannot \cite{can16} suggest that the bounds of Kleindorfer and especially Dodin are usually tight, so they may be useful as approximations of the distribution function in addition to bounds. However, although both methods run in polynomial time, they tend to still be significantly more expensive than heuristics based on the Central Limit Theorem (see Section \ref{subsect.normality}), without pronounced improvements in accuracy, so are typically of less interest from a scheduling perspective and are not included in comparisons here. 
+Exhaustive empirical investigations by Ludwig, M{\"o}hring and Stork \cite{lud01} and Canon and Jeannot \cite{can16} suggest that the bounds of Kleindorfer and especially Dodin are usually tight, so they may be useful as approximations of the distribution function in addition to formal bounds. However, although both methods run in polynomial time, they tend to be more expensive than heuristics based on the Central Limit Theorem (see Section \ref{sect.CLT}), without pronounced improvements in accuracy, so are typically of less interest from a scheduling perspective.  
 
 %Reference to Bein? Shogan?
 %good reference for stochastic dominance.
 
-\section{Heuristics}
-\label{sect.heuristics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MONTE CARLO.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-Rather than a formal bound, in many cases it may be more useful to simply obtain a good estimate of the longest path distribution. To that end, many heuristic approaches have been proposed. In this section we discuss some of those which may be of particular interest.
-
-\subsection{Monte Carlo}
-\label{subsect.monte_carlo} 
+\section{Monte Carlo simulation}
+\label{sect.monte_carlo} 
 
 % MC part is same as in previous chapter - where best to put it?
 
-{\em Monte Carlo} (MC) methods have a long history in approximating the longest path distribution of PERT networks, dating back to at least the early 1960s \cite{van63}. The idea is to simulate the realization of all weight RVs and then evaluate the longest path of the resulting scalar graph. This is done repeatedly, giving a set of longest path instances whose empirical distribution function is guaranteed to converge to the true distribution by the Glivenko-Cantelli theorem\footnote{Despite this convergence in the limit, we refer to MC as a heuristic as any solutions obtained in practice will only ever be approximate.}. Furthermore, analytical results allow us to (at least roughly) quantify the approximation error for any given the number of realizations---and therefore the number of realizations needed to reach a given accuracy. On top of these theoretical assurances, the other big advantage of this approach is its simplicity: once the graph weights are realized, we only need to perform sums and maximizations of scalar values, rather than possibly dependent RVs.  
+The {\em Monte Carlo} (MC) method has a long history in approximating the longest path distribution of PERT networks, dating back to at least the early 1960s \cite{van63}. The idea is to simulate the realization of all weight RVs and then evaluate the longest path of the resulting scalar graph. This is done repeatedly, giving a set of longest path instances whose empirical distribution function is guaranteed to converge to the true distribution by the Glivenko-Cantelli theorem\footnote{Despite this convergence in the limit, we refer to MC as a heuristic since any solutions obtained in practice will only ever be approximate.}. Furthermore, analytical results allow us to (at least roughly) quantify the approximation error for any given the number of realizations---and therefore the number of realizations needed to reach a given accuracy. On top of these theoretical assurances, the other big advantage of this approach is its simplicity: once the graph weights are realized, we only need to perform sums and maximizations of scalar values, rather than (possibly dependent) RVs.  
 % Canon reference in support of the convergence claim? 
 
-The major disadvantage of MC methods is the computational cost. Of course, modern architectures are well-suited to this approach because of their parallelism, but MC can still be impractical for large, dense graphs that require many realizations in order to obtain an accurate solution. For this reason, in our numerical experiments we typically only use MC to obtain a reference solution for the longest path distribution of a given schedule graph. 
+The major disadvantage of the MC method is the computational cost, particularly for large, dense graphs. Still, modern architectures are well-suited to this approach because of their parallelism. Furthermore, it is often the case in practice that only a relatively small number of realizations are actually required to obtain good estimates of the longest path distribution, even for very large graphs. Various investigations along these lines are detailed in our empirical study at the end of this chapter.  
 % We call it a heuristic since the solutions are not exact by definition, although we do use them as a reference since they are guaranteed to converge...
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CENTRAL LIMIT THEOREM.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Applying the CLT}
-\label{subsect.normality}
+\section{Applying the CLT}
+\label{sect.CLT}
 
 Fundamentally, the length of any given path through a schedule graph is just the sum of the weight RVs along it. By the Central Limit Theorem (CLT), sums of random variables are asymptotically normally distributed. So we can make a reasonable argument that the longest path distribution itself is likely to be at least approximately normal, $L_n \approx N(\mu_n, \sigma_n)$. Indeed, this has often been observed empirically, even when the graph weights follow distributions that are far from normal \cite{can10}. This argument forms the basis of a family of efficient heuristics for computing an approximation to the longest path distribution.
 
-\subsubsection{Clark's equations and Sculli's method}
-\label{subsubsect.clark_sculli}
+\subsection{Clark's equations and Sculli's method}
+\label{subsect.clark_sculli}
 
 Computing the longest path ultimately reduces to performing summations and maximizations of dependent random variables. If we assume that all weight RVs can be characterized by their mean and variance (i.e., effectively that they are also normal), then sums can be computed though the well-known rule for any two normal RVs $\epsilon \sim N(\mu_\epsilon, \sigma_\epsilon^2)$ and $\eta \sim N(\mu_\eta, \sigma_\eta^2)$,
 \begin{align}
@@ -243,7 +259,7 @@ Computing the longest path ultimately reduces to performing summations and maxim
 \end{align}
 where $\rho_{\epsilon\eta}$ is the linear correlation coefficient between the two distributions. Formulae for the first two moments of the maximization of two normal RVs---which is not itself normal---are less well-known but were first provided by Clark in the early 1960s \cite{cla61}. Let 
 \begin{align*}
-\phi(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2} \quad \text{and} \quad \Phi(x) = \int_{-\infty}^{x} \phi(t) dt
+\phi(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2} \quad \text{and} \quad \Phi(x) = \int_{-\infty}^{x} \phi(t) \diff t
 \end{align*}
 be the unit normal probability density function and cumulative probability function, respectively, and define 
 \begin{align}
@@ -256,16 +272,16 @@ Then the first two moments $\mu_{\max}$ and $\sigma_{\max}$ of $\max(\epsilon, \
 \sigma_{\max}^2 &= (\mu_\epsilon^2 + \sigma_\epsilon^2) \Phi(\beta) + (\mu_\eta^2 + \sigma_\eta^2) \Phi(-\beta) \label{eq.clark_max_sigma}\\
 &+ (\mu_\epsilon + \mu_\eta)\alpha\phi(\beta) -\mu_{\max}^2 \nonumber.
 \end{align}
-Although these formulae are exact, they are only valid for a single pair of normal RVs. As already noted, the maximization of two normal RVs is not normal, so we cannot obtain the exact moments for a set of arbitrarily many RVs by applying them in a pairwise manner. However, we can at least get an approximation. Sinha, Zhou and Shenoy \cite{sin07} empirically investigated the accuracy of this approximation for sets of up to 100 normal RVs, concluding that it is usually fairly good. Furthermore, they considered several possible orderings for the operands of the maximization (randomly, by mean value, and so on), a topic that was also briefly discussed by Ross \cite{ross03}.        
+Although these formulae are exact, they are only valid for a single pair of normal RVs. The maximization of two normal RVs is not itself normal, so we cannot obtain the exact moments for a set of arbitrarily many RVs by applying them in a pairwise manner. However, we can at least get an approximation. Sinha, Zhou and Shenoy \cite{sin07} empirically investigated the accuracy of this approximation for sets of up to 100 normal RVs, ultimately concluding that it is usually fairly good. Furthermore, they considered several possible orderings for the operands of the maximization (randomly, sorted by mean value, and so on), a topic that was also briefly discussed by Ross \cite{ross03}.        
 
 Bringing this all together, by using \eqref{eq.sum_moments} for summations, and \eqref{eq.clark_max_mu} and \eqref{eq.clark_max_sigma} pairwise for maximizations, we can now move through the graph in a manner similar to \eqref{eq.Li} and compute approximations $\mu_n$ and $\sigma_n^2$ to the first two moments of the longest path which, since it is assumed to be roughly normal, suffices to describe the entire distribution. This method appears to have first been proposed for estimating the completion time of PERT networks by Sculli \cite{scu83}, although to simplify the problem he assumed that all of the correlation coefficients $\rho_{\epsilon \eta}$ in \eqref{eq.alpha_beta} were zero (see next section).
 
-In practice, the moment estimates obtained using Sculli's method tend to be quite accurate, with performance improving as the weight distributions move closer to normality and the number of nodes in the graph increases (as we might intuitively expect). More importantly, Sculli's method is typically much faster than the alternatives \cite{can16}. 
+In practice, the moment estimates obtained using Sculli's method tend to be quite good. Moreover, the method is typically much faster than the alternatives \cite{can16}. However, ignoring the correlations between the maximands is not ideal since common ancestors make path length RVs dependent, even when all weights themselves are not. 
 
 \subsubsection{Including correlations}
 \label{subsubsect.correlation_aware}
 
-Sculli assumed that all correlations were zero, which is rarely the case in practice since common ancestors make the longest path at two nodes dependent, even if all weights themselves are independent. Computing the correlation coefficients efficiently is tricky. However, Canon and Jeannot \cite{can16} proposed two different heuristics which alternatively prioritize precision and speed. The first is a dynamic programming algorithm called Cordyn which recursively computes the correlations using formulae derived in Clark's original paper for the correlation coefficients between any normal RV $\tau$ and a summation or maximization of normal RVs $\epsilon$ and $\eta$, 
+Efficiently computing the correlation coefficients between path lengths is tricky. However, Canon and Jeannot \cite{can16} proposed two different heuristics which alternatively prioritize precision and speed. The first is a dynamic programming algorithm called Cordyn which recursively computes the correlations using formulae derived in Clark's original paper for the correlation coefficients between any normal RV $\tau$ and a summation or maximization of normal RVs $\epsilon$ and $\eta$, 
 \begin{align}
   \label{eq.clark_corrs}
   \rho_{\tau, \, \text{sum}(\epsilon, \eta)} &= \frac{\sigma_\epsilon \rho_{\tau \epsilon} + \sigma_\eta \rho_{\tau \eta} }{\sigma_{\text{sum}}} \quad \text{and} \quad
@@ -278,21 +294,20 @@ In an effort to marry the speed of Sculli's method and the accuracy of Cordyn, C
 \begin{align*}
   \rho_{L_i, L_k} \approx \frac{\sigma_{L_a}^2}{\sigma_{L_i}\sigma_{L_k}}. % Not technically correct---introduce C?
   \end{align*}
-  For every edge, we need to do a lowest common ancestor query, so the time complexity of CorLCA depends to a large extent on the cost of these. Although they do not present a method, based on similar results in the literature, Canon and Jeannot hypothesize this can be done in $O(1)$ operations, giving an overall time complexity $O(e) \approx O(n^2)$ for the entire algorithm. At any rate, an extensive numerical comparison of several heuristic methods for approximating the longest path distribution by the original authors suggested that CorLCA is more efficient than Cordyn with only a relatively small reduction in accuracy \cite{can16}. It should however also be noted that it can do badly when longest path length estimates at two or more nodes with a common child are similar since only one of the respective edges to the child will be retained in the correlation tree.
+  For every edge, we need to do a lowest common ancestor query, so the time complexity of CorLCA depends to a large extent on the cost of these. Although they do not present a method, based on similar results in the literature, Canon and Jeannot hypothesize this can be done in $O(1)$ operations, giving an overall time complexity $O(e) \approx O(n^2)$ for the entire algorithm. At any rate, an extensive numerical comparison of several heuristics for approximating the longest path distribution by the original authors suggested that CorLCA is more efficient than Cordyn with only a relatively small reduction in accuracy \cite{can16}. It should however also be noted that it can do badly when longest path length estimates for two or more incident edges at a node are similar since only one of the edges will be retained in the correlation tree.
 
-  \subsubsection{The canonical method}
-\label{subsubsect.canonical}
-
+\subsection{The canonical method}
+\label{subsect.canonical}
 
 Another method for estimating the longest path distribution that approximates correlations in a similar manner comes from the field of digital circuit design. In the so-called {\em canonical model} \cite{vis06,zha06}, all RVs are expressed as the sum of their expected value and a weighted sum of standard normal distributions that characterize the variance, 
 \begin{align*}
 \eta = \mu + \sum_i v_i \delta_i,
 \end{align*}  
-where all $\delta_i \sim N(0, 1)$ and are independent of one another. The advantage of this is that evaluating summations and maximizations becomes much more straightforward. Let $\eta = \mu_\eta + \sum_i v_{\eta, i} \delta_i$ and $\epsilon = \mu_\epsilon + \sum_i v_{\epsilon, i} \delta_i$. Then 
+where all $\delta_i \sim N(0, 1)$ are independent. The advantage of this is that evaluating summations and maximizations becomes much more straightforward. Let $\eta = \mu_\eta + \sum_i v_{\eta, i} \delta_i$ and $\epsilon = \mu_\epsilon + \sum_i v_{\epsilon, i} \delta_i$. Then 
 \begin{align*}
 \omega = \eta + \epsilon = (\mu_\eta + \mu_\epsilon) + \sum_i (v_{\eta, i} + v_{\epsilon, i}) \delta_i.
 \end{align*}
-Suppose now that $\omega = \max(\eta, \epsilon)$. Let $\alpha$ and $\beta$ be defined as in \eqref{eq.alpha_beta}, and $\Phi(x) = \int_{-\infty}^{x} \phi(t) dt$ be the standard normal cdf. Note that computing $\beta$ requires the linear correlation coefficient $\rho_{\eta\epsilon}$ which can be efficiently calculated as:
+Suppose now that $\omega = \max(\eta, \epsilon)$. Let $\alpha$ and $\beta$ be defined as in \eqref{eq.alpha_beta}, and $\Phi(x) = \int_{-\infty}^{x} \phi(t) \diff t$ be the standard normal cdf. Note that computing $\beta$ requires the linear correlation coefficient $\rho_{\eta\epsilon}$ which can be efficiently calculated as:
 \begin{align*}
 \rho_{\eta\epsilon} = \frac{\sum_i v_{\eta, i} v_{\epsilon, i}}{\sqrt{\sum_i v_{\eta, i}^2} \cdot \sqrt{\sum_i v_{\epsilon, i}^2} }.
 \end{align*}
@@ -303,17 +318,16 @@ By definition, $\P[\eta > \epsilon] = \Phi(\beta)$ and we can therefore approxim
 \end{align*}
 This is both similar and in some sense contrary to the Clark equation approach, in that the latter precisely computes the first two moments of the maximization of two normal RVs, whereas the canonical method approximates the distribution of the maximization of any two RVs using linear combinations of normal RVs. In their empirical comparison, Canon and Jeannot found that the canonical method tended to fall between Sculli's heuristic and CorLCA in terms of both speed and approximation quality \cite{can16}, so we decided not to include it in comparisons here. 
 
+\subsection{Kamburowski's bounds}
+\label{subsect.kamburowski}
 
-\subsubsection{Kamburowski's bounds}
-\label{subsubsect.kamburowski}
+As stated in Section \ref{sect.bounds}, when all weights are independent Gaussian RVs, Kamburowski was able to prove both upper and lower bounds on the first two moments\footnote{As noted previously, the upper bound on the variance technically remains a conjecture.} of the longest path distribution. Since the bounds are somewhat similar to the methods discussed elsewhere in this section, we describe them here.
 
-As stated in Section \ref{sect.bounds}, when all costs are independent Gaussian RVs, Kamburowski was able to prove both upper and lower bounds on the first two moments\footnote{As noted previously, the upper bound on the variance technically remains a conjecture.} of the longest path distribution. Since the bounds are somewhat similar to the methods discussed elsewhere in this section, we describe them here.
-
-The basic idea is to recursively compute four number sequences $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$ such that $\underline{m_i} \leq \mu_{L_i} \leq \overline{m_i}$ and $ \underline{s_i} \leq \sigma_{L_i} \leq \overline{s_i}$ for all $i = 1, \dots, n$. Clearly, by taking $\underline{m_1} = \overline{m_1} = \E[\pi_1]$ and $\underline{s_1}^2 = \overline{s_1}^2 = Var[\pi_1]$ we can achieve the desired bounds for $L_1$. (As ever, we could work backward instead, in which case the analogous results hold for the index $n$.) Now we suppose that all of the upper and lower bounds have been computed for all of the parents of a given node $t_i$ and consider how we can construct  $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$. The variance bounds are relatively straightforward, albeit loose. The lower bound is given by
+The basic idea is to recursively compute four number sequences $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$ such that $\underline{m_i} \leq \mu_{L_i} \leq \overline{m_i}$ and $ \underline{s_i} \leq \sigma_{L_i} \leq \overline{s_i}$ for all $i = 1, \dots, n$. Clearly, by taking $\underline{m_1} = \overline{m_1} = \E[\pi_1]$ and $\underline{s_1}^2 = \overline{s_1}^2 = \Var[\pi_1]$ we can achieve the desired bounds for $L_1$. (As ever, we could work backward instead, in which case the analogous results hold for the index $n$.) Now we suppose that all of the upper and lower bounds have been computed for all of the parents of a given node $t_i$ and consider how we can construct  $\underline{m_i}$, $\overline{m_i}$, $\underline{s_i}$ and  $\overline{s_i}$. The variance bounds are relatively straightforward, albeit loose. The lower bound is given by
 \begin{equation}
 \underline{s_i^2} =\left\{
 \begin{array}{@{}ll@{}}
-\underline{s_h^2} + Var[\pi_{hi}] + Var[\pi_{i}], \quad  \text{if $P_i = \{s_h\}$,} \\
+\underline{s_h^2} + \Var[\pi_{hi}] + \Var[\pi_{i}], \quad  \text{if $P_i = \{s_h\}$,} \\
 0,  \quad \text{ otherwise},
 \end{array}\right.
 \label{eq.si_under}
@@ -321,7 +335,7 @@ The basic idea is to recursively compute four number sequences $\underline{m_i}$
 reflecting the intuition that the variance can be reduced almost arbitrarily by a maximization (which needs to be performed for the case of multiple parents). The upper bound is similarly intuitive since it is effectively equivalent to saying that the variance of the maximum of a set of normal RVs is bounded above by the maximum variance of the RVs, although this has never been proven (see Section \ref{subsect.discussion}). More precisely, define 
 \begin{align}
   \label{eq.si_over}
-  \overline{s_i^2} = \max_{h \in P_i}\{ \overline{s_h^2} + Var[\pi_{hi}] + Var[\pi_{i}]\}.
+  \overline{s_i^2} = \max_{h \in P_i}\{ \overline{s_h^2} + \Var[\pi_{hi}] + \Var[\pi_{i}]\}.
 \end{align}
 The bounds on the expected value are somewhat more complex. First, define a function $h$ by
 \begin{align*}
@@ -340,7 +354,7 @@ Then, for all $i = 2, \dots, n$, if we define
 \end{align*}
 where
 \begin{align*}
-  \underline{X_h} &\sim N(\underline{m_h} + \E[\pi_{hi}] + \E[\pi_{i}], \; \underline{s_h^2} + Var[\pi_{hi}] + Var[\pi_{i}]),
+  \underline{X_h} &\sim N(\underline{m_h} + \E[\pi_{hi}] + \E[\pi_{i}], \; \underline{s_h^2} + \Var[\pi_{hi}] + \Var[\pi_{i}]),
 \end{align*}
 and
 \begin{align*}
@@ -348,7 +362,7 @@ and
 \end{align*}
 where
 \begin{align*}
-  \overline{X_h} \sim N(\overline{m_h} + \E[\pi_{hi}] + \E[\pi_{i}], \; \overline{s_h^2} + Var[\pi_{hi}] + Var[\pi_{i}]),
+  \overline{X_h} \sim N(\overline{m_h} + \E[\pi_{hi}] + \E[\pi_{i}], \; \overline{s_h^2} + \Var[\pi_{hi}] + \Var[\pi_{i}]),
   \end{align*}
 we have 
 \begin{align*}
@@ -356,8 +370,87 @@ we have
 \end{align*}
 (Here we are assuming that the sets $\{\underline{X_h}\}_{h \in S_i}$ and $\{\overline{X_h}\}_{h \in S_i}$ are ordered in such a way that the inequality constraints on the variances is satisfied.)
 
-\section{A path-based heuristic}
-\label{sect.path_heuristic}
+\subsection{Updating approximations}
+\label{subsect.updating}
+
+% Makespan or longest path? Have used LP earlier but makespan more sensible here...
+
+The problem of approximating the longest path distribution of a stochastic graph has been widely-studied, as illustrated by the structure of this chapter so far. However a related problem has received less attention: how can estimated longest path distributions be quickly updated as weight realizations become apparent? From a scheduling perspective, this is equivalent to asking, how can makespan estimates be updated {\em during} execution? This would be particularly useful in situations such as when an unexpected delay occurs. More precisely, the scenario we consider is as follows. We have a complete set of longest path estimates $L_i \approx N(\mu_i, \sigma_i^2)$ for all nodes $i = 1, \dots, n$. At some point in time $T$, some fraction of the weights have been realized so that longest path estimates corresponding to some subset $C_T$ of the nodes have likewise been realized. How do we do update the longest path distribution $L_n$ accordingly? 
+
+
+In conjunction with the path normality assumption induced by the CLT, the following proposition may be useful.
+\begin{prop}
+	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
+	\begin{align*}
+	(w \mid v) \sim N \big( \bar{w} + \Sigma_{wv}\Sigma_{vv}^{-1} (v - \bar{v}), \enspace  \Sigma_{ww} - \Sigma_{wv} \Sigma_{vv}^{-1} \Sigma_{vw} \big).
+	\end{align*}
+\end{prop}
+Note that if all of the linear correlation coefficients $\rho_{uv}$ are known, we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find $\Sigma_{uv}$.
+
+This proposition is useful because we are assuming that there is a joint normal distribution across the entire set of finish times $L_i$. Furthermore, we can estimate the correlation coefficient between finish times at any two tasks using, for example, the correlation tree approach of CorLCA. This means that we can update the final makespan estimate using only the observed finish times of the tasks indexed by $C_T^*$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Suppose that task $t_i$ has finished at time $\ell_i$. Then we can compute a new estimate $L_n^i$ of the final makespan by applying the above result as follows,
+\begin{align*}
+L_n^i &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
+&\sim N \bigg(\mu_{n} + \frac{\rho_{ni} \sigma_{n}}{\sigma_{i}} (\ell_i - \mu_{i}), \enspace (1 - \rho_{ni}^2) \sigma_{n}^2 \bigg).
+\end{align*}
+We do this for all $i \in C_T^*$ and then compute their maximum (using the same method as before to estimate the correlation coefficients, if they are not already known) in order to obtain a new estimated final makespan $L_n'$, 
+\begin{align*}
+  L_n' = \max_{i \in C_T^*} \{ L_n^i  \}.
+\end{align*}
+
+
+Effectively, at time $T$ the schedule graph $G_s$ can be divided into two distinct subgraphs: one corresponding to those tasks that have been completed and the other to those that have not. Define $C_T$ to be the set of indices corresponding to tasks that have completed by time $T$ and $U_T$ to be the set of indices corresponding to tasks that are still not done. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of tasks which have been completed but at least one of their parents has not---in some sense the boundary of the realized and unrealized sections of the graph.
+% something about the first having multiple exit tasks and the second multiple entry tasks?
+
+Since all cost RVs corresponding to tasks indexed by $C_T$---and the edges between them---have been realized, we can compute the realized finish times $\ell_i$ for the corresponding tasks in the usual manner for scalar costs. The question then remains of how we compute an updated set of makespan estimates $L_k'$ for all $k \in U_T$, including a new final makespan estimate $L_n'$. We outline different possible approaches to this problem in the following three sections.
+
+%\subsection{Create a new graph}
+%\label{subsect.remaining}
+
+The most straightforward approach is to simply consider the unrealized part of the graph separately and compute the longest path through it, starting from any of the boundary tasks indexed by $C_T^*$, using any method. A new longest path estimate which passes through the given boundary task is then the sum of the realized longest path up to and including the task, plus the estimated longest path through the remaining unrealized subgraph. More efficiently, rather than initially computing values $L_i$ that represent longest path lengths from the source to a task (inclusive), we can compute a sequences of values $R_i$ that represent the longest paths from the tasks to the sink (exclusive)---i.e., estimates of the remaining time until the entire schedule has been completed. In particular, we set $R_n = 0$, then work backward and recursively compute  
+\begin{align*}
+  R_i = \max_{k \in S_i} \{ \pi_{ik} + \pi_k + R_k  \}
+\end{align*}
+for all other tasks, where the maximization is approximated using any of the methods that have been discussed (or otherwise). Note that since the $R_i$ do not include the cost of task $t_i$ the schedule makespan estimate is actually $R_1 + \pi_1$.
+
+(Of course, minor changes need to be made to some heuristics in order to estimate the correlations when working backward through the DAG. For example, in CorLCA, rather than the lowest common ancestors of two tasks, we want the deepest common descendants. However these changes are typically straightforward. As an aside, though, fairly significant differences are sometimes apparent between makespan estimates computed forward and backward through the DAG; see Section \ref{subsect.results_heuristics}.) 
+
+The advantage of this approach is that at time $T$ the estimated longest path which passes through task $t_i$, where $i \in C_T^*$, is simply given by $L_i' = \ell_i + R_i$ and, in particular, a new estimate of the makespan can be computed through
+\begin{align*}
+  L_n' = \max_{i \in C_T^*} \{ \ell_i + R_i  \}.
+\end{align*}
+Correlations for this maximization can be estimated in the same manner as was done for the calculation of the $R_i$, ideally using the same set of correlation coefficients (or not, if using Sculli's method).
+
+
+
+Rather than updating the finish time of the exit task---and therefore the makespan---directly, we can instead move forward through the DAG and update the finish time estimates for all unrealized tasks. This is more expensive of course but potentially more accurate. Now, in principle the updated finish times can be computed for each task $t_i$, where $i \in U_T$, using equation \eqref{eq.Li} in the usual manner. However, there are essentially three different cases that we need to consider, depending on the status of the terms in the maximization.
+\begin{enumerate}
+\item Both $\pi_{hi}$ and $L_h$ have been realized for all $h \in P_i$.
+\item Both $\pi_{hi}$ and $L_h$ have been realized for some $h \in P_i$ but not others. 
+  \item Both $\pi_{hi}$ and $L_h$ have been realized for none of the parents.
+  \end{enumerate}
+  In the first instance, the sums of $\pi_{hi}$ and $L_h$ are now deterministic so the maximization is just done over a set of scalars and is therefore straightforward. Similarly, in the third case, all of the sums are unrealized RVs so we can just use Clark's equations again to compute the new finish time estimate.
+
+The second case is more interesting. The problem basically reduces to how we compute the maximum of a set of RVs, some of which have been realized and others which have not. For notational ease, let $Z_h = \pi_{hi} + L_h$ and $M_i = \max_{h \in P_i} \{ Z_h  \}$.  Let $X_i$ be the maximum over the subset of parents for which $Z_h$ has been realized. Now, we know that $M_i > X_i$ since at least some of the $Z_h$ have not been realized yet. Furthermore, we have already computed an estimate of $L_i = \pi_i + M_i$, where $M_i$ is assumed to be roughly normal, so we can also explicitly form $M_i \sim N(\mu_{M_i}, \sigma_{M_i}^2)$. We want to find a new finish time estimate
+\begin{align}
+  \label{eq.dash_Li}
+  L_i' = \pi_i + (M_i | M_i > X_i). 
+\end{align}
+Given that $M_i$ is assumed to be Gaussian, we can model the term on the right as a truncated Gaussian. Let $a = (X_i - \mu_{M_i}) / \sigma_{M_i}$ and $b = 1 - \Phi(a)$, where $\Phi$ is the unit normal cdf as before. Then the first two moments of $(M_i | M_i > X_i)$ are given by
+\begin{align*}
+  \E[M_i \mid M_i > X_i] = \mu_{M_i} + \frac{\sigma_{M_i}\phi(a)}{b}
+\end{align*}
+and
+\begin{align*}
+  Var[M_i \mid M_i > X_i] = \sigma_{M_i}^2 \bigg[ 1 + \frac{a\phi(a)}{b} - \bigg( \frac{\phi(a)}{b} \bigg)^2    \bigg].
+\end{align*}
+Using these expressions, we can now compute \eqref{eq.dash_Li}, and therefore work through the remainder of the DAG updating the finish time estimates for all tasks that have not yet completed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PATH REDUCTION.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\section{Path reduction}
+\label{sect.path_reduction}
 
 By definition, the longest path through a graph is exactly that: the longest of all possible paths. Let $q$ denote the number of paths and $P_a$ be any path. Then we have
 \begin{align}
@@ -438,83 +531,9 @@ As an aside, it is interesting to note that when all weights are normal---so all
 
 % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
 
-\section{Updating makespan estimates}
-\label{sect.updating}
-
-% Makespan or longest path? Have used LP earlier but makespan more sensible here...
-
-Estimating the length of a schedule with stochastic costs before its execution has been widely-studied, as the examples in previous sections illustrate. However a related problem has received less attention: how can schedule makespan estimates be quickly updated {\em during} execution? This would be particularly useful in situations such as when a large unexpected delay occurs. More precisely, the scenario we consider is as follows. Given a schedule $\pi$, we have a complete set of task finish times estimates $L_i \sim N(\mu_i, \sigma_i^2)$ for all $i = 1, \dots, n$ that were computed before runtime. At some point in time $T$ during the schedule execution we want to compute a new estimate of the makespan based on the data gathered thus far. How do we do this as quickly and accurately as possible?
-
-Effectively, at time $T$ the schedule graph $G_s$ can be divided into two distinct subgraphs: one corresponding to those tasks that have been completed and the other to those that have not. Define $C_T$ to be the set of indices corresponding to tasks that have completed by time $T$ and $U_T$ to be the set of indices corresponding to tasks that are still not done. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of tasks which have been completed but at least one of their parents has not---in some sense the boundary of the realized and unrealized sections of the graph.
-% something about the first having multiple exit tasks and the second multiple entry tasks?
-
-Since all cost RVs corresponding to tasks indexed by $C_T$---and the edges between them---have been realized, we can compute the realized finish times $\ell_i$ for the corresponding tasks in the usual manner for scalar costs. The question then remains of how we compute an updated set of makespan estimates $L_k'$ for all $k \in U_T$, including a new final makespan estimate $L_n'$. We outline different possible approaches to this problem in the following three sections.
-
-\subsection{Create a new graph}
-\label{subsect.remaining}
-
-The most straightforward approach is to simply consider the unrealized part of the graph separately and compute the longest path through it, starting from any of the boundary tasks indexed by $C_T^*$, using any method. A new longest path estimate which passes through the given boundary task is then the sum of the realized longest path up to and including the task, plus the estimated longest path through the remaining unrealized subgraph. More efficiently, rather than initially computing values $L_i$ that represent longest path lengths from the source to a task (inclusive), we can compute a sequences of values $R_i$ that represent the longest paths from the tasks to the sink (exclusive)---i.e., estimates of the remaining time until the entire schedule has been completed. In particular, we set $R_n = 0$, then work backward and recursively compute  
-\begin{align*}
-  R_i = \max_{k \in S_i} \{ \pi_{ik} + \pi_k + R_k  \}
-\end{align*}
-for all other tasks, where the maximization is approximated using any of the methods that have been discussed (or otherwise). Note that since the $R_i$ do not include the cost of task $t_i$ the schedule makespan estimate is actually $R_1 + \pi_1$.
-
-(Of course, minor changes need to be made to some heuristics in order to estimate the correlations when working backward through the DAG. For example, in CorLCA, rather than the lowest common ancestors of two tasks, we want the deepest common descendants. However these changes are typically straightforward. As an aside, though, fairly significant differences are sometimes apparent between makespan estimates computed forward and backward through the DAG; see Section \ref{subsect.results_heuristics}.) 
-
-The advantage of this approach is that at time $T$ the estimated longest path which passes through task $t_i$, where $i \in C_T^*$, is simply given by $L_i' = \ell_i + R_i$ and, in particular, a new estimate of the makespan can be computed through
-\begin{align*}
-  L_n' = \max_{i \in C_T^*} \{ \ell_i + R_i  \}.
-\end{align*}
-Correlations for this maximization can be estimated in the same manner as was done for the calculation of the $R_i$, ideally using the same set of correlation coefficients (or not, if using Sculli's method).
-
-\subsection{Update the makespan directly}
-\label{subsect.corr_update}
-
-Another possible method for updating the final makespan estimate makes use of the following result.
-\begin{prop}
-	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
-	\begin{align*}
-	(w \mid v) \sim N \big( \bar{w} + \Sigma_{wv}\Sigma_{vv}^{-1} (v - \bar{v}), \enspace  \Sigma_{ww} - \Sigma_{wv} \Sigma_{vv}^{-1} \Sigma_{vw} \big).
-	\end{align*}
-\end{prop}
-Note that if all of the linear correlation coefficients $\rho_{uv}$ are known, we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find $\Sigma_{uv}$.
-
-This proposition is useful because we are assuming that there is a joint normal distribution across the entire set of finish times $L_i$. Furthermore, we can estimate the correlation coefficient between finish times at any two tasks using, for example, the correlation tree approach of CorLCA. This means that we can update the final makespan estimate using only the observed finish times of the tasks indexed by $C_T^*$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Suppose that task $t_i$ has finished at time $\ell_i$. Then we can compute a new estimate $L_n^i$ of the final makespan by applying the above result as follows,
-\begin{align*}
-L_n^i &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
-&\sim N \bigg(\mu_{n} + \frac{\rho_{ni} \sigma_{n}}{\sigma_{i}} (\ell_i - \mu_{i}), \enspace (1 - \rho_{ni}^2) \sigma_{n}^2 \bigg).
-\end{align*}
-We do this for all $i \in C_T^*$ and then compute their maximum (using the same method as before to estimate the correlation coefficients, if they are not already known) in order to obtain a new estimated final makespan $L_n'$, 
-\begin{align*}
-  L_n' = \max_{i \in C_T^*} \{ L_n^i  \}.
-  \end{align*}
-
-\subsection{Do the computation again}
-\label{subsect.propagating}
-
-Rather than updating the finish time of the exit task---and therefore the makespan---directly, we can instead move forward through the DAG and update the finish time estimates for all unrealized tasks. This is more expensive of course but potentially more accurate. Now, in principle the updated finish times can be computed for each task $t_i$, where $i \in U_T$, using equation \eqref{eq.Li} in the usual manner. However, there are essentially three different cases that we need to consider, depending on the status of the terms in the maximization.
-\begin{enumerate}
-\item Both $\pi_{hi}$ and $L_h$ have been realized for all $h \in P_i$.
-\item Both $\pi_{hi}$ and $L_h$ have been realized for some $h \in P_i$ but not others. 
-  \item Both $\pi_{hi}$ and $L_h$ have been realized for none of the parents.
-  \end{enumerate}
-  In the first instance, the sums of $\pi_{hi}$ and $L_h$ are now deterministic so the maximization is just done over a set of scalars and is therefore straightforward. Similarly, in the third case, all of the sums are unrealized RVs so we can just use Clark's equations again to compute the new finish time estimate.
-
-The second case is more interesting. The problem basically reduces to how we compute the maximum of a set of RVs, some of which have been realized and others which have not. For notational ease, let $Z_h = \pi_{hi} + L_h$ and $M_i = \max_{h \in P_i} \{ Z_h  \}$.  Let $X_i$ be the maximum over the subset of parents for which $Z_h$ has been realized. Now, we know that $M_i > X_i$ since at least some of the $Z_h$ have not been realized yet. Furthermore, we have already computed an estimate of $L_i = \pi_i + M_i$, where $M_i$ is assumed to be roughly normal, so we can also explicitly form $M_i \sim N(\mu_{M_i}, \sigma_{M_i}^2)$. We want to find a new finish time estimate
-\begin{align}
-  \label{eq.dash_Li}
-  L_i' = \pi_i + (M_i | M_i > X_i). 
-\end{align}
-Given that $M_i$ is assumed to be Gaussian, we can model the term on the right as a truncated Gaussian. Let $a = (X_i - \mu_{M_i}) / \sigma_{M_i}$ and $b = 1 - \Phi(a)$, where $\Phi$ is the unit normal cdf as before. Then the first two moments of $(M_i | M_i > X_i)$ are given by
-\begin{align*}
-  \E[M_i \mid M_i > X_i] = \mu_{M_i} + \frac{\sigma_{M_i}\phi(a)}{b}
-\end{align*}
-and
-\begin{align*}
-  Var[M_i \mid M_i > X_i] = \sigma_{M_i}^2 \bigg[ 1 + \frac{a\phi(a)}{b} - \bigg( \frac{\phi(a)}{b} \bigg)^2    \bigg].
-\end{align*}
-Using these expressions, we can now compute \eqref{eq.dash_Li}, and therefore work through the remainder of the DAG updating the finish time estimates for all tasks that have not yet completed. 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NUMERICAL EXPERIMENTS.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 \section{Numerical experiments}
 \label{sect.results}
 
