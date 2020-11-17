@@ -370,81 +370,6 @@ we have
 \end{align*}
 (Here we are assuming that the sets $\{\underline{X_h}\}_{h \in S_i}$ and $\{\overline{X_h}\}_{h \in S_i}$ are ordered in such a way that the inequality constraints on the variances is satisfied.)
 
-\subsection{Updating approximations}
-\label{subsect.updating}
-
-% Makespan or longest path? Have used LP earlier but makespan more sensible here...
-
-The problem of approximating the longest path distribution of a stochastic graph has been widely-studied, as illustrated by the structure of this chapter so far. However a related problem has received less attention: how can estimated longest path distributions be quickly updated as weight realizations become apparent? From a scheduling perspective, this is equivalent to asking, how can makespan estimates be updated {\em during} execution? This would be particularly useful in situations such as when an unexpected delay occurs. More precisely, the scenario we consider is as follows. We have a complete set of longest path estimates $L_i \approx N(\mu_i, \sigma_i^2)$ for all nodes $i = 1, \dots, n$. At some point in time $T$, some fraction of the weights have been realized so that longest path estimates corresponding to some subset $C_T$ of the nodes have likewise been realized. How do we do update the longest path distribution $L_n$ accordingly? 
-
-
-In conjunction with the path normality assumption induced by the CLT, the following proposition may be useful.
-\begin{prop}
-	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
-	\begin{align*}
-	(w \mid v) \sim N \big( \bar{w} + \Sigma_{wv}\Sigma_{vv}^{-1} (v - \bar{v}), \enspace  \Sigma_{ww} - \Sigma_{wv} \Sigma_{vv}^{-1} \Sigma_{vw} \big).
-	\end{align*}
-\end{prop}
-Note that if all of the linear correlation coefficients $\rho_{uv}$ are known, we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find $\Sigma_{uv}$.
-
-This proposition is useful because we are assuming that there is a joint normal distribution across the entire set of finish times $L_i$. Furthermore, we can estimate the correlation coefficient between finish times at any two tasks using, for example, the correlation tree approach of CorLCA. This means that we can update the final makespan estimate using only the observed finish times of the tasks indexed by $C_T^*$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Suppose that task $t_i$ has finished at time $\ell_i$. Then we can compute a new estimate $L_n^i$ of the final makespan by applying the above result as follows,
-\begin{align*}
-L_n^i &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
-&\sim N \bigg(\mu_{n} + \frac{\rho_{ni} \sigma_{n}}{\sigma_{i}} (\ell_i - \mu_{i}), \enspace (1 - \rho_{ni}^2) \sigma_{n}^2 \bigg).
-\end{align*}
-We do this for all $i \in C_T^*$ and then compute their maximum (using the same method as before to estimate the correlation coefficients, if they are not already known) in order to obtain a new estimated final makespan $L_n'$, 
-\begin{align*}
-  L_n' = \max_{i \in C_T^*} \{ L_n^i  \}.
-\end{align*}
-
-
-Effectively, at time $T$ the schedule graph $G_s$ can be divided into two distinct subgraphs: one corresponding to those tasks that have been completed and the other to those that have not. Define $C_T$ to be the set of indices corresponding to tasks that have completed by time $T$ and $U_T$ to be the set of indices corresponding to tasks that are still not done. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of tasks which have been completed but at least one of their parents has not---in some sense the boundary of the realized and unrealized sections of the graph.
-% something about the first having multiple exit tasks and the second multiple entry tasks?
-
-Since all cost RVs corresponding to tasks indexed by $C_T$---and the edges between them---have been realized, we can compute the realized finish times $\ell_i$ for the corresponding tasks in the usual manner for scalar costs. The question then remains of how we compute an updated set of makespan estimates $L_k'$ for all $k \in U_T$, including a new final makespan estimate $L_n'$. We outline different possible approaches to this problem in the following three sections.
-
-%\subsection{Create a new graph}
-%\label{subsect.remaining}
-
-The most straightforward approach is to simply consider the unrealized part of the graph separately and compute the longest path through it, starting from any of the boundary tasks indexed by $C_T^*$, using any method. A new longest path estimate which passes through the given boundary task is then the sum of the realized longest path up to and including the task, plus the estimated longest path through the remaining unrealized subgraph. More efficiently, rather than initially computing values $L_i$ that represent longest path lengths from the source to a task (inclusive), we can compute a sequences of values $R_i$ that represent the longest paths from the tasks to the sink (exclusive)---i.e., estimates of the remaining time until the entire schedule has been completed. In particular, we set $R_n = 0$, then work backward and recursively compute  
-\begin{align*}
-  R_i = \max_{k \in S_i} \{ \pi_{ik} + \pi_k + R_k  \}
-\end{align*}
-for all other tasks, where the maximization is approximated using any of the methods that have been discussed (or otherwise). Note that since the $R_i$ do not include the cost of task $t_i$ the schedule makespan estimate is actually $R_1 + \pi_1$.
-
-(Of course, minor changes need to be made to some heuristics in order to estimate the correlations when working backward through the DAG. For example, in CorLCA, rather than the lowest common ancestors of two tasks, we want the deepest common descendants. However these changes are typically straightforward. As an aside, though, fairly significant differences are sometimes apparent between makespan estimates computed forward and backward through the DAG; see Section \ref{subsect.results_heuristics}.) 
-
-The advantage of this approach is that at time $T$ the estimated longest path which passes through task $t_i$, where $i \in C_T^*$, is simply given by $L_i' = \ell_i + R_i$ and, in particular, a new estimate of the makespan can be computed through
-\begin{align*}
-  L_n' = \max_{i \in C_T^*} \{ \ell_i + R_i  \}.
-\end{align*}
-Correlations for this maximization can be estimated in the same manner as was done for the calculation of the $R_i$, ideally using the same set of correlation coefficients (or not, if using Sculli's method).
-
-
-
-Rather than updating the finish time of the exit task---and therefore the makespan---directly, we can instead move forward through the DAG and update the finish time estimates for all unrealized tasks. This is more expensive of course but potentially more accurate. Now, in principle the updated finish times can be computed for each task $t_i$, where $i \in U_T$, using equation \eqref{eq.Li} in the usual manner. However, there are essentially three different cases that we need to consider, depending on the status of the terms in the maximization.
-\begin{enumerate}
-\item Both $\pi_{hi}$ and $L_h$ have been realized for all $h \in P_i$.
-\item Both $\pi_{hi}$ and $L_h$ have been realized for some $h \in P_i$ but not others. 
-  \item Both $\pi_{hi}$ and $L_h$ have been realized for none of the parents.
-  \end{enumerate}
-  In the first instance, the sums of $\pi_{hi}$ and $L_h$ are now deterministic so the maximization is just done over a set of scalars and is therefore straightforward. Similarly, in the third case, all of the sums are unrealized RVs so we can just use Clark's equations again to compute the new finish time estimate.
-
-The second case is more interesting. The problem basically reduces to how we compute the maximum of a set of RVs, some of which have been realized and others which have not. For notational ease, let $Z_h = \pi_{hi} + L_h$ and $M_i = \max_{h \in P_i} \{ Z_h  \}$.  Let $X_i$ be the maximum over the subset of parents for which $Z_h$ has been realized. Now, we know that $M_i > X_i$ since at least some of the $Z_h$ have not been realized yet. Furthermore, we have already computed an estimate of $L_i = \pi_i + M_i$, where $M_i$ is assumed to be roughly normal, so we can also explicitly form $M_i \sim N(\mu_{M_i}, \sigma_{M_i}^2)$. We want to find a new finish time estimate
-\begin{align}
-  \label{eq.dash_Li}
-  L_i' = \pi_i + (M_i | M_i > X_i). 
-\end{align}
-Given that $M_i$ is assumed to be Gaussian, we can model the term on the right as a truncated Gaussian. Let $a = (X_i - \mu_{M_i}) / \sigma_{M_i}$ and $b = 1 - \Phi(a)$, where $\Phi$ is the unit normal cdf as before. Then the first two moments of $(M_i | M_i > X_i)$ are given by
-\begin{align*}
-  \E[M_i \mid M_i > X_i] = \mu_{M_i} + \frac{\sigma_{M_i}\phi(a)}{b}
-\end{align*}
-and
-\begin{align*}
-  Var[M_i \mid M_i > X_i] = \sigma_{M_i}^2 \bigg[ 1 + \frac{a\phi(a)}{b} - \bigg( \frac{\phi(a)}{b} \bigg)^2    \bigg].
-\end{align*}
-Using these expressions, we can now compute \eqref{eq.dash_Li}, and therefore work through the remainder of the DAG updating the finish time estimates for all tasks that have not yet completed.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PATH REDUCTION.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -466,7 +391,7 @@ We propose a very similar heuristic here that we call {\em Reduce Paths to Maxim
 \item Identify a set of paths that are good candidates to be the longest.
   \item Approximate the distribution of their maximization.
   \end{enumerate}
-We describe our approach for both of these steps in more detail in the following two sections.
+  We describe our approach for both of these steps in more detail in the following two sections.
 
 \subsection{Identifying longest path candidates}
 \label{subsect.identifying}
@@ -489,12 +414,12 @@ Things are slightly more complicated if $t_k$ has multiple parents: we need to i
 \end{align*}
 and add those which are not $\epsilon$-dominated by $P_k^*$ to $X_k$. Moving forward through the graph in this manner, $X_n$ gives us our set of path candidates. Bringing this all together, Algorithm X summarizes the full procedure.    
  
-Of course, it is very easy to construct examples for which this heuristic does badly, such as when we have many paths of similar length. For the sake of efficiency, it is sensible to set an upper limit on the number of paths that are retained at each node, but in the worst case this method can still be expensive (although it has polynomial time complexity). However, the hope is that computing the candidate paths is not too tedious for an average graph. Similarly, there are absolutely no theoretical guarantees that the generated paths are a useful substitute for the full set of paths. However, we investigate both of these conjectures via numerical experimentation in Section \ref{sect.results}. 
+Of course, it is very easy to construct examples for which this heuristic does badly, such as when we have many paths of similar length. For the sake of efficiency, it is sensible to set an upper limit on the number of paths that are retained at each node, but in the worst case this method can still be expensive (although it has polynomial time complexity). However, the hope is that computing the candidate paths is not too tedious for an average graph. Similarly, there are absolutely no theoretical guarantees that the generated paths are a useful substitute for the full set of paths. However, we investigate both of these conjectures via numerical experimentation in Section \ref{sect.results}.
 
 \subsection{Approximating the maximum}
 \label{subsect.approx_max}
 
-Once the set of candidate paths $X_n$ has been computed, we can estimate the distribution of their maximum using the Clark equations pairwise. The question then is, how do we deal with the correlations? There are three obvious ways, analogous to Sculli's method, CorLCA and CorDyn. The first is to simply disregard them all. Alternatively, since as correlations between any two given paths can be computed efficiently, we could take a similar approach to CorLCA and use only the single dominant path in the intermediate maximizations to estimate the correlations. Finally, we could use \eqref{eq.clark_corrs} to recursively compute all of the correlation coefficients required for the maximization over the entire set, in a manner similar to Cordyn. We consider the empirical performance relative to the computational cost for all of these alternatives in Section \ref{sect.results}.  
+Once the set of candidate paths $X_n$ has been computed, we can estimate the distribution of their maximum using the Clark equations pairwise. The question then is, how do we deal with the correlations? There are three obvious ways, analogous to Sculli's method, CorLCA and CorDyn. The first is to simply disregard them all. Alternatively, since as correlations between any two given paths can be computed efficiently, we could take a similar approach to CorLCA and use only the single dominant path in the intermediate maximizations to estimate the correlations. Finally, we could use \eqref{eq.clark_corrs} to recursively compute all of the correlation coefficients required for the maximization over the entire set, in a manner similar to Cordyn. We consider the empirical performance relative to the computational cost for all of these alternatives in Section \ref{sect.results}.
 
 \subsection{Discussion}
 \label{subsect.discussion}
@@ -510,7 +435,7 @@ As an aside, it is interesting to note that when all weights are normal---so all
   \end{align*}
   for any set of DDD normal RVs $X_1, \dots, X_N$. While simple counterexamples to this conjecture can be found for RVs from {\em arbitrary} distributions, as far as we know it remains an open question for normal RVs.
 
-  %In fact, if we assume that the shape of the maximum is roughly normal, since the mean of the maximum is greater than the mean of any path, we could argue heuristically that the variance of the longest path is actually bounded in the normal case by $Var[P_M]$, where   
+%In fact, if we assume that the shape of the maximum is roughly normal, since the mean of the maximum is greater than the mean of any path, we could argue heuristically that the variance of the longest path is actually bounded in the normal case by $Var[P_M]$, where   
 % \begin{align*}
  %    M \coloneqq \argmax_a(\E[P_a] + Var[P_a]).
  % \end{align*}
@@ -530,6 +455,87 @@ As an aside, it is interesting to note that when all weights are normal---so all
     %  \end{prop}  
 
 % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% UPDATING.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\section{Updating approximations}
+\label{sect.updating}
+
+The problem of approximating the longest path distribution of a stochastic graph has been widely-studied, as demonstrated by the structure of this chapter so far. However a related problem has received less attention: how can estimated longest path distributions be quickly updated as weight realizations become apparent? From a scheduling perspective, this is equivalent to asking how makespan estimates can be updated {\em during} execution. Clearly, this would be particularly useful in situations such as when an unexpected delay occurs, or decisions need to be made as to whether it is worthwhile to continue with the current schedule.
+
+More precisely, the scenario we consider is as follows. We have computed a complete set of longest path estimates $L_i$ for all nodes $i = 1, \dots, n$. At some point in time $T$, some fraction of the weights have been realized so that longest path estimates corresponding to some subset $C_T$ of the nodes have likewise been realized but those for another subset $U_T$ have not yet been. Furthermore, define $C_T^* \subseteq C_T$ to be the set of indices of nodes with at least one child in $U_T$---in some sense the boundary of the realized and unrealized sections of the graph. How do we compute a new, more accurate longest path estimate $L_n'$?
+
+\subsection{The naive approach}
+\label{subsect.updating_naive}
+
+% Since all cost RVs corresponding to tasks indexed by $C_T$---and the edges between them---have been realized, we can compute the realized finish times $\ell_i$ for the corresponding tasks in the usual manner for scalar costs.
+
+The most straightforward approach is to simply move forward through the DAG, starting from the source, and apply equation \eqref{eq.Li} again, using any heuristic that we choose for dealing with the summation and maximization of RVs. As already noted, since all weight RVs corresponding to nodes in $C_T$---and the edges between them---have been realized, we can compute the corresponding realizations of their longest paths in the usual manner for scalar weights. The question now is, what to do for a given node $t_i \in U_T$? By definition, the node weight $\pi_i$ has not yet been realized but there are essentially three different cases for the maximization in \eqref{eq.Li} that we need to consider, depending on the status of the parent nodes (indexed by $P_i$) and the weights of the incident edges:
+\begin{enumerate}
+\item Both $\pi_{hi}$ and $L_h$ have been realized for all $h \in P_i$.
+\item Both $\pi_{hi}$ and $L_h$ have been realized for some $h \in P_i$ but not others. 
+  \item Both $\pi_{hi}$ and $L_h$ have been realized for no $h \in P_i$.
+  \end{enumerate}
+  In the first instance, the maximands are now deterministic so the result is straightforward. Similarly, in the third case, all of the maximands are unrealized RVs so we can use our chosen approximation method (e.g., Clark's equations) to compute the new estimate.
+
+The second case is more interesting. The problem basically reduces to how we compute the maximum of a set of RVs, some of which have been realized and others which have not. For notational ease, let $Z_h = \pi_{hi} + L_h$ and $M_i = \max_{h \in P_i} \{ Z_h  \}$.  Let $X_i$ be the maximum over the subset of parents for which $Z_h$ has been realized. We know that $M_i > X_i$ since at least some of the $Z_h$ have not been realized yet, so we want to compute
+\begin{align}
+  \label{eq.dash_Li}
+  L_i' = \pi_i + (M_i | M_i > X_i). 
+\end{align}
+In general this is a difficult problem, but it can be dealt with heuristically. Since $M_i$ is roughly normal by the CLT and $L_i = \pi_i + M_i$ has already been computed, we can explicitly form $M_i \approx N(\mu_{M_i}, \sigma_{M_i}^2)$ and model the term on the right of \eqref{eq.dash_Li} as a truncated normal distribution. Let $a = (X_i - \mu_{M_i}) / \sigma_{M_i}$ and $b = 1 - \Phi(a)$, where $\Phi$ is the unit normal cdf as before. Then the first two moments of $(M_i | M_i > X_i)$ are given by
+\begin{align*}
+  \E[M_i \mid M_i > X_i] = \mu_{M_i} + \frac{\sigma_{M_i}\phi(a)}{b}
+\end{align*}
+and
+\begin{align*}
+  \Var[M_i \mid M_i > X_i] = \sigma_{M_i}^2 \bigg[ 1 + \frac{a\phi(a)}{b} - \bigg( \frac{\phi(a)}{b} \bigg)^2    \bigg].
+\end{align*}
+Using these expressions, we can handle \eqref{eq.dash_Li} and therefore compute new longest path estimates $L_i'$ for all $t_i \in U_T$.
+
+The obvious downside of this approach to updating the longest path distribution is the computational cost since we need to traverse the entire DAG and compute the intermediate longest path estimates again.  
+
+
+\subsection{Working backwards}
+\label{subsect.updating_backwards}
+
+Rather than moving through the entire DAG again it would be more efficient if we could somehow update $L_n$ directly. Perhaps the most obvious way to do this is, rather than initially computing values $L_i$ that represent longest path lengths from the source to a task (inclusive) using \eqref{eq.Li}, we can instead compute a sequence of values $R_i$ that represent the longest paths from the tasks to the sink (exclusive). In particular, we set $R_n = 0$, then work backward and recursively compute  
+\begin{align*}
+  R_i = \max_{k \in S_i} \{ \pi_{ik} + \pi_k + R_k  \}
+\end{align*}
+for all other tasks, where the maximization is approximated using any of the methods that have been discussed (or otherwise). Note that since $R_i$ does not include the weight of node $t_i$, the longest path estimate for the entire graph is actually $R_1 + \pi_1$. (Of course, changes need to be made to certain heuristics in order to accommodate working backward through the DAG. For example, in CorLCA, to estimate correlations we need the {\em deepest common descendant} rather than the lowest common ancestor. However these changes are typically cosmetic.)
+
+For any $t_i \in C_T$, a new estimate of the longest path can be computed via $L_n^i \coloneqq \ell_i + R_i$. But this gives us a host of possible updated longest path estimates---how do we get a definitive answer $L_n'$? First of all, it is sensible to restrict ourselves to nodes in $C_T^*$ since they are in some real sense the most ``up-to-date''. Given that $R_i$ represents the estimated longest path from node $t_i$ to the end, $\ell_i + R_i$ is the length of the longest complete path that passes through node $t_i$. Therefore what we really want to compute is       
+\begin{align*}
+  L_n' = \max_{i \in C_T^*} \{ \ell_i + R_i  \} = \max_{i \in C_T^*} \{ L_n^i  \}.
+\end{align*}
+Effectively this is a maximization over a set of path length RVs. For $t_i \in C_T^*$, define $P_i = L_i + R_i$. What can we say about the correlation between $P_i$ and $P_k$?  We can presumably estimate the correlation coefficient between $R_i$ and $R_k$ through whatever method was used to compute them in the first place (e.g., a correlation tree if CorLCA). But we can't use this to compute the correlation between $P_i$ and $P_k$ since nothing is known about $L_i$ and $L_k$. The only solution therefore is to use the same approach as in the previous chapter and compute the correlations for the paths as a whole...
+
+% Question for Neil: is the last part correct?
+% Say something about ignoring realized edges.
+% It is not clear that this is any easier than computing everything again...
+% Assuming normality again...
+
+\subsection{Using normality}
+\label{subsect.updating_normality}
+
+In conjunction with the path normality assumption induced by the CLT, the following proposition may be useful for updating the longest path distribution as path length realizations become apparent.
+\begin{prop}
+	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
+	\begin{align*}
+	(w \mid v) \sim N \big( \bar{w} + \Sigma_{wv}\Sigma_{vv}^{-1} (v - \bar{v}), \enspace  \Sigma_{ww} - \Sigma_{wv} \Sigma_{vv}^{-1} \Sigma_{vw} \big).
+	\end{align*}
+\end{prop}
+Note that if the linear correlation coefficient $\rho_{uv}$ is known, we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find the covariance $\Sigma_{uv}$.
+
+The proposition is applicable here because we are assuming that there is a joint normal distribution across the entire set of longest path RVs $L_i$. Furthermore, we can estimate the correlation coefficient between longest paths at any two nodes using, for example, the correlation tree approach of CorLCA. This means that we can update the longest path distribution $L_n$ using realized longest paths that terminate at any node. Suppose that $\ell_i$ is the realized longest path from the source to node $t_i$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Then we can compute a new estimate $L_n^i$ of the longest path through the DAG by applying the above result as follows,
+\begin{align*}
+L_n^i &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
+&\sim N \bigg(\mu_{n} + \frac{\rho_{ni} \sigma_{n}}{\sigma_{i}} (\ell_i - \mu_{i}), \enspace (1 - \rho_{ni}^2) \sigma_{n}^2 \bigg).
+\end{align*}
+The question now is the same as in the previous section: which nodes do we use?
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NUMERICAL EXPERIMENTS.
