@@ -244,7 +244,7 @@ The major disadvantage of the MC method is the computational cost, particularly 
 % CENTRAL LIMIT THEOREM.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Applying the CLT}
+\section{The CLT approach}
 \label{sect.CLT}
 
 Fundamentally, the length of any given path through a schedule graph is just the sum of the weight RVs along it. By the Central Limit Theorem (CLT), sums of random variables are asymptotically normally distributed. So we can make a reasonable argument that the longest path distribution itself is likely to be at least approximately normal, $L_n \approx N(\mu_n, \sigma_n)$. Indeed, this has often been observed empirically, even when the graph weights follow distributions that are far from normal \cite{can10}. This argument forms the basis of a family of efficient heuristics for computing an approximation to the longest path distribution.
@@ -278,8 +278,8 @@ Bringing this all together, by using \eqref{eq.sum_moments} for summations, and 
 
 In practice, the moment estimates obtained using Sculli's method tend to be quite good. Moreover, the method is typically much faster than the alternatives \cite{can16}. However, ignoring the correlations between the maximands is not ideal since common ancestors make path length RVs dependent, even when all weights themselves are not. 
 
-\subsubsection{Including correlations}
-\label{subsubsect.correlation_aware}
+\subsection{Including correlations}
+\label{subsect.correlation_aware}
 
 Efficiently computing the correlation coefficients between path lengths is tricky. However, Canon and Jeannot \cite{can16} proposed two different heuristics which alternatively prioritize precision and speed. The first is a dynamic programming algorithm called Cordyn which recursively computes the correlations using formulae derived in Clark's original paper for the correlation coefficients between any normal RV $\tau$ and a summation or maximization of normal RVs $\epsilon$ and $\eta$, 
 \begin{align}
@@ -377,24 +377,30 @@ we have
 \section{Path reduction}
 \label{sect.path_reduction}
 
-By definition, the longest path through a graph is exactly that: the longest of all possible paths. Let $q$ denote the number of paths and $P_a$ be any path. Then we have
+By definition, the longest path through a graph is exactly that: the longest of all possible paths. Let $q$ denote the number of paths and $P_a$ be any path. Then we of course have
 \begin{align}
   \label{eq.lp_definition}
   L_n = \max_{a = 1, \dots, q} P_a.
 \end{align}
-Since all path lengths are approximately normal by the CLT---or exactly normal if all weight distributions are as well---this reduces to the problem of finding the maximum of a set of dependent, differently distributed (DDD) normal RVs. Of course, the problem with this approach is that $q$ is usually impractically large; it is rare that we can even efficiently generate all of the possible paths, let alone evaluate their maximum. The dynamic programming approach defined by \eqref{eq.Li} is therefore (usually) the only possible option. In that case we also have to deal with finding the maximum of sets of normal path length RVs, but they are much smaller so we can apply Clark's equations in any of the flavors---Sculli's method, CorLCA, Cordyn---described previously. However, one potential downside is that approximation errors can propagate through the DAG. An illustration of this principle is provided by the fact that the longest path distribution computed by the forward and backward variants of Sculli's method and CorLCA can be quite different (see Section X). But if we could somehow reduce the set of paths that need to be considered to a smaller, more manageable size we could apply Clark's equations directly to the path lengths and hopefully alleviate this effect. In other words: can we identify a subset of paths that are (in some reasonable sense) the most likely to be the longest?
+Since all path lengths are approximately normal by the CLT---or exactly normal if all weight distributions are as well---heuristically this reduces to the problem of finding the maximum of a set of dependent, differently distributed (DDD) normal RVs. Setting aside the issue of actually computing the maximum for the moment, the problem with this approach is that $q$ is usually impractically large; it is rare that we can even efficiently generate all of the possible paths. The dynamic programming approach defined by \eqref{eq.Li} is therefore (usually) the only possible option. In that case we also have to deal with finding the maximum of sets of normal path length RVs, but they are much smaller so we can apply Clark's equations in any of the flavors---Sculli's method, CorLCA, Cordyn---described previously. One potential downside of this is that we have to do a lot of maximizations with intermediate path lengths so approximation errors may propagate through the DAG. An illustration of this principle is provided by the fact that the longest path distribution computed by the forward and backward variants of CorLCA for large graphs can be quite different (see Section X...). But if we could somehow reduce the set of paths to a more manageable size we could apply Clark's equations directly to the path lengths and hopefully alleviate this effect. In other words: can we identify a subset of paths that are (in some reasonable sense) most likely to be the longest?
+% Say that in practice the number of paths that are actually longest is much smaller?
 
-This problem has been considered before. For example, Dodin \cite{dod84} presented a polynomial time algorithm for determining the $K$ {\em most critical} paths in a PERT network, where criticality is defined in terms of the probability that a path will be greater than all others. A modified version of Dodin's algorithm was used by Ludwig, M{\"o}hring and Stork \cite{lud01} in conjunction with the normality assumption as a heuristic bound on the distribution function: paths were generated according to the algorithm and their length distributions were then multiplied together to (heuristically) bound the longest path distribution. As noted in Section \ref{sect.bounds}, this heuristic performed well in comparison to other methods, even though multiplying the path length distributions treats them as though they were independent.
+This problem has been considered before. For example, Dodin \cite{dod84} presented a polynomial time algorithm for determining the $K$ {\em most critical} paths in a PERT network, where criticality is defined in terms of the probability that a path will be greater than all others. A modified version of Dodin's algorithm, in conjunction with the normality assumption induced by the CLT, was used by Ludwig, M{\"o}hring and Stork \cite{lud01} as a heuristic bound on the distribution function: paths were generated according to the algorithm and their length distributions were then multiplied together to (heuristically) bound the longest path distribution. As noted in Section \ref{sect.bounds}, this heuristic performed well in comparison to other methods, even though multiplying the path length distributions treats them as though they were independent.
 
-We propose a very similar heuristic here that we call {\em Reduce Paths to Maximize} (RPM) for ease of reference. At a high level, it has the following two step structure:
+We propose a very similar heuristic framework here that we call {\em Reduce Paths then Maximize} (RPM) for ease of reference. At a high level, it has the following two-step structure:
 \begin{enumerate}
 \item Identify a set of paths that are good candidates to be the longest.
   \item Approximate the distribution of their maximization.
   \end{enumerate}
-  We describe our approach for both of these steps in more detail in the following two sections.
+  We discuss possibilities for both of these steps in more detail in the following two sections. 
 
 \subsection{Identifying longest path candidates}
-\label{subsect.identifying}
+\label{subsect.path_identifying}
+
+Of course, one can easily construct graphs for which we would expect the RPM heuristic to do badly, such as when we have many paths of similar length. In practice however it is often the case that the number of paths that are ever actually longest is relatively small (see Section \ref{subsect.empirical_distribution}). Now, clearly it is impossible to efficiently identify all such paths beforehand, otherwise the longest path problem itself would be trivial. However, the hope is that computing a useful set of candidate paths is more practical, at least for an ``average'' graph. We consider two possible ways such a set can be constructed: a modified version of Dodin's algorithm \cite{dod84} and a cheaper MC-based alternative. The relative merits of each are evaluated empirically in Section \ref{subsect.results_path}. 
+
+\subsubsection{A modification of Dodin's algorithm}
+\label{subsubsect.path_dodin}
 
 Given any two paths $P_a \sim N(\mu_a, \sigma_a^2)$ and $P_b \sim N(\mu_b, \sigma_b^2)$ whose lengths are assumed to be normally distributed by the CLT, the probability that $P_a$ is greater than $P_b$ is given by
 \begin{align}
@@ -412,26 +418,37 @@ Things are slightly more complicated if $t_k$ has multiple parents: we need to i
 \begin{align*}
   \cup_{h \in P_i}\{P + \pi_{hk} \mid P \in X_h \}
 \end{align*}
-and add those which are not $\epsilon$-dominated by $P_k^*$ to $X_k$. Moving forward through the graph in this manner, $X_n$ gives us our set of path candidates. Bringing this all together, Algorithm X summarizes the full procedure.    
+and add those which are not $\epsilon$-dominated by $P_k^*$ to $X_k$. Moving forward through the graph in this manner, $X_n$ gives us our set of path candidates.
+% Bringing this all together, Algorithm X summarizes the full procedure.
+
+Unfortunately, it is easy to see how this algorithm can be expensive. Dodin's algorithm for the $K$ longest paths has computational complexity $n^4$ in the worst case and our modification has the additional problem that the number of retained paths at each node depends on the input value of $\epsilon$. It is probably sensible to set an upper limit on the latter, no matter what the choice of $\epsilon$, but the cost is still potentially high.
+% Comments about the runtime of our own implementation are made in Section \ref{subsect.results_path}.
+
+\subsubsection{Small-scale Monte Carlo}
+\label{subsubsect.path_mc}
+
+Take a number of Monte Carlo samples and identify the paths...
  
-Of course, it is very easy to construct examples for which this heuristic does badly, such as when we have many paths of similar length. For the sake of efficiency, it is sensible to set an upper limit on the number of paths that are retained at each node, but in the worst case this method can still be expensive (although it has polynomial time complexity). However, the hope is that computing the candidate paths is not too tedious for an average graph. Similarly, there are absolutely no theoretical guarantees that the generated paths are a useful substitute for the full set of paths. However, we investigate both of these conjectures via numerical experimentation in Section \ref{sect.results}.
-
 \subsection{Approximating the maximum}
-\label{subsect.approx_max}
+\label{subsect.path_approx}
 
-Once the set of candidate paths $X_n$ has been computed, we can estimate the distribution of their maximum using the Clark equations pairwise. The question then is, how do we deal with the correlations? There are three obvious ways, analogous to Sculli's method, CorLCA and CorDyn. The first is to simply disregard them all. Alternatively, since as correlations between any two given paths can be computed efficiently, we could take a similar approach to CorLCA and use only the single dominant path in the intermediate maximizations to estimate the correlations. Finally, we could use \eqref{eq.clark_corrs} to recursively compute all of the correlation coefficients required for the maximization over the entire set, in a manner similar to Cordyn. We consider the empirical performance relative to the computational cost for all of these alternatives in Section \ref{sect.results}.
+Once the set of candidate paths $X_n$ has been computed, we need to estimate the distribution of their maximum. By the CLT, all paths are roughly normal. Furthermore, as noted in Section \ref{subsubsect.path_dodin}, correlations between any two paths in the set can be efficiently approximated by identifying common weights. So the natural way to approximate the maximum is by using the Clark equations pairwise. There are several possible variants which are obvious analogues to the heuristics discussed in Section \ref{sect.CLT}. For example, disregarding all correlations is similar to Sculli's method, whereas using the currently dominant path in the intermediate maximizations to estimate the correlations is the counterpart to CorLCA. Finally, we could use \eqref{eq.clark_corrs} to recursively compute all of the correlation coefficients required for the maximization over the entire set, in a manner similar to Cordyn.
 
-\subsection{Discussion}
-\label{subsect.discussion}
+Alternatively, we could use MC simulation to estimate the maximum distribution. This is considerably cheaper than doing MC for the entire graph. The way this is normally done is by Cholesky factorization of the covariance matrix...  
+
+We consider the empirical performance relative to the computational cost for all of these alternatives in Section \ref{sect.results}.
+
+\subsection{Heuristic bounds}
+\label{subsect.path_heuristic_bounds}
 
 Given that we are essentially replacing \eqref{eq.lp_definition} with a maximization over a much smaller set of DDD normal RVs, certain results from the literature may now be applicable. Although much less studied than the independent, identically distributed (IID) case, bounds on both the distribution and its moments have been established, but none of these are practical for the full set of paths. However, although they technically no longer hold, they may be useful heuristically when applied to the subset of longest path candidates $X_n$ as defined above.
 
 Ross gives a general upper bound for the expected value of a set of (not necessarily normal) DDD RVs, which he later specializes for the normal case, as well as mathematical programs for computing tight upper and lower bounds when the RVs are normally distributed \cite{ross03}. Their practical limit is stated to probably be for sets comprising hundreds of RVs, which may be feasible depending on the size of $X_n$. On the other hand, while Galambos \cite{gal72} presents bounds on the distribution it isn't clear how they can be practically computed even for small sets.
 
 As an aside, it is interesting to note that when all weights are normal---so all paths are exactly normal as well---there is at least one bound we can prove even for the full set of path lengths. Since the mean of a given path length is just the sum of the means of the weights along it, we can easily find $\max_a(\E[P_a])$ via dynamic programming. This is useful because by Jensen's inequality we have  
-  $\E[\max_aP_a] \geq \max_a(\E[P_a])$---i.e., the classic CPM lower bound on the expected value of the longest path. (Of course, this can be proven via other methods to be true even when all weights are not normally distributed.) Similarly, $\max_a(Var[P_a])$ can be computed cheaply for normal weights, which is Kamburowski's conjectured upper bound on the variance of the longest path in that case. The bound therefore holds if and only if
+  $\E[\max_aP_a] \geq \max_a(\E[P_a])$---i.e., the classic CPM lower bound on the expected value of the longest path. (Of course, this can be proven via other methods to be true even when all weights are not normally distributed.) Similarly, $\max_a(\Var[P_a])$ can be computed cheaply for normal weights, which is Kamburowski's conjectured upper bound on the variance of the longest path in that case. The bound therefore holds if and only if
   \begin{align*}
-    Var[\max(X_1, \dots, X_N)] \leq \max(Var[X_1], \dots, Var[X_N]),
+    \Var[\max(X_1, \dots, X_N)] \leq \max(\Var[X_1], \dots, \Var[X_N]),
   \end{align*}
   for any set of DDD normal RVs $X_1, \dots, X_N$. While simple counterexamples to this conjecture can be found for RVs from {\em arbitrary} distributions, as far as we know it remains an open question for normal RVs.
 
@@ -460,7 +477,7 @@ As an aside, it is interesting to note that when all weights are normal---so all
 % UPDATING.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-\section{Updating approximations}
+\section{Updating longest path estimates}
 \label{sect.updating}
 
 The problem of approximating the longest path distribution of a stochastic graph has been widely-studied, as demonstrated by the structure of this chapter so far. However a related problem has received less attention: how can estimated longest path distributions be quickly updated as weight realizations become apparent? From a scheduling perspective, this is equivalent to asking how makespan estimates can be updated {\em during} execution. Clearly, this would be particularly useful in situations such as when an unexpected delay occurs, or decisions need to be made as to whether it is worthwhile to continue with the current schedule.
@@ -509,19 +526,19 @@ for all other tasks, where the maximization is approximated using any of the met
 
 For any $t_i \in C_T$, a new estimate of the longest path can be computed via $L_n^i \coloneqq \ell_i + R_i$. But this gives us a host of possible updated longest path estimates---how do we get a definitive answer $L_n'$? First of all, it is sensible to restrict ourselves to nodes in $C_T^*$ since they are in some real sense the most ``up-to-date''. Given that $R_i$ represents the estimated longest path from node $t_i$ to the end, $\ell_i + R_i$ is the length of the longest complete path that passes through node $t_i$. Therefore what we really want to compute is       
 \begin{align*}
-  L_n' = \max_{i \in C_T^*} \{ \ell_i + R_i  \} = \max_{i \in C_T^*} \{ L_n^i  \}.
+  L_n' = \max_{i \in C_T^*} \{ L_n^i  \} = \max_{i \in C_T^*} \{ \ell_i + R_i  \}.
 \end{align*}
-Effectively this is a maximization over a set of path length RVs. For $t_i \in C_T^*$, define $P_i = L_i + R_i$. What can we say about the correlation between $P_i$ and $P_k$?  We can presumably estimate the correlation coefficient between $R_i$ and $R_k$ through whatever method was used to compute them in the first place (e.g., a correlation tree if CorLCA). But we can't use this to compute the correlation between $P_i$ and $P_k$ since nothing is known about $L_i$ and $L_k$. The only solution therefore is to use the same approach as in the previous chapter and compute the correlations for the paths as a whole...
+Dealing with maximizations over sets of dependent (approximately) normal RVs is a common theme in this chapter, so we can deal with this using any of the methods discussed in Section \ref{subsect.path_approx}. We typically we also need to be able to estimate the correlation coefficient between any two RVs $L_n^i$ and $L_n^k$. However, since $\ell_i$ and $\ell_k$ are scalars, we can just use $\rho_{ik}$, the correlation coefficient between $R_i$ and $R_k$, which can presumably be estimated using whatever method was used to compute them in the first place (e.g., a correlation tree if CorLCA was used).   
 
 % Question for Neil: is the last part correct?
 % Say something about ignoring realized edges.
 % It is not clear that this is any easier than computing everything again...
 % Assuming normality again...
 
-\subsection{Using normality}
-\label{subsect.updating_normality}
+\subsection{A useful proposition?}
+\label{subsect.updating_proposition}
 
-In conjunction with the path normality assumption induced by the CLT, the following proposition may be useful for updating the longest path distribution as path length realizations become apparent.
+An alternative method for directly updating the longest path distribution as path length realizations become apparent is based on the following proposition, in conjunction with the path normality assumption induced by the CLT.  
 \begin{prop}
 	Let $u$ be a normally distributed vector with mean $\bar{\mu}$ and covariance $\Sigma_u$, $u \sim N(\bar{\mu}, \Sigma_u)$, and suppose that $u = (v, w)$. Then 
 	\begin{align*}
@@ -530,12 +547,17 @@ In conjunction with the path normality assumption induced by the CLT, the follow
 \end{prop}
 Note that if the linear correlation coefficient $\rho_{uv}$ is known, we can use the definition $\rho_{uv} = \Sigma_{uv} / \sigma_u \sigma_v$ to find the covariance $\Sigma_{uv}$.
 
-The proposition is applicable here because we are assuming that there is a joint normal distribution across the entire set of longest path RVs $L_i$. Furthermore, we can estimate the correlation coefficient between longest paths at any two nodes using, for example, the correlation tree approach of CorLCA. This means that we can update the longest path distribution $L_n$ using realized longest paths that terminate at any node. Suppose that $\ell_i$ is the realized longest path from the source to node $t_i$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Then we can compute a new estimate $L_n^i$ of the longest path through the DAG by applying the above result as follows,
+The proposition is applicable here because we are assuming that there is a joint normal distribution across the entire set of longest path RVs $L_i$. This means that we can update the longest path distribution $L_n$ using realized longest paths that terminate at any node, assuming that we can estimate the relevant correlation coefficients (which again can be done using e.g., a correlation tree). Suppose that $\ell_i$ is the realized longest path from the source to node $t_i$. For compactness of notation let $\rho_{in} = \rho_{ni}$ be the linear correlation coefficient between $L_i$ and $L_n$. Then we can compute a new estimate $L_n^i$ of the longest path through the DAG by applying the above result as follows,
 \begin{align*}
 L_n^i &\sim N \bigg( \mu_{n} + \frac{\rho_{ni} \sigma_{n} \sigma_{i}}{\sigma_{i}^2} (\ell_i - \mu_{i}), \enspace \sigma_{n}^2 - \frac{\rho_{ni} \sigma_{n} \sigma_{i} \cdot \rho_{in} \sigma_{i} \sigma_{n}}{\sigma_{i}^2} \bigg) \nonumber\\
 &\sim N \bigg(\mu_{n} + \frac{\rho_{ni} \sigma_{n}}{\sigma_{i}} (\ell_i - \mu_{i}), \enspace (1 - \rho_{ni}^2) \sigma_{n}^2 \bigg).
 \end{align*}
-The question now is the same as in the previous section: which nodes do we use?
+As in the previous section, we now want to compute
+\begin{align*}
+  L_n' = \max_{i \in C_T^*} \{ L_n^i  \}.
+\end{align*}
+Again, this can be done using any maximization heuristic but we generally need the relevant correlations between the maximands. In this case, it is less clear intuitively how these should be approximated. It seems most sensible (and efficient) to use the correlation coefficient between $L_i$ and $L_k$ as an estimate of that between $L_n^i$ and $L_n^k$, since this can be done in the same manner in which the longest path estimates were originally computed.   
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NUMERICAL EXPERIMENTS.
@@ -549,7 +571,7 @@ Exhaustive comparisons of heuristics and bounds for the longest path distributio
 
 Note that all of the results presented here were generated by running various scripts which can be found in the Github repository on a machine with an Intel i9-9820X @3.30 GHz processor, running Ubuntu 18.04 and {\tt Python 3.6.9}. 
 
-\subsection{Graph sets}
+\subsection{Graphs}
 \label{subsect.graphs}
 
 To compare the methods for bounding and approximating the longest path distribution that we wish to evaluate, we created two sets of stochastic graphs. The first represents schedules for a widely-used application in scientific computing---namely, Cholesky factorization. The second set of graphs are artificial, with topologies based on DAGs from the {\em standard task graph} (STG) collection \cite{tob02} and randomly-generated weights. Both sets are described in more detail in the following two sections, respectively. As noted above, much more extensive investigations with far larger sets of graphs have already been done, so we emphasize again that this investigation is largely exploratory.
@@ -600,7 +622,7 @@ In addition to the Cholesky DAG set, we also consider a set of randomly-generate
 
   This procedure yields a set of $180 \times 9 = 1620$ graphs. This is small compared to other empirical studies, reflecting the narrower scope of our investigation.
 
-\subsection{Investigating the CLT approach}
+\subsection{Analyzing the longest path distribution}
 \label{subsect.empirical_distribution}
 
 In this section we analyze different empirical longest path distributions for the graphs in our test sets, corresponding to different choices for the distributions that the weights follow. These empirical distributions are obtained using the Monte Carlo method with a large number of samples. Ultimately the aim of this investigation is to gauge how reasonable the assumptions underlying the CLT-based heuristics are for these graphs.   
@@ -615,9 +637,34 @@ Time constraints restricted us to a maximum of about $100$,$000$ realizations fo
 
 The traditional way to quantify the accuracy of the MC method for estimating the longest path distribution is the basic analysis of Van Slyke \cite{van63}. In particular, confidence intervals for the mean and variance can easily be constructed based on the number of samples $N$. For $N > 10$,$000$, Van Slyke's analysis suggests that the computed mean and variance estimates are likely to be within about $1\%$ of the true values. (As an aside, Van Slyke's analysis, albeit only intended as a guide, does not depend at all on the size of the graph, which seems counterintuitive. We therefore don't assume that the stated precision is necessarily correct but simply that the estimates are likely very good.)
 
-% Truncated normal.
+Although we have largely avoided discussing runtimes in this thesis so far because our code is not---and is not intended to be---optimal, this is an area in which at least some baseline comparisons are necessary. Table \ref{tb.mc_timings} illustrates how the runtime of our implementation of the MC method increases with the size of the graph and the number of samples for the Cholesky set. The timings presented are for normally distributed weights, as that was always the most efficient of those we considered. Although it is obviously application-specific, one can easily imagine from the data presented in the table how using many samples for the larger graphs may be impractical. 
 
-\subsubsection{How normal is the longest path distribution?}
+\begin{table}
+	\caption{Time needed for MC implementation for Cholesky graphs.} 
+	\begin{center}	
+		\begin{tabular}{c c c c c c}
+                  \toprule
+                  & \multicolumn{5}{c}{\# Samples}     \\
+                  \cmidrule{2-6}
+                  DAG size & 10 & 100 & 1000 & 10000 & 100000\\
+                  \cmidrule{1-6}
+                  $35$ & $<0.1$s & $<0.1$s & $0.4$s & $4$s & $41$s\\
+                  $220$  & $<0.1$s & $0.5$s & $3$s & $36$s & $5$m $43$s\\
+                  $680$ & $0.2$s & $1$s & $12$s & $2$m $9$s & $20$m $44$s\\
+                  $1540$ & $0.4$s & $3$s & $32$s & $5$m $22$s & $49$m $56$s\\
+                  $2925$ & $0.6$s & $6$s & $1$m $3$s & $10$m $17$s & $1$h $39$m $54$s\\
+                  $4960$ & $1$s & $12$s & $1$m $59$s & $17$m $57$s & $2$h $55$m $35$s\\
+                  $7770$ & $2$s & $19$s & $3$m $2$s & $29$m $59$s & $4$h $49$m $42$s\\
+                  $11480$ & $3$s & $28$s & $4$m $36$s & $46$m $40$s & $7$h $39$m $4$s\\
+		\bottomrule
+		\end{tabular}
+		\label{tb.mc_timings}
+	\end{center}	
+      \end{table}
+      % TODO: Should probably be timings for Gamma weights since that is the reference.
+
+
+\subsubsection{How normal?}
 \label{subsubsect.how_normal}
 
 Other studies, such as \cite{can16}, have thoroughly investigated how accurate the normality assumption is for a wide range of randomly-generated graphs---with the conclusions typically being that it is usually, but by no means always, a good approximation. Therefore, in this section we consider only the Cholesky DAG set here. Now, there are several standard statistical tests for normality, such as Shapiro-Wilks, Anderson-Darling or Kolmogorov-Smirnoff, and so on. But these are rarely useful for large data sets\footnote{We did apply all three of the aforementioned tests to the data, with normality being rejected in all cases.}, so in Table \ref{tb.emp_summary} we present instead some summary statistics for the empirical distributions in order to convey a more intuitive understanding. Informally, all of the distributions may be at least roughly normal: the median is very close to the mean and both skewness and (excess) kurtosis are fairly close to zero.
@@ -669,7 +716,7 @@ Inspecting the visualizations of the distributions in Figure \ref{plot.emp_hists
 	\label{plot.emp_hists} 
       \end{figure}
 
-      \subsubsection{How sensitive is the longest path distribution?}
+      \subsubsection{How sensitive?}
       \label{subsubsect.sensitive}
 
       Since the CLT-based heuristics are agnostic of the weight distributions, clearly they will be of little use for a given graph if the longest path distribution can vary widely depending on what distributions the weights follow. Hence it will be helpful going forward to establish how much variation we can expect to see for the graphs in our test sets.
@@ -678,43 +725,8 @@ Inspecting the visualizations of the distributions in Figure \ref{plot.emp_hists
 
       To conclude, there will of course always be a range---however narrow---of distributions that the longest path can assume if only the first two moments of the weight distributions are known. However, given the similarities that we have seen for the graphs in our test sets, the weight distribution independence assumption of the CLT approach is fairly reasonable, especially for the Cholesky graphs. Since task timing distributions in our experiments were usually closer to a Gamma distribution than normal, for the remainder of this investigation, when use reference solutions obtained by the MC method, these will have been obtained for Gamma distributed weights. 
 
-\subsubsection{Runtime}
-\label{subsubsect.runtime}
-
-Although we have largely avoided discussing runtimes in this thesis so far because our code is not---and is not intended to be---optimal, this is an area in which at least some baseline comparisons are necessary. Table \ref{tb.mc_timings} illustrates how the runtime of our implementation of the MC method increases with the size of the graph and the number of samples for the Cholesky set. The timings presented are for normally distributed weights, as that was always the most efficient of those we considered. Although it is obviously application-specific, one can easily imagine from the data presented in the table how using many samples for the larger graphs may be impractical. 
-
-\begin{table}
-	\caption{Time needed for MC implementation for Cholesky graphs.} 
-	\begin{center}	
-		\begin{tabular}{c c c c c c}
-                  \toprule
-                  & \multicolumn{5}{c}{\# Samples}     \\
-                  \cmidrule{2-6}
-                  DAG size & 10 & 100 & 1000 & 10000 & 100000\\
-                  \cmidrule{1-6}
-                  $35$ & $<0.1$s & $<0.1$s & $0.4$s & $4$s & $41$s\\
-                  $220$  & $<0.1$s & $0.5$s & $3$s & $36$s & $5$m $43$s\\
-                  $680$ & $0.2$s & $1$s & $12$s & $2$m $9$s & $20$m $44$s\\
-                  $1540$ & $0.4$s & $3$s & $32$s & $5$m $22$s & $49$m $56$s\\
-                  $2925$ & $0.6$s & $6$s & $1$m $3$s & $10$m $17$s & $1$h $39$m $54$s\\
-                  $4960$ & $1$s & $12$s & $1$m $59$s & $17$m $57$s & $2$h $55$m $35$s\\
-                  $7770$ & $2$s & $19$s & $3$m $2$s & $29$m $59$s & $4$h $49$m $42$s\\
-                  $11480$ & $3$s & $28$s & $4$m $36$s & $46$m $40$s & $7$h $39$m $4$s\\
-		\bottomrule
-		\end{tabular}
-		\label{tb.mc_timings}
-	\end{center}	
-      \end{table}
-      % TODO: Should probably be timings for Gamma weights since that is the reference.
 
 %      Assuming that the longest path distribution is at least roughly normal, it is sufficient to obtain good estimates of its first two moments. This prompts the question: how many samples do we actually need to do this? For the Cholesky DAG set, this was largely a tale of two different moments. Taking the expected values and variances obtained for the full set of $100$,$000$ samples as a reference, we found that, for all of the graphs, the MC method was well within $1\%$ of the expected value after as few as $10$ samples (representing a runtime more than $9000$ times smaller than the full MC method, see Table \ref{tb.mc_timings}). The picture was more complex for the variance, as illustrated in Figure \ref{plot.mc_variance}, but we see that it was usually fairly tight after about 1000 samples as well. Of course, the Cholesky graphs considered here only represent a single family of schedules based on a single application. However, this does serve to demonstrate that it is often possible to converge to the mean and expected value of the longest path distribution after a fairly small number of samples.
-
-      % One speculative approach that might be useful is to consider extreme value theory... The problem is that it isn't clear how to characterize the distribution. Paper by Berman (and other one) seems to suggest that max of dependent normals will also tend to Gumbel but don't know anything about the correlations...
-      % More extensive testing with lots of different weight distributions?
-      % Comment somewhere about how this is technically a truncated normal but never had to make correction because of the mean and sd values.
-      % "There are surely combinations of weight distribution and mean, variance pairs that lead to much more divergent behavior (and DAG topology of course) but for this particular application we're going to take it that they will be extremely similar..."
-      % They will however be assumed to be exact in comparisons with other heuristic solutions in later sections.
-      % Can probably at least restrict the range of distributions they can follow...
 
 \subsection{Existing bounds and heuristics}
 \label{subsect.results_existing}
@@ -812,7 +824,7 @@ With regard to the heuristics, CorLCA is consistently better than Sculli's metho
 % (note the logarithmic scale on the $y$-axis)
 
 \subsection{Path reduction}
-\label{subsect.results_paths}
+\label{subsect.results_path}
 
 Compare path based alternatives...
 

@@ -5,13 +5,13 @@
                      '(("article" "12pt")))
    (TeX-add-to-alist 'LaTeX-provided-package-options
                      '(("hyperref" "colorlinks" "urlcolor=blue" "linkcolor=blue" "citecolor=hotpink") ("babel" "british") ("algorithm2e" "linesnumbered" "ruled") ("tcolorbox" "most" "minted")))
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
-   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "url")
    (add-to-list 'LaTeX-verbatim-macros-with-braces-local "path")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "url")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "nolinkurl")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperbaseurl")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperimage")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "hyperref")
+   (add-to-list 'LaTeX-verbatim-macros-with-braces-local "href")
    (add-to-list 'LaTeX-verbatim-macros-with-delims-local "path")
    (TeX-run-style-hooks
     "latex2e"
@@ -76,7 +76,7 @@
     "eq.alpha_beta"
     "eq.clark_max_mu"
     "eq.clark_max_sigma"
-    "subsubsect.correlation_aware"
+    "subsect.correlation_aware"
     "eq.clark_corrs"
     "subsect.canonical"
     "subsect.kamburowski"
@@ -84,15 +84,17 @@
     "eq.si_over"
     "sect.path_reduction"
     "eq.lp_definition"
-    "subsect.identifying"
+    "subsect.path_identifying"
+    "subsubsect.path_dodin"
     "eq.path_comparison"
-    "subsect.approx_max"
-    "subsect.discussion"
+    "subsubsect.path_mc"
+    "subsect.path_approx"
+    "subsect.path_heuristic_bounds"
     "sect.updating"
     "subsect.updating_naive"
     "eq.dash_Li"
     "subsect.updating_backwards"
-    "subsect.updating_normality"
+    "subsect.updating_proposition"
     "sect.results"
     "subsect.graphs"
     "subsubsect.cholesky"
@@ -100,14 +102,13 @@
     "subsubsect.stg"
     "subsect.empirical_distribution"
     "subsubsect.generating"
+    "tb.mc_timings"
     "subsubsect.how_normal"
     "tb.emp_summary"
     "plot.hist_normal"
     "plot.hist_gamma"
     "plot.emp_hists"
     "subsubsect.sensitive"
-    "subsubsect.runtime"
-    "tb.mc_timings"
     "subsect.results_existing"
     "subsubsect.existing_mean"
     "tb.mean_existing"
@@ -119,7 +120,7 @@
     "tb.corlca_direction"
     "subsubsect.existing_efficiency"
     "plot.chol_existing_timings"
-    "subsect.results_paths"
+    "subsect.results_path"
     "subsect.results_updating"
     "sect.conclusions")
    (LaTeX-add-environments
