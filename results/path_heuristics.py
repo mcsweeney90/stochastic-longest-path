@@ -86,20 +86,21 @@ samples = 30
 # STG.
 # =============================================================================
 
-# stg_dag_path = '../graphs/STG'
-# info = {}
-# for dname in os.listdir(stg_dag_path):
-#     info[dname] = {}
-# timings = defaultdict(float)
+stg_dag_path = '../graphs/STG'
+info = {}
+for dname in os.listdir(stg_dag_path):
+    info[dname] = {}
+timings = defaultdict(float)
 
-# for dname in os.listdir(stg_dag_path):  
-#     with open('{}/{}'.format(stg_dag_path, dname), 'rb') as file:
-#         H = dill.load(file)
+for dname in os.listdir(stg_dag_path):  
+    with open('{}/{}'.format(stg_dag_path, dname), 'rb') as file:
+        H = dill.load(file)
     
-#     start = timer()
-#     longest_paths = H.dodin_longest_paths(epsilon=0.2)
-#     elapsed = timer() - start
-#     print(elapsed)
+    start = timer()
+    longest_paths = H.dodin_longest_paths(epsilon=0.1)
+    # CL = H.corLCA()
+    elapsed = timer() - start
+    print(elapsed)
     
     
     

@@ -361,7 +361,8 @@ class SDAG:
             self.realize(dist=dist, fixed=fixed)
             if path_info:
                 lp, path = self.real_longest_path(return_path=True)
-                path_counts[tuple(path)] += 1
+                rep = path.get_rep()
+                path_counts[rep] += 1
             else:
                 lp = self.real_longest_path()
             longest_paths.append(lp)
@@ -827,12 +828,13 @@ class SDAG:
         self.reset()
         return longest_paths    
     
-    def dodin_longest_paths(self, epsilon=0.1):
+    def orig_dodin_longest_paths(self, epsilon=0.1):
         """
         TODO.
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
         """
         
+        x = norm.ppf(epsilon)
         candidates = {}        
         for t in self.top_sort:
             parents = list(self.graph.predecessors(t))
@@ -863,63 +865,121 @@ class SDAG:
                         r = max_path.get_rho(pth)
                         num = pth.length.mu - max_path.length.mu
                         denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
-                        prob = norm.cdf(num/denom)
-                        if prob > epsilon:
+                        if num/denom > x:
                             candidates[t.ID].append(pth)  
+                
+        return candidates[self.top_sort[-1].ID] 
+    
+    def dodin_longest_paths(self, epsilon=0.1):
+        """
+        TODO.
+        Implementation is really poor atm since just proof of concept but will likely always be expensive...
+        """
+        
+        x = norm.ppf(epsilon)
+        candidates = {}        
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
+            if not parents:
+                candidates[t.ID] = [Path() + t]
+            else: 
+                # Concatenate all possible paths.
+                all_paths = []
+                # paths_by_parent = {}
+                max_path, max_parent = Path(), None
+                for p in parents:
+                    # paths_by_parent[p.ID] = []
+                    edge_weight = self.graph[p][t]['weight'] 
+                    try:
+                        edge_weight.ID = (p.ID, t.ID)
+                    except AttributeError:
+                        pass
+                    add_to_pth = edge_weight + t
+                    for pt in candidates[p.ID]:
+                        pth = pt + add_to_pth
+                        if pth.length.mu > max_path.length.mu:
+                            max_path = pth
+                            max_parent = p.ID
+                        all_paths.append(pth)
+                        # paths_by_parent[p.ID].append(pth)
+                        
+                # Filter set of paths.
+                candidates[t.ID] = []
+                for pth in all_paths:
+                    if pth == max_path:
+                        candidates[t.ID].append(pth)
+                    else:
+                        r = max_path.get_rho(pth)
+                        num = pth.length.mu - max_path.length.mu
+                        denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
+                        if num/denom > x:
+                            candidates[t.ID].append(pth) 
+                
+                # candidates[t.ID] = []
+                # for p in parents:                        
+                #     for pth in paths_by_parent[p.ID]:                         
+                #         if pth.length.mu == max_path.length.mu: #p.ID == max_parent:
+                #             candidates[t.ID].append(pth)
+                #         else:
+                #             r = max_path.get_rho(pth)
+                #             num = pth.length.mu - max_path.length.mu
+                #             denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
+                #             if num/denom > x:
+                #                 candidates[t.ID].append(pth) 
                 
         return candidates[self.top_sort[-1].ID]      
     
-    # def dodin_longest_paths(self, epsilon=0.1):
-    #     """
-    #     TODO.
-    #     Implementation is really poor atm since just proof of concept but will likely always be expensive...
-    #     """
+    def sorted_dodin_longest_paths(self, epsilon=0.1):
+        """
+        TODO.
+        Implementation is really poor atm since just proof of concept but will likely always be expensive...
+        """
         
-    #     candidates = {}        
-    #     for t in self.top_sort:
-    #         parents = list(self.graph.predecessors(t))
-    #         if not parents:
-    #             candidates[t.ID] = [Path() + t]
-    #         else: 
-    #             # Find maximum path across all parents.
-    #             max_path = Path()
-    #             add_to_parent = {}
-    #             for p in parents:
-    #                 edge_weight = self.graph[p][t]['weight'] 
-    #                 try:
-    #                     edge_weight.ID = (p.ID, t.ID)
-    #                 except AttributeError:
-    #                     pass
-    #                 add_to_p = edge_weight + t
-    #                 add_to_parent[p.ID] = add_to_p
-    #                 pth = candidates[p.ID][0] + add_to_p
-    #                 if pth.length.mu > max_path.length.mu:
-    #                     max_path = pth
+        candidates = {}        
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
+            if not parents:
+                candidates[t.ID] = [Path() + t]
+            else: 
+                # Find maximum path across all parents.
+                max_path = Path()
+                add_to_parent = {}
+                for p in parents:
+                    edge_weight = self.graph[p][t]['weight'] 
+                    try:
+                        edge_weight.ID = (p.ID, t.ID)
+                    except AttributeError:
+                        pass
+                    add_to_p = edge_weight + t
+                    add_to_parent[p.ID] = add_to_p
+                    pth = candidates[p.ID][0] + add_to_p
+                    if pth.length.mu > max_path.length.mu:
+                        max_path = pth
                        
-    #             # Filter set of paths.
-    #             candidates[t.ID] = []
-    #             probs = {}
-    #             for p in parents:
-    #                 for ph in candidates[p.ID]:   
-    #                     pth = ph + add_to_parent[p.ID]                        
-    #                     if pth.get_rep() == max_path.get_rep():
-    #                         candidates[t.ID].append(pth)
-    #                         probs[pth] = 1.0
-    #                     else:
-    #                         r = max_path.get_rho(pth)
-    #                         num = pth.length.mu - max_path.length.mu
-    #                         denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
-    #                         prob = norm.cdf(num/denom)
-    #                         if prob > epsilon:
-    #                             candidates[t.ID].append(pth)  
-    #                             probs[pth] = prob
-    #                         else:
-    #                             break
+                # Filter set of paths.
+                candidates[t.ID] = []
+                probs = {}
+                for p in parents:
+                    for ph in candidates[p.ID]:   
+                        pth = ph + add_to_parent[p.ID]                        
+                        if pth.get_rep() == max_path.get_rep():
+                            candidates[t.ID].append(pth)
+                            probs[pth] = 1.0
+                        else:
+                            r = max_path.get_rho(pth)
+                            num = pth.length.mu - max_path.length.mu
+                            denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
+                            prob = norm.cdf(num/denom)
+                            if prob > epsilon:
+                                candidates[t.ID].append(pth)  
+                                probs[pth] = prob
+                            else:
+                                break
                             
-    #             # Sort candidates.
-    #             candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda p:probs[p])))
+                # Sort candidates.
+                candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda p:probs[p])))
                 
-    #     return candidates[self.top_sort[-1].ID] 
+        return candidates[self.top_sort[-1].ID] 
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """

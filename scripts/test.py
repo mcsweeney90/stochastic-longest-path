@@ -29,7 +29,7 @@ for nt in n_tasks:
     print("\nNUMBER OF TASKS: {}".format(nt))
     
     start = timer()
-    longest_paths = H.dodin_longest_paths()
+    longest_paths = H.orig_dodin_longest_paths()
     elapsed = timer() - start
     print("Time to find longest paths: {}".format(elapsed))
     print(len(longest_paths))
@@ -39,17 +39,17 @@ for nt in n_tasks:
     # elapsed = timer() - start
     # print("Time for MC30: {}".format(elapsed))
     
-    start = timer()
-    dom_path = longest_paths[0]
-    lp = longest_paths[0].length
-    for path in longest_paths[1:]:
-        r = path.get_rho(dom_path)
-        if path.length.mu > lp.mu:
-            dom_path = path
-        lp = lp.clark_max(path.length, rho=r)
-    elapsed = timer() - start
-    print(lp)
-    print("Time for maximization: {}".format(elapsed))
+    # start = timer()
+    # dom_path = longest_paths[0]
+    # lp = longest_paths[0].length
+    # for path in longest_paths[1:]:
+    #     r = path.get_rho(dom_path)
+    #     if path.length.mu > lp.mu:
+    #         dom_path = path
+    #     lp = lp.clark_max(path.length, rho=r)
+    # elapsed = timer() - start
+    # print(lp)
+    # print("Time for maximization: {}".format(elapsed))
     
     # lp = CFP(H)
     # print(lp)
