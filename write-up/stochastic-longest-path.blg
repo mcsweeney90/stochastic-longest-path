@@ -11,45 +11,45 @@ Database file #2: strings.bib
 Warning--empty year in hag88
 Warning--there's a number but no volume in ross03
 Warning--empty year in tob02
-You've used 27 entries,
+You've used 28 entries,
             2359 wiz_defined-function locations,
-            1378 strings with 19728 characters,
-and the built_in function-call counts, 9093 in all, are:
-= -- 878
-> -- 346
-< -- 0
-+ -- 146
-- -- 112
-* -- 817
-:= -- 1492
-add.period$ -- 81
-call.type$ -- 27
-change.case$ -- 137
+            1389 strings with 19978 characters,
+and the built_in function-call counts, 9526 in all, are:
+= -- 925
+> -- 353
+< -- 1
++ -- 149
+- -- 114
+* -- 842
+:= -- 1551
+add.period$ -- 85
+call.type$ -- 28
+change.case$ -- 140
 chr.to.int$ -- 0
-cite$ -- 30
-duplicate$ -- 296
-empty$ -- 778
-format.name$ -- 112
-if$ -- 1868
+cite$ -- 31
+duplicate$ -- 319
+empty$ -- 819
+format.name$ -- 114
+if$ -- 1971
 int.to.chr$ -- 0
-int.to.str$ -- 27
-missing$ -- 27
-newline$ -- 139
-num.names$ -- 54
-pop$ -- 88
+int.to.str$ -- 28
+missing$ -- 29
+newline$ -- 145
+num.names$ -- 56
+pop$ -- 96
 preamble$ -- 2
-purify$ -- 110
+purify$ -- 113
 quote$ -- 0
-skip$ -- 189
+skip$ -- 207
 stack$ -- 0
-substring$ -- 758
-swap$ -- 54
-text.length$ -- 0
+substring$ -- 795
+swap$ -- 65
+text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 108
+type$ -- 110
 warning$ -- 3
-while$ -- 87
-width$ -- 29
-write$ -- 298
+while$ -- 92
+width$ -- 30
+write$ -- 312
 (There was 1 error message)
