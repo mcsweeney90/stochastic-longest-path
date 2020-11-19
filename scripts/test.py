@@ -29,7 +29,7 @@ for nt in n_tasks:
     print("\nNUMBER OF TASKS: {}".format(nt))
     
     start = timer()
-    longest_paths = H.orig_dodin_longest_paths()
+    longest_paths = H.dodin_longest_paths()
     elapsed = timer() - start
     print("Time to find longest paths: {}".format(elapsed))
     print(len(longest_paths))

@@ -876,10 +876,14 @@ class SDAG:
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
         """
         
+        # Compute comparison for determining if path is retained.
         x = norm.ppf(epsilon)
+        
+        # candidates is a dict {node ID : non-dominated paths}
         candidates = {}        
         for t in self.top_sort:
             parents = list(self.graph.predecessors(t))
+            # If entry node, create path.
             if not parents:
                 candidates[t.ID] = [Path() + t]
             else: 

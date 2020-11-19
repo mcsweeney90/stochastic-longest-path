@@ -332,7 +332,7 @@ The basic idea is to recursively compute four number sequences $\underline{m_i}$
 \end{array}\right.
 \label{eq.si_under}
 \end{equation}
-reflecting the intuition that the variance can be reduced almost arbitrarily by a maximization (which needs to be performed for the case of multiple parents). The upper bound is similarly intuitive since it is effectively equivalent to saying that the variance of the maximum of a set of normal RVs is bounded above by the maximum variance of the RVs, although this has never been proven (see Section \ref{subsect.discussion}). More precisely, define 
+reflecting the intuition that the variance can be reduced almost arbitrarily by a maximization (which needs to be performed for the case of multiple parents). The upper bound is similarly intuitive since it is effectively equivalent to saying that the variance of the maximum of a set of normal RVs is bounded above by the maximum variance of the RVs, although this has never been proven (see Section \ref{subsect.path_heuristic_bounds}). More precisely, define 
 \begin{align}
   \label{eq.si_over}
   \overline{s_i^2} = \max_{h \in P_i}\{ \overline{s_h^2} + \Var[\pi_{hi}] + \Var[\pi_{i}]\}.
@@ -822,7 +822,6 @@ With regard to the heuristics, CorLCA is consistently better than Sculli's metho
       \end{figure} 
 
 % One of the advantages is supposed to be if we don't know the distribution, but note that the CLT also says it doesn't matter so we can just take them to be normal. 
-% (note the logarithmic scale on the $y$-axis)
 
 \subsection{Path reduction}
 \label{subsect.results_path}
