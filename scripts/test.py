@@ -14,7 +14,7 @@ from src import RV, SDAG, Path
 
 chol_dag_path = '../graphs/cholesky'
 nb = 128
-n_tasks = [35, 220]#, 680]#, 1540, 2925, 4960, 7770, 11480]
+n_tasks = [35, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
 
 # =============================================================================
 # Timings.
@@ -29,10 +29,16 @@ for nt in n_tasks:
     print("\nNUMBER OF TASKS: {}".format(nt))
     
     start = timer()
-    longest_paths = H.dodin_longest_paths()
+    longest_paths = H.dodin_longest_paths(epsilon=0.05)
     elapsed = timer() - start
-    print("Time to find longest paths: {}".format(elapsed))
+    print("Time to find longest paths: {}".format(elapsed))    
+    
     print(len(longest_paths))
+    # for p in longest_paths:
+    #     print(p.get_rep())
+    
+    unique = set(p.get_rep() for p in longest_paths)
+    print(len(unique))
         
     # start = timer()
     # mc30 = H.monte_carlo(samples=30)

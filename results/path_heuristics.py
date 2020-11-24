@@ -97,10 +97,16 @@ for dname in os.listdir(stg_dag_path):
         H = dill.load(file)
     
     start = timer()
-    longest_paths = H.dodin_longest_paths(epsilon=0.1)
+    try:
+        # longest_paths = H.dodin_longest_paths_timeout(epsilon=0.01)
+        longest_paths = H.dodin_longest_paths(epsilon=0.01, limit=100)
+        lnth = len(longest_paths)
+    except StopIteration:
+        lnth = 0
+        pass
     # CL = H.corLCA()
     elapsed = timer() - start
-    print(elapsed)
+    print(dname, lnth, elapsed)
     
     
     
