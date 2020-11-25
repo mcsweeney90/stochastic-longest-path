@@ -10,9 +10,9 @@ import numpy as np
 from collections import defaultdict
 from scipy.stats import norm
 
-# These are used to timeout the dodin_longest_path method but don't like this approach, remove...
-import time
-import timeout_decorator
+# Uncomment if using timeout version of dodin_longest_paths.
+# import time
+# import timeout_decorator
 
 class RV:
     """
@@ -830,58 +830,10 @@ class SDAG:
                 longest_paths.append(P)
                 unique.add(check)                
         self.reset()
-        return longest_paths    
+        return longest_paths             
     
-    @timeout_decorator.timeout(5, timeout_exception=StopIteration)
-    def dodin_longest_paths_timeout(self, epsilon=0.1):
-        """
-        TODO.
-        Implementation is really poor atm since just proof of concept but will likely always be expensive...
-        """
-        
-        # Compute comparison for determining if path is retained.
-        x = norm.ppf(epsilon)
-        
-        # candidates is a dict {node ID : non-dominated paths}
-        candidates = {}        
-        for t in self.top_sort:
-            parents = list(self.graph.predecessors(t))
-            # If entry node, create path.
-            if not parents:
-                candidates[t.ID] = [Path() + t]
-            else: 
-                # Identify path with greatest expected value.
-                paths_by_parent = {}
-                max_path, max_parent = Path(), None
-                for p in parents:
-                    paths_by_parent[p.ID] = []
-                    edge_weight = self.graph[p][t]['weight'] 
-                    try:
-                        edge_weight.ID = (p.ID, t.ID)
-                    except AttributeError:
-                        pass
-                    for pt in candidates[p.ID]:
-                        pth = pt + edge_weight + t 
-                        if pth.length.mu > max_path.length.mu:
-                            max_path = pth
-                            max_parent = p.ID
-                        paths_by_parent[p.ID].append(pth) 
-                # Retain only non-dominated paths.
-                candidates[t.ID] = []
-                for p in parents:                        
-                    for pth in paths_by_parent[p.ID]:                         
-                        if p.ID == max_parent:
-                            candidates[t.ID].append(pth)
-                        else:
-                            r = max_path.get_rho(pth)
-                            num = pth.length.mu - max_path.length.mu
-                            denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
-                            if num/denom > x:
-                                candidates[t.ID].append(pth) 
-                
-        return candidates[self.top_sort[-1].ID]      
-    
-    def dodin_longest_paths(self, epsilon=0.1, limit=100, correlations=True):
+    # @timeout_decorator.timeout(5, timeout_exception=StopIteration)    # Uncomment if using timeout version (and imports at top).
+    def dodin_longest_paths(self, epsilon=0.1, limit=None, correlations=True):
         """
         TODO.
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
@@ -915,19 +867,21 @@ class SDAG:
                         paths_by_parent[p.ID].append(pth) 
                 # Retain only non-dominated paths.
                 candidates[t.ID] = []
-                probs = {}
+                if limit is not None:
+                    probs = {}
                 for p in parents:                        
                     for pth in paths_by_parent[p.ID]:                         
                         if p.ID == max_parent:
                             candidates[t.ID].append(pth)
-                            if pth == max_path:
-                                probs[pth] = float("inf")
-                            else:
-                                r = max_path.get_rho(pth) if correlations else 0
-                                num = pth.length.mu - max_path.length.mu
-                                denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
-                                y = num/denom
-                                probs[pth] = y
+                            if limit is not None:
+                                if pth == max_path:
+                                    probs[pth] = float("inf")
+                                else:
+                                    r = max_path.get_rho(pth) if correlations else 0
+                                    num = pth.length.mu - max_path.length.mu
+                                    denom = np.sqrt(max_path.length.var + pth.length.var - r * np.sqrt(max_path.length.var)*np.sqrt(pth.length.var))
+                                    y = num/denom
+                                    probs[pth] = y
                         else:
                             r = max_path.get_rho(pth) if correlations else 0
                             num = pth.length.mu - max_path.length.mu
@@ -935,14 +889,13 @@ class SDAG:
                             y = num/denom
                             if y > x:
                                 candidates[t.ID].append(pth)
-                                probs[pth] = y
-                            # else:
-                            #     break
-                # Sort candidates.
-                if len(candidates[t.ID]) > limit:
+                                if limit is not None:
+                                    probs[pth] = y
+                # If #candidates > limit, sort and retain only the greatest .
+                if limit is not None and len(candidates[t.ID]) > limit:
                     candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:probs[pth])))
                     candidates[t.ID] = candidates[t.ID][:limit]                    
-                
+        # Return set of path candidates terminating at (single) exit task.        
         return candidates[self.top_sort[-1].ID] 
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
@@ -1071,9 +1024,64 @@ def fover(X):
     elif len(X) == 2:
         return h(X[0].mu, X[0].var, X[1].mu, X[1].var)
     else:
-        return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)   
+        return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)  
+    
+def mc_path_max(P, samples=100):
+    """
+    
+    Uses Monte Carlo simulation to estimate the maximum of a set of paths.
+    
+    Parameters
+    ----------
+    P : TYPE
+        DESCRIPTION.
+    samples : TYPE, optional
+        DESCRIPTION. The default is 100.
 
-# def CFP(S, path_reduction="MC", samples=30, epsilon=0.01, max_type="SCULLI"):
+    Returns
+    -------
+    None.
+    
+    TODO: check all the axes directions etc.
+    """
+    
+    # Construct vector of means.
+    means = [pth.length.mu for pth in P]
+    
+    # Compute covariance matrix.
+    cov = []
+    for i, pth in enumerate(P):
+        row = []
+        # Copy already computed covariances.
+        for j in range(i):
+            cv = cov[j][i]
+            row.append(cv)
+        # Add variance.
+        row.append(pth.length.var)
+        # Compute covariance with other paths.
+        for pt in P[i + 1:]: # TODO: Check if this throws an error...
+            rho = pth.get_rho(pt)
+            cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
+            row.append(cv)
+        cov.append(row)
+    
+    # Generate the path length realizations.
+    N = np.random.default_rng().multivariate_normal(means, cov, samples)
+    
+    # Compute the maximums.
+    dist = np.amax(N, axis=1)
+    return list(dist) # list conversion necessary?
+    
+            
+        
+        
+            
+        
+    
+    
+    
+    
+# def RPM(S, path_reduction="MC", samples=30, epsilon=0.01, max_type="SCULLI"):
 #     """
 #     Parameters
 #     ----------

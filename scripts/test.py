@@ -14,7 +14,7 @@ from src import RV, SDAG, Path
 
 chol_dag_path = '../graphs/cholesky'
 nb = 128
-n_tasks = [35, 220, 680, 1540]#, 2925, 4960, 7770, 11480]
+n_tasks = [35, 220]#, 680, 1540]#, 2925, 4960, 7770, 11480]
 
 # =============================================================================
 # Timings.
@@ -37,8 +37,49 @@ for nt in n_tasks:
     # for p in longest_paths:
     #     print(p.get_rep())
     
-    unique = set(p.get_rep() for p in longest_paths)
-    print(len(unique))
+    # unique = set(p.get_rep() for p in longest_paths)
+    # print(len(unique))
+    
+    # Construct vector of means.
+    means = [pth.length.mu for pth in longest_paths]
+    
+    # Compute covariance matrix.
+    start = timer()
+    cov = []
+    for i, pth in enumerate(longest_paths):
+        row = []
+        # Copy already computed covariances.
+        for j in range(i):
+            cv = cov[j][i]
+            row.append(cv)
+        # Add variance.
+        row.append(pth.length.var)
+        # Compute covariance with other paths.
+        for pt in longest_paths[i + 1:]: 
+            rho = pth.get_rho(pt)
+            cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
+            row.append(cv)
+        cov.append(row)
+    elapsed = timer() - start
+    print("Time to create covariance matrix: {}".format(elapsed)) 
+    
+    samples = len(longest_paths) * 100
+    start = timer()
+    N = np.random.default_rng().multivariate_normal(means, cov, samples)
+    elapsed = timer() - start
+    print("Time to draw samples: {}".format(elapsed)) 
+    
+    start = timer()
+    dist = np.amax(N, axis=1)
+    elapsed = timer() - start
+    print("Time to compute maxima: {}".format(elapsed)) 
+    
+    mu = np.mean(dist)
+    var = np.var(dist)
+    print("Mu: {}".format(mu)) 
+    print("Var: {}".format(var)) 
+    
+    
         
     # start = timer()
     # mc30 = H.monte_carlo(samples=30)

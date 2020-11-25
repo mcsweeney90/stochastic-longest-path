@@ -98,7 +98,6 @@ for dname in os.listdir(stg_dag_path):
     
     start = timer()
     try:
-        # longest_paths = H.dodin_longest_paths_timeout(epsilon=0.01)
         longest_paths = H.dodin_longest_paths(epsilon=0.01, limit=100)
         lnth = len(longest_paths)
     except StopIteration:
