@@ -796,7 +796,10 @@ class SDAG:
         return paths        
     
     def mc_longest_paths(self, samples=30):
-        """TODO."""
+        """
+        Naive way to find longest path candidates: just do a bunch of MC realizations and use the observed 
+        longest ones.
+        """
         
         longest_paths = []  
         unique = set()
@@ -815,6 +818,7 @@ class SDAG:
         """
         TODO.
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
+        Is this really Dodin's algorithm in disguise?
         """
         
         # Compute comparison for determining if path is retained.
@@ -875,6 +879,127 @@ class SDAG:
                     candidates[t.ID] = candidates[t.ID][:limit]                    
         # Return set of path candidates terminating at (single) exit task.        
         return candidates[self.top_sort[-1].ID] 
+    
+    def average_longest_paths(self, K, average="mean"):
+        """
+        Get the longest paths according to some average of the weights.
+        TODO: filter set of candidates. 
+        """
+        
+        candidates = {}        
+        for t in self.top_sort:
+            parents = list(self.graph.predecessors(t))
+            # Identify all possible paths.
+            if not parents:
+                candidates[t.ID] = [Path() + t]
+            else: 
+                # Get all possible paths.
+                paths_by_parent = {}
+                for p in parents:
+                    paths_by_parent[p.ID] = []
+                    edge_weight = self.graph[p][t]['weight'] 
+                    try:
+                        edge_weight.ID = (p.ID, t.ID)
+                    except AttributeError:
+                        pass
+                    for pt in candidates[p.ID]:
+                        pth = pt + edge_weight + t 
+                        paths_by_parent[p.ID].append(pth) 
+                # Sort paths according to average.    
+                if average == "mean":
+                    candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.mu)))
+                elif average == "var":
+                    candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.var)))
+                elif average == "mean+var":
+                    candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.mu + pth.length.var)))
+                if len(parents) > 1:                    
+                    candidates[t.ID] = candidates[t.ID][:K]                                     
+        # Return set of path candidates terminating at (single) exit task.        
+        return candidates[self.top_sort[-1].ID] 
+    
+    def get_critical_subgraph(self, m, average="mean"):
+        """
+        TODO.
+        m is number of nodes to retain.
+        """
+        
+        # Compute upward rank of all tasks.
+        upward = {}
+        backward_traversal = list(reversed(self.top_sort))  
+        for t in backward_traversal:
+            if average == "mean":
+                upward[t.ID] = t.mu
+            elif average == "var":
+                upward[t.ID] = t.var
+            elif average == "mean+var":
+                upward[t.ID] = t.mu + t.var                
+            children = list(self.graph.successors(t))
+            mx = 0.0
+            for c in children:
+                try:
+                    if average == "mean":
+                        edge_weight = self.graph[t][c]['weight'].mu 
+                    elif average == "var":
+                        edge_weight = self.graph[t][c]['weight'].var
+                    elif average == "mean+var":
+                        edge_weight = self.graph[t][c]['weight'].mu + self.graph[t][c]['weight'].var
+                except AttributeError:
+                    edge_weight = 0.0
+                mx = max(mx, edge_weight + upward[c.ID])
+            upward[t.ID] += mx
+            
+        # Compute downward rank of all tasks.
+        downward, similarity = {}, {}
+        for t in self.top_sort:
+            downward[t.ID] = 0.0
+            parents = list(self.graph.predecessors(t))
+            mx = 0.0
+            for p in parents:
+                try:
+                    if average == "mean":
+                        edge_weight = self.graph[p][t]['weight'].mu 
+                        pw = p.mu
+                    elif average == "var":
+                        edge_weight = self.graph[p][t]['weight'].var
+                        pw = p.var
+                    elif average == "mean+var":
+                        edge_weight = self.graph[p][t]['weight'].mu + self.graph[p][t]['weight'].var
+                        pw = p.mu + p.var
+                except AttributeError:
+                    edge_weight = 0.0
+                mx = max(mx, pw + edge_weight + downward[p.ID])
+            downward[t.ID] += mx
+            # Calculate similarity.
+            mn = min(upward[t.ID], downward[t.ID])
+            mx = max(upward[t.ID], downward[t.ID])
+            similarity[t.ID] = mx/mn
+         
+        # Sort by similarity.
+        node_sort = list(sorted(range(self.size), lambda n:similarity[n]))
+        retain = set(node_sort[:m])
+        
+        # Construct subgraph.
+        N, mapping = nx.DiGraph(), {}
+        for t in self.top_sort:
+            if t.ID not in retain:
+                continue
+            n = RV(t.mu, t.var, ID=t.ID)
+            N.add_node(n)
+            mapping[t.ID] = n
+            for p in self.graph.predecessors(t):
+                if p.ID not in retain:
+                    continue
+                q = mapping[p.ID]
+                N.add_edge(q, n)
+                try:
+                    self.graph[p][t]['weight'].mu
+                    edge_weight = RV(self.graph[p][t]['weight'].mu, self.graph[p][t]['weight'].var, ID=(p.ID, t.ID))
+                except AttributeError:
+                    edge_weight = 0.0
+                N[q][n]['weight'] = edge_weight
+        # Convert to SDAG object.
+        S = SDAG(N)
+        return S       
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """
@@ -974,6 +1099,10 @@ class SDAG:
                 
     #     return F
     
+# =============================================================================
+# Assorted functions.
+# =============================================================================
+    
 def h(mu1, var1, mu2, var2):
     """Helper function for Kamburowski method."""
     alpha = np.sqrt(var1 + var2)
@@ -1019,8 +1148,6 @@ def mc_path_max(P, samples=100):
     Returns
     -------
     None.
-    
-    TODO: check all the axes directions etc.
     """
     
     # Construct vector of means.
@@ -1031,13 +1158,11 @@ def mc_path_max(P, samples=100):
     for i, pth in enumerate(P):
         row = []
         # Copy already computed covariances.
-        for j in range(i):
-            cv = cov[j][i]
-            row.append(cv)
-        # Add variance.
+        row = [cov[j][i] for j in range(i)]
+        # Add diagonal - just the variance.
         row.append(pth.length.var)
         # Compute covariance with other paths.
-        for pt in P[i + 1:]: # TODO: Check if this throws an error...
+        for pt in P[i + 1:]: 
             rho = pth.get_rho(pt)
             cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
             row.append(cv)
@@ -1048,6 +1173,7 @@ def mc_path_max(P, samples=100):
     
     # Compute the maximums.
     dist = np.amax(N, axis=1)
+    
     return list(dist) # list conversion necessary?
     
             

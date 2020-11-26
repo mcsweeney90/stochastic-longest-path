@@ -59,21 +59,7 @@ for nt in n_tasks:
             row.append(cv)
         cov.append(row)
     elapsed = timer() - start
-    print("Time to create covariance matrix: {}".format(elapsed)) 
-    
-    # # Numpy version.
-    # start = timer()
-    # n = len(longest_paths)
-    # cov = np.zeros([n, n])    
-    # for i, pth in enumerate(longest_paths):
-    #     cov[i][i] = pth.length.var
-    #     for j, pt in enumerate(longest_paths[:i]):
-    #         rho = pth.get_rho(pt)
-    #         cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
-    #         cov[i][j] = cv
-    #         cov[j][i] = cv    
-    # elapsed = timer() - start
-    # print("Time to create covariance matrix: {}".format(elapsed)) 
+    print("Time to create covariance matrix: {}".format(elapsed))     
     
     samples = len(longest_paths) * 100
     start = timer()
