@@ -166,30 +166,8 @@ class Path:
                 self.rep += (str(k) + "-") 
         return self.rep
     def get_rho(self, other):
-        common_var = 0.0
-        for k in self.members:
-            try:
-                common_var += other.members[k].var
-            except KeyError:
-                pass         
-        return common_var / (np.sqrt(self.length.var)*np.sqrt(other.length.var))
-    # def get_max_rho(self, maximand):
-    #     if len(maximand) == 2:
-    #         eps, nu = maximand
-    #         r = eps.get_rho(nu)
-    #         a = np.sqrt(eps.length.var + nu.length.var - 2 * np.sqrt(eps.length.var) * np.sqrt(nu.length.var) * r)
-    #         b = (eps.length.mu - nu.length.mu) / a
-    #         cdf_b = norm.cdf(b)
-    #         cdf_minus = norm.cdf(-b)
-    #         pdf_b = norm.pdf(b)             
-    #         mu = eps.length.mu * cdf_b + nu.length.mu * cdf_minus + a * pdf_b      
-    #         var = (eps.length.mu**2 + eps.length.var) * cdf_b
-    #         var += (nu.length.mu**2 + nu.length.var) * cdf_minus
-    #         var += (eps.length.mu + nu.length.mu) * a * pdf_b
-    #         var -= mu**2 
-    #         r1 = self.get_rho(eps)
-    #         r2 = self.get_rho(nu)
-    #         return (np.sqrt(eps.length.var) * r1 * cdf_b + np.sqrt(nu.length.var) * r2 * cdf_minus)/var           
+        common_var = sum(self.members[w].var for w in self.members if w in other.members)             
+        return common_var / (np.sqrt(self.length.var)*np.sqrt(other.length.var))      
             
 
 class CRV:
