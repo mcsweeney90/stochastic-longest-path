@@ -303,6 +303,7 @@ class SDAG:
         Computes the realized longest path of the DAG. 
         Notes:
             - disjunctive edges make the code slightly uglier since can't just do start_time = max(parent realizations).
+        TODO: return_path is expensive because of all the path objects that are created - alternative approach?
         """            
         Z = {} 
         if return_path:
@@ -331,34 +332,35 @@ class SDAG:
             return Z[self.top_sort[-1].ID], paths[self.top_sort[-1].ID]                                                     
         return Z[self.top_sort[-1].ID]   # Assumes single exit task.  
     
-    def monte_carlo(self, samples, dist="NORMAL", fixed={}, path_info=False):
+    def monte_carlo(self, samples, dist="NORMAL", fixed={}, return_paths=False):
         """
-        Monte Carlo method to estimate the distribution of the longest path. 
-        """        
+        Monte Carlo method to estimate the distribution of the longest path.  
+        """      
         
-        longest_paths = []     
-        if path_info:
-            path_counts = defaultdict(int)
+        emp, paths = [], [] 
+        if return_paths:
+            unique = set()
         for _ in range(samples):
             self.realize(dist=dist, fixed=fixed)
-            if path_info:
-                lp, path = self.real_longest_path(return_path=True)
-                rep = path.get_rep()
-                path_counts[rep] += 1
+            if return_paths:
+                lth, pth = self.real_longest_path(return_path=True)
+                check = pth.get_rep()
+                if check not in unique:
+                    paths.append(pth)
+                    unique.add(check) 
             else:
-                lp = self.real_longest_path()
-            longest_paths.append(lp)
+                lth = self.real_longest_path(return_path=False)
+            emp.append(lth)              
         self.reset(fixed=fixed)
-        if path_info:
-            return longest_paths, path_counts
-        return longest_paths
+        if return_paths:
+            return emp, paths
+        return emp  
     
     def pert_cpm(self, variance=False):
         """
         Returns the classic PERT-CPM bound on the expected value of the longest path.
-        If variance == True, also returns the variance of this longest path to use as a rough estimate
+        If variance == True, also returns the variance of this path to use as a rough estimate
         of the longest path variance.
-        TODO: Is there any link between the variance of this and the longest path variance? Is it an upper bound?
         """
         Z = {}       
         for t in self.top_sort:
@@ -793,25 +795,7 @@ class SDAG:
                 paths[t.ID] = 1
             else:
                 paths[t.ID] = sum(paths[p.ID] for p in parents)                
-        return paths        
-    
-    def mc_longest_paths(self, samples=30):
-        """
-        Naive way to find longest path candidates: just do a bunch of MC realizations and use the observed 
-        longest ones.
-        """
-        
-        longest_paths = []  
-        unique = set()
-        for _ in range(samples):
-            self.realize()
-            lp, P = self.real_longest_path(return_path=True)
-            check = P.get_rep()
-            if check not in unique:
-                longest_paths.append(P)
-                unique.add(check)                
-        self.reset()
-        return longest_paths             
+        return paths                 
     
     # @timeout_decorator.timeout(5, timeout_exception=StopIteration)    # Uncomment if using timeout version (and imports at top).
     def dodin_longest_paths(self, epsilon=0.1, limit=None, correlations=True):
@@ -894,9 +878,8 @@ class SDAG:
                 candidates[t.ID] = [Path() + t]
             else: 
                 # Get all possible paths.
-                paths_by_parent = {}
+                candidates[t.ID] = []
                 for p in parents:
-                    paths_by_parent[p.ID] = []
                     edge_weight = self.graph[p][t]['weight'] 
                     try:
                         edge_weight.ID = (p.ID, t.ID)
@@ -904,7 +887,7 @@ class SDAG:
                         pass
                     for pt in candidates[p.ID]:
                         pth = pt + edge_weight + t 
-                        paths_by_parent[p.ID].append(pth) 
+                        candidates[t.ID].append(pth) 
                 # Sort paths according to average.    
                 if average == "mean":
                     candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.mu)))
@@ -972,10 +955,10 @@ class SDAG:
             # Calculate similarity.
             mn = min(upward[t.ID], downward[t.ID])
             mx = max(upward[t.ID], downward[t.ID])
-            similarity[t.ID] = mx/mn
+            similarity[t.ID] = mx/mn if mn > 0.0 else float('inf')# TODO: division by zero can occur!
          
         # Sort by similarity.
-        node_sort = list(sorted(range(self.size), lambda n:similarity[n]))
+        node_sort = list(sorted(range(self.size), key=lambda n:similarity[n]))
         retain = set(node_sort[:m])
         
         # Construct subgraph.
@@ -1133,10 +1116,10 @@ def fover(X):
     else:
         return h(fover(X[:-1]), X[-2].var, X[-1].mu, X[-1].var)  
     
-def mc_path_max(P, samples=100):
+def path_max(P, method="MC", samples=100):
     """
     
-    Uses Monte Carlo simulation to estimate the maximum of a set of paths.
+    Estimate the maximum of a set of paths.
     
     Parameters
     ----------
@@ -1150,31 +1133,42 @@ def mc_path_max(P, samples=100):
     None.
     """
     
-    # Construct vector of means.
-    means = [pth.length.mu for pth in P]
-    
-    # Compute covariance matrix.
-    cov = []
-    for i, pth in enumerate(P):
-        row = []
-        # Copy already computed covariances.
-        row = [cov[j][i] for j in range(i)]
-        # Add diagonal - just the variance.
-        row.append(pth.length.var)
-        # Compute covariance with other paths.
-        for pt in P[i + 1:]: 
-            rho = pth.get_rho(pt)
-            cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
-            row.append(cv)
-        cov.append(row)
-    
-    # Generate the path length realizations.
-    N = np.random.default_rng().multivariate_normal(means, cov, samples)
-    
-    # Compute the maximums.
-    dist = np.amax(N, axis=1)
-    
-    return list(dist) # list conversion necessary?
+    if method == "SCULLI" or method == "S":
+        S = P[0].length
+        for path in P[1:]:
+            S = S.clark_max(path.length)
+        return S
+    elif method == "CorLCA" or method == "C":
+        dom_path = P[0]
+        C = P[0].length
+        for path in P[1:]:
+            r = path.get_rho(dom_path)
+            if path.length.mu > C.mu:
+                dom_path = path
+            C = C.clark_max(path.length, rho=r)
+        return C
+    elif method == "MC" or method == "mc" or method == "M":    
+        # Construct vector of means.
+        means = [pth.length.mu for pth in P]        
+        # Compute covariance matrix.
+        cov = []
+        for i, pth in enumerate(P):
+            row = []
+            # Copy already computed covariances.
+            row = [cov[j][i] for j in range(i)]
+            # Add diagonal - just the variance.
+            row.append(pth.length.var)
+            # Compute covariance with other paths.
+            for pt in P[i + 1:]: 
+                rho = pth.get_rho(pt)
+                cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
+                row.append(cv)
+            cov.append(row)        
+        # Generate the path length realizations.
+        N = np.random.default_rng().multivariate_normal(means, cov, samples)        
+        # Compute the maximums.
+        dist = np.amax(N, axis=1)        
+        return list(dist) # Note this is list rather than RV - make separate function?
     
             
         

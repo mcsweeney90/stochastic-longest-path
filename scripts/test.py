@@ -28,8 +28,15 @@ for nt in n_tasks:
     
     print("\nNUMBER OF TASKS: {}".format(nt))
     
+    # TODO: make sure this actually works...
     start = timer()
-    longest_paths = H.dodin_longest_paths(epsilon=0.05)
+    C = H.get_critical_subgraph(m=nt//10, average="mean")
+    elapsed = timer() - start
+    print("Time to find critical subgraph: {}".format(elapsed))  
+    
+    start = timer()
+    # longest_paths = H.dodin_longest_paths(epsilon=0.05)
+    longest_paths = H.average_longest_paths(K=500, average="mean+var")
     elapsed = timer() - start
     print("Time to find longest paths: {}".format(elapsed))    
     
