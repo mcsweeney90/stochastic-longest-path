@@ -337,9 +337,9 @@ class SDAG:
         Monte Carlo method to estimate the distribution of the longest path.  
         """      
         
-        emp, paths = [], [] 
+        emp = [] 
         if return_paths:
-            unique = set()
+            unique, paths = set(), []
         for _ in range(samples):
             self.realize(dist=dist, fixed=fixed)
             if return_paths:
