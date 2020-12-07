@@ -14,7 +14,7 @@ from src import RV, SDAG, Path
 
 chol_dag_path = '../graphs/cholesky'
 nb = 128
-n_tasks = [35, 220]#, 680, 1540]#, 2925, 4960, 7770, 11480]
+n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
 
 # =============================================================================
 # Timings.
@@ -30,59 +30,81 @@ for nt in n_tasks:
     
     # TODO: make sure this actually works...
     start = timer()
-    C = H.get_critical_subgraph(m=nt//10, average="mean")
+    # criticalities = H.get_static_node_criticalities(weights="mean")
+    # x = criticalities[H.top_sort[0].ID]
+    # cp_length = sum(1 for t in range(H.size) if abs(criticalities[t] - x) < 1e-3)
+    
+    # for cp in set(criticalities.values()):
+    #     print("cp = {}, count = {}".format(cp, list(criticalities.values()).count(cp)))
+    
+    C = H.get_critical_subgraph(gamma=0.1, weights="mean")
     elapsed = timer() - start
     print("Time to find critical subgraph: {}".format(elapsed))  
+    print("Size of critical subgraph: {}".format(C.size))
     
-    start = timer()
-    # longest_paths = H.dodin_longest_paths(epsilon=0.05)
-    longest_paths = H.average_longest_paths(K=500, average="mean+var")
-    elapsed = timer() - start
-    print("Time to find longest paths: {}".format(elapsed))    
+    # for t in C.graph:
+    #     print(t.ID, len(list(C.graph.successors(t))))
     
-    print(len(longest_paths))
+    # cpm = C.pert_cpm()
+    # print("CPM bound: {}".format(cpm))
+    
+    
+    # dist = C.monte_carlo(samples=1000)
+    # # print(dist)
+    # mu = np.mean(dist)
+    # var = np.var(dist)
+    # print("Mu: {}".format(mu)) 
+    # print("Var: {}".format(var)) 
+    
+    # start = timer()
+    # # longest_paths = H.dodin_longest_paths(epsilon=0.05)
+    # longest_paths = H.average_longest_paths(K=500, average="mean+var")
+    # elapsed = timer() - start
+    # print("Time to find longest paths: {}".format(elapsed))    
+    
+    # print(len(longest_paths))
     # for p in longest_paths:
     #     print(p.get_rep())
     
     # unique = set(p.get_rep() for p in longest_paths)
     # print(len(unique))
     
-    # Construct vector of means.
-    means = [pth.length.mu for pth in longest_paths]
+    # # Construct vector of means.
+    # means = [pth.length.mu for pth in longest_paths]
     
-    # Compute covariance matrix.
-    start = timer()
-    cov = []
-    for i, pth in enumerate(longest_paths):
-        row = []
-        # Copy already computed covariances.
-        row = [cov[j][i] for j in range(i)]
-        # Add diagonal - just the variance.
-        row.append(pth.length.var)
-        # Compute covariance with other paths.
-        for pt in longest_paths[i + 1:]: 
-            rho = pth.get_rho(pt)
-            cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
-            row.append(cv)
-        cov.append(row)
-    elapsed = timer() - start
-    print("Time to create covariance matrix: {}".format(elapsed))     
+    # # Compute covariance matrix.
+    # start = timer()
+    # cov = []
+    # for i, pth in enumerate(longest_paths):
+    #     row = []
+    #     # Copy already computed covariances.
+    #     row = [cov[j][i] for j in range(i)]
+    #     # Add diagonal - just the variance.
+    #     row.append(pth.length.var)
+    #     # Compute covariance with other paths.
+    #     for pt in longest_paths[i + 1:]: 
+    #         rho = pth.get_rho(pt)
+    #         cv = rho * np.sqrt(pth.length.var) * np.sqrt(pt.length.var)
+    #         row.append(cv)
+    #     cov.append(row)
+    # elapsed = timer() - start
+    # print("Time to create covariance matrix: {}".format(elapsed))     
     
-    samples = len(longest_paths) * 100
-    start = timer()
-    N = np.random.default_rng().multivariate_normal(means, cov, samples)
-    elapsed = timer() - start
-    print("Time to draw samples: {}".format(elapsed)) 
+    # samples = len(longest_paths) * 100
+    # start = timer()
+    # N = np.random.default_rng().multivariate_normal(means, cov, samples)
+    # elapsed = timer() - start
+    # print("Time to draw samples: {}".format(elapsed)) 
     
-    start = timer()
-    dist = np.amax(N, axis=1)
-    elapsed = timer() - start
-    print("Time to compute maxima: {}".format(elapsed)) 
+    # start = timer()
+    # dist = np.amax(N, axis=1)
+    # elapsed = timer() - start
+    # print("Time to compute maxima: {}".format(elapsed)) 
     
-    mu = np.mean(dist)
-    var = np.var(dist)
-    print("Mu: {}".format(mu)) 
-    print("Var: {}".format(var)) 
+    # mu = np.mean(dist)
+    # var = np.var(dist)
+    # print("Mu: {}".format(mu)) 
+    # print("Var: {}".format(var)) 
     
     
         

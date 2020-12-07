@@ -79,7 +79,7 @@ class RV:
         elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
             self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)          
             # Need to be careful to make sure mu and var aren't zero (shouldn't be for a Gamma dist ofc but programmatically sometimes tempting.) 
-        elif dist == "uniform":
+        elif dist == "UNIFORM" or dist == "uniform":
             u = np.sqrt(3 * self.var)
             r = np.random.uniform(-u, u)
             if r + self.mu < 0:
@@ -900,67 +900,91 @@ class SDAG:
         # Return set of path candidates terminating at (single) exit task.        
         return candidates[self.top_sort[-1].ID] 
     
-    def get_critical_subgraph(self, m, average="mean"):
+    def get_static_node_criticalities(self, weights="mean"):
         """
-        TODO.
-        m is number of nodes to retain.
+
+        Parameters
+        ----------
+        weights : TYPE, optional
+            DESCRIPTION. The default is "mean".
+        method : TYPE, optional
+            DESCRIPTION. The default is "static".
+
+        Returns
+        -------
+        None.
+
         """
         
         # Compute upward rank of all tasks.
         upward = {}
         backward_traversal = list(reversed(self.top_sort))  
         for t in backward_traversal:
-            if average == "mean":
+            if weights == "mean":
                 upward[t.ID] = t.mu
-            elif average == "var":
-                upward[t.ID] = t.var
-            elif average == "mean+var":
-                upward[t.ID] = t.mu + t.var                
+            elif weights == "UCB":
+                upward[t.ID] = t.mu + np.sqrt(t.var)                
             children = list(self.graph.successors(t))
             mx = 0.0
             for c in children:
                 try:
-                    if average == "mean":
+                    if weights == "mean":
                         edge_weight = self.graph[t][c]['weight'].mu 
-                    elif average == "var":
-                        edge_weight = self.graph[t][c]['weight'].var
-                    elif average == "mean+var":
-                        edge_weight = self.graph[t][c]['weight'].mu + self.graph[t][c]['weight'].var
+                    elif weights == "UCB":
+                        edge_weight = self.graph[t][c]['weight'].mu + np.sqrt(self.graph[t][c]['weight'].var)
                 except AttributeError:
                     edge_weight = 0.0
                 mx = max(mx, edge_weight + upward[c.ID])
             upward[t.ID] += mx
             
         # Compute downward rank of all tasks.
-        downward, similarity = {}, {}
+        downward, criticalities = {}, {}
         for t in self.top_sort:
             downward[t.ID] = 0.0
             parents = list(self.graph.predecessors(t))
             mx = 0.0
             for p in parents:
+                pw = p.mu + np.sqrt(p.var) if weights == "UCB" else p.mu
                 try:
-                    if average == "mean":
+                    if weights == "mean":
                         edge_weight = self.graph[p][t]['weight'].mu 
-                        pw = p.mu
-                    elif average == "var":
-                        edge_weight = self.graph[p][t]['weight'].var
-                        pw = p.var
-                    elif average == "mean+var":
-                        edge_weight = self.graph[p][t]['weight'].mu + self.graph[p][t]['weight'].var
-                        pw = p.mu + p.var
+                    elif weights == "UCB":
+                        edge_weight = self.graph[p][t]['weight'].mu + np.sqrt(self.graph[p][t]['weight'].var)
                 except AttributeError:
                     edge_weight = 0.0
                 mx = max(mx, pw + edge_weight + downward[p.ID])
             downward[t.ID] += mx
-            # Calculate similarity.
-            mn = min(upward[t.ID], downward[t.ID])
-            mx = max(upward[t.ID], downward[t.ID])
-            similarity[t.ID] = mx/mn if mn > 0.0 else float('inf')# TODO: division by zero can occur!
-         
-        # Sort by similarity.
-        node_sort = list(sorted(range(self.size), key=lambda n:similarity[n]))
-        retain = set(node_sort[:m])
+            # Calculate criticality.
+            c = upward[t.ID] + downward[t.ID]
+            criticalities[t.ID] = c
+            
+        return criticalities
+    
+    def get_critical_subgraph(self, gamma=0.5, weights="mean"):
+        """
+        TODO.
+        gamma controls the number of nodes to retain.
+        """
         
+        # Get node criticalities.
+        criticalities = self.get_static_node_criticalities(weights=weights)
+         
+        # Identify nodes to be retained.        
+        x = criticalities[self.top_sort[0].ID] # Assumes single entry node.
+        cp_nodes, other_nodes = [], []
+        for t in range(self.size):
+            if abs(criticalities[t] - x) < 1e-6:
+                cp_nodes.append(t)      # Retain all critical path nodes at a minimum.
+            else:
+                other_nodes.append(t)
+        L = int(gamma * self.size)
+        y = L - len(cp_nodes)
+        if y <= 0:
+            retain = set(cp_nodes)
+        else:
+            node_sort = list(reversed(sorted(other_nodes, key=lambda n:criticalities[n])))
+            retain = set(cp_nodes + node_sort[:y])
+                        
         # Construct subgraph.
         N, mapping = nx.DiGraph(), {}
         for t in self.top_sort:
@@ -980,7 +1004,26 @@ class SDAG:
                 except AttributeError:
                     edge_weight = 0.0
                 N[q][n]['weight'] = edge_weight
-        # Convert to SDAG object.
+        
+        # Check that graph is fully connected.
+        # TODO: just delete the nodes?
+        source = mapping[self.top_sort[0].ID]
+        sink = mapping[self.top_sort[-1].ID]
+        for t in self.top_sort:
+            if t.ID not in retain:
+                continue
+            if t.ID in [self.top_sort[0].ID, self.top_sort[-1].ID]:
+                continue
+            n = mapping[t.ID]
+            if not len(list(N.predecessors(n))):
+                N.add_edge(source, n)
+                N[source][n]['weight'] = 0.0
+            if not len(list(N.successors(n))):
+                N.add_edge(n, sink)
+                N[n][sink]['weight'] = 0.0
+            
+                
+        # Convert to SDAG object and return. 
         S = SDAG(N)
         return S       
     
@@ -1170,7 +1213,30 @@ def path_max(P, method="MC", samples=100):
         dist = np.amax(N, axis=1)        
         return list(dist) # Note this is list rather than RV - make separate function?
     
-            
+def PGS(G, frac=0.1, samples=30, weights="mean"):
+    """
+    Parameters
+    ----------
+    G : TYPE
+        DESCRIPTION.
+    frac : TYPE, optional
+        DESCRIPTION. The default is 0.1.
+    samples : TYPE, optional
+        DESCRIPTION. The default is 30.
+    weights : TYPE, optional
+        DESCRIPTION. The default is "mean".
+
+    Returns
+    -------
+    None.
+    """          
+    
+    # Get the subgraph.
+    H = G.get_critical_subgraph(frac=frac, weights=weights)   
+    # Do the simulation. 
+    emp = H.monte_carlo(samples=samples)
+    
+    return emp   
         
         
             

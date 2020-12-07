@@ -78,7 +78,7 @@ class RV:
             self.realization = r
         elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
             self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu) 
-        elif dist == "uniform":
+        elif dist == "UNIFORM" or dist == "uniform":
             u = np.sqrt(3 * self.var)
             r = np.random.uniform(-u, u)
             if r + self.mu < 0:

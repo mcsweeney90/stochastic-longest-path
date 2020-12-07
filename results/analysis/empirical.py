@@ -43,11 +43,12 @@ pathlib.Path(plot_path).mkdir(parents=True, exist_ok=True)
 
 nb = 128
 n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
-# Load info.
+distros = ["NORMAL", "GAMMA", "UNIFORM"]
+# Load info.   
 with open('../data/chol_empirical.dill', 'rb') as file:
-    chol_empirical = dill.load(file)     
+    chol_empirical = dill.load(file)    
 with open('../data/stg_empirical.dill', 'rb') as file:
-    stg_empirical = dill.load(file)  
+    stg_empirical = dill.load(file)   
 
 # =============================================================================
 # Summary statistics for Cholesky set.
@@ -60,7 +61,7 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 #         print("\n\n\n---------------------------------", file=dest)
 #         print("NUMBER OF TASKS: {}".format(nt), file=dest)
 #         print("---------------------------------", file=dest)
-#         for dist in ["NORMAL", "GAMMA"]: 
+#         for dist in distros: 
 #             print("\n{} WEIGHTS".format(dist), file=dest)
 #             mu = np.mean(chol_empirical[nt][dist])
 #             print("MEAN: {}".format(mu), file=dest)
@@ -91,7 +92,7 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 #         print("\n\n\n---------------------------------", file=dest)
 #         print("NUMBER OF TASKS: {}".format(nt), file=dest)
 #         print("---------------------------------", file=dest)
-#         for dist in ["NORMAL", "GAMMA"]: 
+#         for dist in distros: 
 #             print("\n{} WEIGHTS".format(dist), file=dest)
 #             mu = np.mean(chol_empirical[nt][dist])
 #             print("REFERENCE MEAN: {}".format(mu), file=dest)
@@ -111,7 +112,7 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 # Histograms of empirical distributions for Cholesky set.
 # =============================================================================
 
-# for dist in ["NORMAL", "GAMMA"]:
+# for dist in distros:
 #     fig = plt.figure(dpi=400) 
 #     ax = fig.add_subplot(111, frameon=False)
 #     # hide tick and tick label of the big axes
@@ -135,7 +136,7 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 #     plt.close(fig) 
 
 # =============================================================================
-# Progression of variance for Cholesky set.
+# Progression of variance for Cholesky set with normal weights. Not used anywhere.
 # =============================================================================            
 
 # diffs = defaultdict(list)
@@ -162,42 +163,49 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 # Comparison of STG distributions.
 # =============================================================================
 
-devs = {}
-devs["MEAN"] = []
-devs["VAR"] = []
-for dname in stg_empirical:
-    dmu = abs(100 - (stg_empirical[dname]["GAMMA"][0] / stg_empirical[dname]["NORMAL"][0])*100)
-    devs["MEAN"].append(dmu)    
-    dvar = abs(100 - (stg_empirical[dname]["GAMMA"][1] / stg_empirical[dname]["NORMAL"][1])*100)
-    devs["VAR"].append(dvar)    
+# devs = {}
+# for dist in ["NORMAL", "UNIFORM"]:
+#     devs[dist] = {}
+#     devs[dist]["MEAN"] = []
+#     devs[dist]["VAR"] = []
+#     for dname in stg_empirical:
+#         dmu = abs(100 - (stg_empirical[dname][dist][0] / stg_empirical[dname]["GAMMA"][0])*100)
+#         devs[dist]["MEAN"].append(dmu)    
+#         dvar = abs(100 - (stg_empirical[dname][dist][1] / stg_empirical[dname]["GAMMA"][1])*100)
+#         devs[dist]["VAR"].append(dvar)    
 
-with open("{}/stg_comparison.txt".format(summary_path), "w") as dest:
-    print("COMPARISON OF MOMENT ESTIMATES FOR STG GRAPH EMPIRICAL DISTRIBUTIONS WITH NORMAL AND GAMMA WEIGHTS.", file=dest) 
-    print("EMPIRICAL DISTRIBUTIONS COMPUTED VIA MC METHOD WITH 10,000 SAMPLES.", file=dest)  
+# with open("{}/stg_comparison.txt".format(summary_path), "w") as dest:
+#     print("COMPARISON OF MOMENT ESTIMATES FOR STG GRAPH EMPIRICAL DISTRIBUTIONS COMPUTED VIA MC METHOD WITH 10,000 SAMPLES.", file=dest)  
+#     print("TRUE SOLUTION ASSUMED TO THAT COMPUTED WITH ALL GAMMA WEIGHTS.", file=dest) 
+#     print("HOW LARGE ARE THE MOMENT DEVIATIONS FOR MC SOLUTIONS WITH NORMAL OR UNIFORM WEIGHTS?", file=dest)
     
-    print("\n\n\n---------------------------------", file=dest)
-    print("MEAN DEVIATIONS (%)", file=dest)
-    print("---------------------------------", file=dest)    
-    print("MAXIMUM : {}".format(max(devs["MEAN"])), file=dest)
-    print("AVERAGE : {}".format(np.mean(devs["MEAN"])), file=dest)
-    gr1 = sum(1 for m in devs["MEAN"] if m > 1.0)
-    gr5 = sum(1 for m in devs["MEAN"] if m > 5.0)
-    gr10 = sum(1 for m in devs["MEAN"] if m > 10.0)
-    print("#TIMES > 1% : {} / 1620".format(gr1), file=dest)
-    print("#TIMES > 5% : {} / 1620".format(gr5), file=dest)
-    print("#TIMES > 10% : {} / 1620".format(gr10), file=dest)
+#     print("\n\n\n---------------------------------", file=dest)
+#     print("MEAN DEVIATIONS (%)", file=dest)
+#     print("---------------------------------", file=dest)    
+#     for dist in ["NORMAL", "UNIFORM"]:
+#         print("\n{} WEIGHTS".format(dist), file=dest)
+#         print("MAXIMUM : {}".format(max(devs[dist]["MEAN"])), file=dest)
+#         print("AVERAGE : {}".format(np.mean(devs[dist]["MEAN"])), file=dest)
+#         gr1 = sum(1 for m in devs[dist]["MEAN"] if m > 1.0)
+#         gr5 = sum(1 for m in devs[dist]["MEAN"] if m > 5.0)
+#         gr10 = sum(1 for m in devs[dist]["MEAN"] if m > 10.0)
+#         print("#TIMES > 1% : {} / 1620".format(gr1), file=dest)
+#         print("#TIMES > 5% : {} / 1620".format(gr5), file=dest)
+#         print("#TIMES > 10% : {} / 1620".format(gr10), file=dest)
     
-    print("\n\n\n---------------------------------", file=dest)
-    print("VARIANCE DEVIATIONS (%)", file=dest)
-    print("---------------------------------", file=dest)    
-    print("MAXIMUM : {}".format(max(devs["VAR"])), file=dest)
-    print("AVERAGE : {}".format(np.mean(devs["VAR"])), file=dest)
-    gr1 = sum(1 for m in devs["VAR"] if m > 1.0)
-    gr5 = sum(1 for m in devs["VAR"] if m > 5.0)
-    gr10 = sum(1 for m in devs["VAR"] if m > 10.0)
-    print("#TIMES > 1% : {} / 1620".format(gr1), file=dest)
-    print("#TIMES > 5% : {} / 1620".format(gr5), file=dest)
-    print("#TIMES > 10% : {} / 1620".format(gr10), file=dest)
+#     print("\n\n\n---------------------------------", file=dest)
+#     print("VARIANCE DEVIATIONS (%)", file=dest)
+#     print("---------------------------------", file=dest) 
+#     for dist in ["NORMAL", "UNIFORM"]:
+#         print("\n{} WEIGHTS".format(dist), file=dest)
+#         print("MAXIMUM : {}".format(max(devs[dist]["VAR"])), file=dest)
+#         print("AVERAGE : {}".format(np.mean(devs[dist]["VAR"])), file=dest)
+#         gr1 = sum(1 for m in devs[dist]["VAR"] if m > 1.0)
+#         gr5 = sum(1 for m in devs[dist]["VAR"] if m > 5.0)
+#         gr10 = sum(1 for m in devs[dist]["VAR"] if m > 10.0)
+#         print("#TIMES > 1% : {} / 1620".format(gr1), file=dest)
+#         print("#TIMES > 5% : {} / 1620".format(gr5), file=dest)
+#         print("#TIMES > 10% : {} / 1620".format(gr10), file=dest)
     
     
     
