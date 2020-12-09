@@ -128,7 +128,7 @@ class RV:
         cdf_minus = norm.cdf(-b)
         pdf_b = norm.pdf(b) 
         
-        mu = mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
+        mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
         var = (self.mu**2 + self.var) * cdf_minus
         var += (other.mu**2 + other.var) * cdf_b
         var -= (self.mu + other.mu) * a * pdf_b
@@ -198,7 +198,7 @@ for nb in nbs:
                     target_type = platform.workers[s.where_scheduled].type 
                     mu = t.comm_costs[source_type + target_type][s.ID]
                     var = variances[s.type][source_type + target_type]
-                    w = RV(mu, var) # TODO: add ID = (parent, child)? Would make some things easier but would have to re-run some code...
+                    w = RV(mu, var, ID=(t.ID, s.ID)) 
                     G[n][c]['weight'] = w
         
         # Add transitive edges.
@@ -213,7 +213,7 @@ for nb in nbs:
                 c = mapping[s]
                 if not G.has_edge(n, c):
                     G.add_edge(n, c)
-                    G[n][c]['weight'] = 0
+                    G[n][c]['weight'] = 0.0
                                         
         # Reset DAG and platform if necessary.
         dag.reset()

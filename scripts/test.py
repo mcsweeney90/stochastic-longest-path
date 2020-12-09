@@ -4,7 +4,7 @@
 Testing...
 """
 
-import dill, pathlib, sys
+import dill, pathlib, sys, os
 import numpy as np
 import networkx as nx
 from timeit import default_timer as timer
@@ -15,10 +15,25 @@ from src import RV, SDAG, Path
 chol_dag_path = '../graphs/cholesky'
 nb = 128
 n_tasks = [35, 220, 680, 1540, 2925, 4960, 7770, 11480]
+stg_dag_path = '../graphs/STG'
 
 # =============================================================================
 # Timings.
 # =============================================================================
+
+# gamma = 0.95
+# for dname in os.listdir(stg_dag_path):  
+#     with open('{}/{}'.format(stg_dag_path, dname), 'rb') as file:
+#         G = dill.load(file)
+#     start = timer()
+#     criticalities = G.get_static_node_criticalities(weights="mean")
+#     x = criticalities[G.top_sort[0].ID]
+#     y = gamma * x
+#     retained = sum(1 for t in range(G.size) if criticalities[t] > y)        
+#     elapsed = timer() - start
+#     print("#retained with gamma = {} : {}".format(gamma, retained))
+    
+    
 
 
 for nt in n_tasks:
@@ -30,17 +45,17 @@ for nt in n_tasks:
     
     # TODO: make sure this actually works...
     start = timer()
-    # criticalities = H.get_static_node_criticalities(weights="mean")
-    # x = criticalities[H.top_sort[0].ID]
-    # cp_length = sum(1 for t in range(H.size) if abs(criticalities[t] - x) < 1e-3)
+    criticalities = H.get_static_node_criticalities(weights="mean")
+    x = criticalities[H.top_sort[0].ID]
+    cp_length = sum(1 for t in range(H.size) if abs(criticalities[t] - x) < 1e-3)
     
     # for cp in set(criticalities.values()):
     #     print("cp = {}, count = {}".format(cp, list(criticalities.values()).count(cp)))
     
-    C = H.get_critical_subgraph(gamma=0.1, weights="mean")
+    # C = H.get_critical_subgraph(gamma=0.1, weights="mean")
     elapsed = timer() - start
-    print("Time to find critical subgraph: {}".format(elapsed))  
-    print("Size of critical subgraph: {}".format(C.size))
+    print("Time to find CP length: {}".format(elapsed))  
+    print("Percentage of tasks that are critical: {}".format((cp_length/H.size)*100))
     
     # for t in C.graph:
     #     print(t.ID, len(list(C.graph.successors(t))))

@@ -8,7 +8,7 @@ import dill
 import networkx as nx
 import numpy as np
 from collections import defaultdict
-from scipy.stats import norm
+from scipy.stats import norm, skew, kurtosis
 
 # Uncomment if using timeout version of dodin_longest_paths.
 # import time
@@ -261,8 +261,7 @@ class SDAG:
                     eps = np.random.uniform(0.9, 1.1)
                     sig = eps * cov * mu
                     var = sig**2
-                    self.graph[p][t]['weight'] = RV(mu, var) 
-                    # TODO: add ID = (parent, child)? Would make some things easier but would have to re-run some code...
+                    self.graph[p][t]['weight'] = RV(mu, var, ID=(p.ID, t.ID)) 
         
     def realize(self, static=False, dist="NORMAL", percentile=None, fixed=set()):  
         """
@@ -900,7 +899,7 @@ class SDAG:
         # Return set of path candidates terminating at (single) exit task.        
         return candidates[self.top_sort[-1].ID] 
     
-    def get_static_node_criticalities(self, weights="mean"):
+    def get_static_node_criticalities(self, weights="MEAN"):
         """
 
         Parameters
@@ -920,7 +919,7 @@ class SDAG:
         upward = {}
         backward_traversal = list(reversed(self.top_sort))  
         for t in backward_traversal:
-            if weights == "mean":
+            if weights == "mean" or weights == "MEAN":
                 upward[t.ID] = t.mu
             elif weights == "UCB":
                 upward[t.ID] = t.mu + np.sqrt(t.var)                
@@ -928,7 +927,7 @@ class SDAG:
             mx = 0.0
             for c in children:
                 try:
-                    if weights == "mean":
+                    if weights == "mean" or weights == "MEAN":
                         edge_weight = self.graph[t][c]['weight'].mu 
                     elif weights == "UCB":
                         edge_weight = self.graph[t][c]['weight'].mu + np.sqrt(self.graph[t][c]['weight'].var)
@@ -946,7 +945,7 @@ class SDAG:
             for p in parents:
                 pw = p.mu + np.sqrt(p.var) if weights == "UCB" else p.mu
                 try:
-                    if weights == "mean":
+                    if weights == "mean" or weights == "MEAN":
                         edge_weight = self.graph[p][t]['weight'].mu 
                     elif weights == "UCB":
                         edge_weight = self.graph[p][t]['weight'].mu + np.sqrt(self.graph[p][t]['weight'].var)
@@ -960,30 +959,34 @@ class SDAG:
             
         return criticalities
     
-    def get_critical_subgraph(self, gamma=0.5, weights="mean"):
+    def get_critical_subgraph(self, f=0.9, node_limit=None, weights="MEAN"):
         """
         TODO.
-        gamma controls the number of nodes to retain.
+        f controls the number of nodes to retain.
         """
         
         # Get node criticalities.
         criticalities = self.get_static_node_criticalities(weights=weights)
          
-        # Identify nodes to be retained.        
+        # Identify nodes to be retained. 
         x = criticalities[self.top_sort[0].ID] # Assumes single entry node.
-        cp_nodes, other_nodes = [], []
-        for t in range(self.size):
-            if abs(criticalities[t] - x) < 1e-6:
-                cp_nodes.append(t)      # Retain all critical path nodes at a minimum.
+        if node_limit is not None:  # TODO: ignore f?
+            cp_nodes, other_nodes = [], []
+            for t in range(self.size):
+                if abs(criticalities[t] - x) < 1e-6:
+                    cp_nodes.append(t)      # Retain all critical path nodes at a minimum.
+                else:
+                    other_nodes.append(t)
+            L = int(node_limit * self.size)
+            y = L - len(cp_nodes)
+            if y <= 0:
+                retain = set(cp_nodes)
             else:
-                other_nodes.append(t)
-        L = int(gamma * self.size)
-        y = L - len(cp_nodes)
-        if y <= 0:
-            retain = set(cp_nodes)
+                node_sort = list(reversed(sorted(other_nodes, key=lambda n:criticalities[n])))
+                retain = set(cp_nodes + node_sort[:y])
         else:
-            node_sort = list(reversed(sorted(other_nodes, key=lambda n:criticalities[n])))
-            retain = set(cp_nodes + node_sort[:y])
+            y = f * x
+            retain = set(t for t in range(self.size) if criticalities[t] > y)
                         
         # Construct subgraph.
         N, mapping = nx.DiGraph(), {}
@@ -1020,8 +1023,7 @@ class SDAG:
                 N[source][n]['weight'] = 0.0
             if not len(list(N.successors(n))):
                 N.add_edge(n, sink)
-                N[n][sink]['weight'] = 0.0
-            
+                N[n][sink]['weight'] = 0.0            
                 
         # Convert to SDAG object and return. 
         S = SDAG(N)
@@ -1128,6 +1130,25 @@ class SDAG:
 # =============================================================================
 # Assorted functions.
 # =============================================================================
+
+def summary_statistics(data):
+    """Compute summary statistics for data."""
+    stats = {}
+    # Mean.
+    stats["MEAN"] = np.mean(data)
+    # Variance.
+    stats["VAR"] = np.var(data)
+    # Max.
+    stats["MAX"] = max(data)
+    # Min.
+    stats["MIN"] = min(data)
+    # Median.
+    stats["MED"] = np.median(data)
+    # Skewness.
+    stats["SKEW"] = skew(data)
+    # Kurtosis.
+    stats["KUR"] = kurtosis(data)   
+    return stats
     
 def h(mu1, var1, mu2, var2):
     """Helper function for Kamburowski method."""

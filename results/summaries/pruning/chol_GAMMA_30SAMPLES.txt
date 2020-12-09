@@ -1,0 +1,395 @@
+QUALITY OF PRUNED MC SOLUTIONS RELATIVE TO FULL MC SOLUTIONS.
+WEIGHT DISTRIBUTIONS: GAMMA.
+NUMBER OF SAMPLES: 30.
+
+
+
+---------------------------------
+NUMBER OF TASKS: 35
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.23333333333333334, 0.39294501397971776)
+Relative error in mean (%): 0.5164548356749801
+Relative error in variance (%): 10.505489735197807
+Time savings (%): 79.18763244916337
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.1, 0.9988393756362763)
+Relative error in mean (%): 0.005955806494466292
+Relative error in variance (%): 15.438118490807742
+Time savings (%): 43.739824406907246
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.3333333333333333, 0.07088798787114439)
+Relative error in mean (%): 0.368631884606865
+Relative error in variance (%): 46.43864748516629
+Time savings (%): 18.039543126662153
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.13333333333333333, 0.9578462903438838)
+Relative error in mean (%): 0.023563981731428714
+Relative error in variance (%): 2.1628922503121095
+Time savings (%): 77.82349203673414
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.16666666666666666, 0.8079631540901643)
+Relative error in mean (%): 0.20817093644724247
+Relative error in variance (%): 27.34447191091111
+Time savings (%): 41.04607804143959
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.23333333333333334, 0.39294501397971776)
+Relative error in mean (%): 0.5191222773351829
+Relative error in variance (%): 25.430851166838547
+Time savings (%): 17.58471258988837
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 220
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.5666666666666667, 8.737803591291227e-05)
+Relative error in mean (%): 0.7982392031795328
+Relative error in variance (%): 93.2331952943542
+Time savings (%): 87.7173198774656
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.13333333333333333, 0.9578462903438838)
+Relative error in mean (%): 0.009038394608362053
+Relative error in variance (%): 3.580548777068214
+Time savings (%): 46.13704514353631
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.23333333333333334, 0.39294501397971776)
+Relative error in mean (%): 0.15758365568808547
+Relative error in variance (%): 6.897137694282746
+Time savings (%): 18.54756124014331
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.6, 2.366488472641374e-05)
+Relative error in mean (%): 1.4795619911021176
+Relative error in variance (%): 246.68924117693973
+Time savings (%): 81.263184971865
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.36666666666666664, 0.034580084963334506)
+Relative error in mean (%): 0.37045413584839915
+Relative error in variance (%): 22.421325029130244
+Time savings (%): 42.841124856536894
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.23333333333333334, 0.39294501397971776)
+Relative error in mean (%): 0.0945107192375752
+Relative error in variance (%): 54.681423072953805
+Time savings (%): 16.645548761904678
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 680
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.8666666666666667, 8.246509538996e-12)
+Relative error in mean (%): 1.2995394062138863
+Relative error in variance (%): 93.6163621597559
+Time savings (%): 78.82819818117177
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.13333333333333333, 0.9578462903438838)
+Relative error in mean (%): 0.008965779613460902
+Relative error in variance (%): 4.816855362212077
+Time savings (%): 44.41956325941493
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.16666666666666666, 0.8079631540901643)
+Relative error in mean (%): 0.14901791544305584
+Relative error in variance (%): 11.037865353471904
+Time savings (%): 19.466801198796873
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.9666666666666667, 1.0146740335286845e-15)
+Relative error in mean (%): 1.953198034037023
+Relative error in variance (%): 151.04727348054428
+Time savings (%): 78.24764943067301
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.16666666666666666, 0.8079631540901643)
+Relative error in mean (%): 0.17574540023411753
+Relative error in variance (%): 32.10006270930518
+Time savings (%): 45.08079157036187
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.2, 0.5940706297759378)
+Relative error in mean (%): 0.04950790369060461
+Relative error in variance (%): 2.674813777011785
+Time savings (%): 17.311267424241407
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 1540
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.8666666666666667, 8.246509538996e-12)
+Relative error in mean (%): 1.168006136320484
+Relative error in variance (%): 8.731308713136036
+Time savings (%): 77.96958302112765
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.5333333333333333, 0.0002933405491362055)
+Relative error in mean (%): 0.4583131816041123
+Relative error in variance (%): 42.239058574351255
+Time savings (%): 54.89334871258939
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.23333333333333334, 0.39294501397971776)
+Relative error in mean (%): 0.11338448055349856
+Relative error in variance (%): 23.288124749875543
+Time savings (%): 26.881992289242135
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.9, 5.78702423789193e-13)
+Relative error in mean (%): 1.6636803762934738
+Relative error in variance (%): 86.01762281040726
+Time savings (%): 72.249043914932
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.43333333333333335, 0.006548396368058784)
+Relative error in mean (%): 0.4131406509786031
+Relative error in variance (%): 0.5871800669909497
+Time savings (%): 52.202829117090836
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.36666666666666664, 0.034580084963334506)
+Relative error in mean (%): 0.28616005864031613
+Relative error in variance (%): 13.907781876060552
+Time savings (%): 23.87277078620008
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 2925
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.7666666666666667, 6.531235554884833e-09)
+Relative error in mean (%): 0.6848745483878853
+Relative error in variance (%): 41.13919870366759
+Time savings (%): 74.18451193104346
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.5333333333333333, 0.0002933405491362055)
+Relative error in mean (%): 0.41791477759943474
+Relative error in variance (%): 17.066579383629456
+Time savings (%): 56.08430952311428
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.13333333333333333, 0.9578462903438838)
+Relative error in mean (%): 0.056100774090803086
+Relative error in variance (%): 6.569218381433088
+Time savings (%): 26.187994922358754
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.8666666666666667, 8.246509538996e-12)
+Relative error in mean (%): 0.8526799208269351
+Relative error in variance (%): 43.826328663370724
+Time savings (%): 71.86816366678772
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.5333333333333333, 0.0002933405491362055)
+Relative error in mean (%): 0.470172393445415
+Relative error in variance (%): 27.094514115208973
+Time savings (%): 52.58632827756616
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.6666666666666666, 1.2750060342394341e-06)
+Relative error in mean (%): 0.5278620179212846
+Relative error in variance (%): 57.45513048816386
+Time savings (%): 24.76982186035292
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 4960
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.8333333333333334, 9.236090683675521e-11)
+Relative error in mean (%): 0.7294977192483615
+Relative error in variance (%): 19.22896662421618
+Time savings (%): 75.0862081436402
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.43333333333333335, 0.006548396368058784)
+Relative error in mean (%): 0.27482892487892047
+Relative error in variance (%): 66.25608313882935
+Time savings (%): 59.799346511943355
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.36666666666666664, 0.034580084963334506)
+Relative error in mean (%): 0.17272294870721897
+Relative error in variance (%): 26.633838905935566
+Time savings (%): 29.621423860777824
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.8333333333333334, 9.236090683675521e-11)
+Relative error in mean (%): 0.7928236566333674
+Relative error in variance (%): 47.854674389112674
+Time savings (%): 72.38028180337155
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.7, 2.5000118318420276e-07)
+Relative error in mean (%): 0.49739118705980506
+Relative error in variance (%): 4.885883026343099
+Time savings (%): 54.672570237618864
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.8, 8.466416460035895e-10)
+Relative error in mean (%): 0.5344707482576881
+Relative error in variance (%): 13.25178818572942
+Time savings (%): 20.817344703938673
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 7770
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.9333333333333333, 2.993288398909619e-14)
+Relative error in mean (%): 0.5682864784957191
+Relative error in variance (%): 57.39048118725406
+Time savings (%): 75.15332090048175
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.6333333333333333, 5.795481973815609e-06)
+Relative error in mean (%): 0.3348342193600573
+Relative error in variance (%): 3.739118585337152
+Time savings (%): 59.98442496099985
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.16666666666666666, 0.8079631540901643)
+Relative error in mean (%): 0.025329450658537925
+Relative error in variance (%): 10.802415691722643
+Time savings (%): 31.63341352689696
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.8, 8.466416460035895e-10)
+Relative error in mean (%): 0.5691311460061936
+Relative error in variance (%): 19.263695244164715
+Time savings (%): 72.00033954696991
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.6666666666666666, 1.2750060342394341e-06)
+Relative error in mean (%): 0.3816099596704494
+Relative error in variance (%): 37.6339553426468
+Time savings (%): 56.67865190062113
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.6333333333333333, 5.795481973815609e-06)
+Relative error in mean (%): 0.41783505054647196
+Relative error in variance (%): 9.457454088111861
+Time savings (%): 25.19395328215039
+------------------------------------------------------
+
+
+
+
+---------------------------------
+NUMBER OF TASKS: 11480
+---------------------------------
+------------------------------------------------------
+MC heuristic = MEAN-0
+2-sided KS test: (0.8333333333333334, 9.236090683675521e-11)
+Relative error in mean (%): 0.5015778158535057
+Relative error in variance (%): 30.80191961473735
+Time savings (%): 75.89723194164795
+------------------------------------------------------
+
+MC heuristic = MEAN-0.6
+2-sided KS test: (0.6333333333333333, 5.795481973815609e-06)
+Relative error in mean (%): 0.2991333132056933
+Relative error in variance (%): 62.24896877206745
+Time savings (%): 62.79220995779411
+------------------------------------------------------
+
+MC heuristic = MEAN-0.8
+2-sided KS test: (0.3, 0.13500350250095441)
+Relative error in mean (%): 0.09685377002694273
+Relative error in variance (%): 10.12473636902151
+Time savings (%): 31.446992555793457
+------------------------------------------------------
+
+MC heuristic = UCB-0
+2-sided KS test: (0.8666666666666667, 8.246509538996e-12)
+Relative error in mean (%): 0.5525841422989236
+Relative error in variance (%): 66.2429806697749
+Time savings (%): 72.3819765438856
+------------------------------------------------------
+
+MC heuristic = UCB-0.6
+2-sided KS test: (0.7666666666666667, 6.531235554884833e-09)
+Relative error in mean (%): 0.38097442709925006
+Relative error in variance (%): 27.385737773007673
+Time savings (%): 57.82473261216662
+------------------------------------------------------
+
+MC heuristic = UCB-0.8
+2-sided KS test: (0.8, 8.466416460035895e-10)
+Relative error in mean (%): 0.402338531600454
+Relative error in variance (%): 35.97984618976573
+Time savings (%): 26.94290842504124
+------------------------------------------------------
+

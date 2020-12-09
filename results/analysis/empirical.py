@@ -71,7 +71,7 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 #             print("SKEWNESS: {}".format(skw), file=dest)
 #             kur = kurtosis(chol_empirical[nt][dist])
 #             print("EXCESS KURTOSIS: {}".format(kur), file=dest)
-#             # stat, p = shapiro(chol_empirical[nt][dist])
+#             # stat, p = shapiro(chol_empirical[nt][dist]) # TODO.
 #             # verdict = "NORMAL" if p > 0.05 else "NOT NORMAL"
 #             # print("p = {} - {}".format(p, verdict), file=dest)
 #             med = np.median(chol_empirical[nt][dist])

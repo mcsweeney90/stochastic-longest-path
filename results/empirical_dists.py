@@ -29,7 +29,7 @@ data_dest = "data"
 #     info[nt]["GAMMA"] = []
 #     info[nt]["UNIFORM"] = []
     
-# with open("chol_empirical_timing_unif.txt", "w") as dest:
+# with open("chol_empirical_timing.txt", "w") as dest:
 #     print("---------------------------------", file=dest)
 #     print("NUMBER OF SAMPLES: {}".format(samples), file=dest)
 #     print("---------------------------------", file=dest)
@@ -61,7 +61,7 @@ data_dest = "data"
 #     info[dname]["GAMMA"] = []
 #     info[dname]["UNIFORM"] = []
 
-# with open("stg_empirical_timing_unif.txt", "w") as dest:
+# with open("stg_empirical_timing.txt", "w") as dest:
 #     start = timer()
 #     for dname in os.listdir(stg_dag_path):  
 #         with open('{}/{}'.format(stg_dag_path, dname), 'rb') as file:

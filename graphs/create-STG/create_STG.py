@@ -137,12 +137,12 @@ class RV:
         cdf_minus = norm.cdf(-b)
         pdf_b = norm.pdf(b) 
         
-        mu = mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
+        mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
         var = (self.mu**2 + self.var) * cdf_minus
         var += (other.mu**2 + other.var) * cdf_b
         var -= (self.mu + other.mu) * a * pdf_b
         var -= mu**2         
-        return RV(mu, var)  
+        return RV(mu, var) 
     
 # =============================================================================
 # Create and save the DAGs.  
