@@ -9,7 +9,7 @@ import numpy as np
 import itertools as it
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from scipy.stats import ks_2samp
+from scipy.stats import ks_2samp, kstest
 sys.path.append('../../') # Needed for src apparently...
 
 ####################################################################################################
@@ -50,6 +50,10 @@ with open('../data/chol_prune.dill', 'rb') as file:
     chol_prune = dill.load(file) 
 with open('../data/chol_prune_timings.dill', 'rb') as file:
     chol_prune_timings = dill.load(file) 
+with open('../data/chol_existing.dill', 'rb') as file:
+    chol_existing = dill.load(file) 
+with open('../data/chol_existing_timings.dill', 'rb') as file:
+    chol_existing_timings = dill.load(file) 
     
 # =============================================================================
 # Cholesky.
@@ -104,8 +108,10 @@ with open("{}/chol_avgs_{}SAMPLES.txt".format(summary_path, s), "w") as dest:
         var_errors = {WL : [] for WL in it.product(["MEAN", "UCB"], [0, 0.6, 0.8])}
         ks_stats = {WL : [] for WL in it.product(["MEAN", "UCB"], [0, 0.6, 0.8])}
         time_reductions = {WL : [] for WL in it.product(["MEAN", "UCB"], [0, 0.6, 0.8])}
+        for h in ["CorLCA", "MC30"]:
+            mean_errors[h], var_errors[h], ks_stats[h], time_reductions[h] = [], [], [], []
         
-        for nt in n_tasks: 
+        for i, nt in enumerate(n_tasks): 
              ref_dist = chol_prune[nt][dist][s]["FULL"] 
              ref_mean, ref_var = np.mean(ref_dist), np.var(ref_dist)             
              for W, L in it.product(["MEAN", "UCB"], [0, 0.6, 0.8]):
@@ -121,6 +127,20 @@ with open("{}/chol_avgs_{}SAMPLES.txt".format(summary_path, s), "w") as dest:
                 full_time = chol_prune_timings[nt][dist][s]["FULL"]
                 time_reduction = 100 - (prune_time/full_time)*100
                 time_reductions[(W, L)].append(time_reduction)
+             # CorLCA and MC30 for comparison.
+             # TODO: full dist for MC30. 
+             for h in ["CorLCA", "MC30"]:
+                 mu_rel = abs(chol_existing[nt][h].mu - ref_mean)/ref_mean
+                 mean_errors[h].append(100*mu_rel)
+                 var_rel = abs(chol_existing[nt][h].var - ref_var)/ref_var
+                 var_errors[h].append(100*var_rel)
+                 ks, p = kstest(emp_dist, 'norm', args=(chol_existing[nt][h].mu, np.sqrt(chol_existing[nt][h].var))) # TODO: ks_2samp for MC30.
+                 ks_stats[h].append(ks)
+                 h_time = chol_existing_timings[h][i]
+                 full_time = chol_prune_timings[nt][dist][s]["FULL"]
+                 time_reduction = 100 - (h_time/full_time)*100
+                 time_reductions[h].append(time_reduction)
+             
         
         # Compute averages over entire set.
         for WL in it.product(["MEAN", "UCB"], [0, 0.6, 0.8]):
@@ -130,6 +150,15 @@ with open("{}/chol_avgs_{}SAMPLES.txt".format(summary_path, s), "w") as dest:
             print("Average relative error in variance (%): {}".format(np.mean(var_errors[WL])), file=dest)
             print("Average KS statistic: {}".format(np.mean(ks_stats[WL])), file=dest)
             print("Average time reduction (%): {}".format(np.mean(time_reductions[WL])), file=dest)
+            print("------------------------------------------------------", file=dest)
+        # CorLCA and MC30 for comparison.
+        for h in ["CorLCA", "MC30"]: 
+            print("------------------------------------------------------", file=dest)
+            print("Heuristic = {}".format(h), file=dest)
+            print("Average relative error in mean (%): {}".format(np.mean(mean_errors[h])), file=dest)
+            print("Average relative error in variance (%): {}".format(np.mean(var_errors[h])), file=dest)
+            print("Average KS statistic: {}".format(np.mean(ks_stats[h])), file=dest)
+            print("Average time reduction (%): {}".format(np.mean(time_reductions[h])), file=dest)
             print("------------------------------------------------------", file=dest)
     
 

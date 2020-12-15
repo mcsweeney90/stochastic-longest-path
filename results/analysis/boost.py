@@ -9,7 +9,7 @@ import dill, pathlib, sys
 import numpy as np
 import itertools as it
 import matplotlib.pyplot as plt
-from collections import defaultdict
+from scipy.stats import ks_2samp, kstest
 sys.path.append('../../') # Needed for src apparently...
 
 ####################################################################################################
@@ -115,46 +115,74 @@ with open('../data/stg_empirical.dill', 'rb') as file:
 # Cholesky.
 # =============================================================================
 
-datapoints = ["MC30", "MC30-SCULLI", "MC30-CorLCA", "MC30-MC", "MC100", "MC100-SCULLI", "MC100-CorLCA", "MC100-MC"]
+datapoints = ["MC30", "MC30-S", "MC30-C", "MC30-MC", "MC100", "MC100-S", "MC100-C", "MC100-MC"]
 
 # Summary.
-with open("{}/chol_moments.txt".format(summary_path), "w") as dest:
-    print("QUALITY OF APPROXIMATION TO THE EXPECTED VALUE AND VARIANCE, RELATIVE TO REFERENCE SOLUTIONS, FOR BOOSTED MC.", file=dest)
-    for nt in n_tasks: 
-        print("\n\n\n---------------------------------", file=dest)
-        print("NUMBER OF TASKS: {}".format(nt), file=dest) 
-        print("---------------------------------", file=dest)
-        
-        ref_mean, ref_var = np.mean(chol_empirical[nt]["GAMMA"]), np.var(chol_empirical[nt]["GAMMA"])
-        print("Reference solution: mu = {}, var = {}".format(ref_mean, ref_var), file=dest)
-        print("Sculli (%): ({}, {})".format((chol_existing[nt]["SCULLI"].mu/ref_mean)*100, (chol_existing[nt]["SCULLI"].var/ref_var)*100), file=dest)
-        print("CorLCA (%): ({}, {})".format((chol_existing[nt]["CorLCA"].mu/ref_mean)*100, (chol_existing[nt]["CorLCA"].var/ref_var)*100), file=dest)
-        for p in datapoints:
-            if p.endswith("MC"):
-                m = np.mean(chol_boost[nt][p])
-                v = np.var(chol_boost[nt][p])
-            else:
-                m = chol_boost[nt][p].mu
-                v = chol_boost[nt][p].var
-            print("\n{} (%): ({}, {})".format(p, (m/ref_mean)*100, (v/ref_var)*100), file=dest) 
-            if p not in ["MC30", "MC100"]:
-                print("Time taken: {}".format(chol_boost_timings[nt][p]), file=dest) 
+# for d1, d2 in it.product(["NORMAL", "GAMMA", "UNIFORM"], ["NORMAL", "GAMMA", "UNIFORM"]):
+#     with open("{}/chol_{}_SAMPLING_{}_REFERENCE.txt".format(summary_path, d1, d2), "w") as dest:
+#         print("QUALITY OF BOOSTED MC SOLUTIONS.", file=dest)
+#         for nt in n_tasks: 
+#             print("\n\n\n---------------------------------", file=dest)
+#             print("NUMBER OF TASKS: {}".format(nt), file=dest) 
+#             print("---------------------------------", file=dest)
             
+#             ref_dist = chol_empirical[nt][d2]
+#             ref_mean, ref_var = np.mean(ref_dist), np.var(ref_dist) 
+#             print("(% rel. error in mean, % rel. error in variance, KS statistic)", file=dest)
+#             for h in ["SCULLI", "CorLCA"]:
+#                 m, v = chol_existing[nt][h].mu, chol_existing[nt][h].var
+#                 me = abs(m - ref_mean)/ref_mean
+#                 ve = abs(v - ref_var)/ref_var
+#                 ks, _ = kstest(ref_dist, 'norm', args=(m, np.sqrt(v)))
+#                 print("{} : ({}, {}, {})".format(h, 100*me, 100*ve, ks), file=dest)
+            
+#             for p in datapoints:
+#                 if p.endswith("MC") or p in ["MC30", "MC100"]:
+#                     m, v = np.mean(chol_boost[nt][d1][p]), np.var(chol_boost[nt][d1][p])
+#                     ks, _ = ks_2samp(chol_boost[nt][d1][p], ref_dist)
+#                 else:
+#                     m, v = chol_boost[nt][d1][p].mu, chol_boost[nt][d1][p].var
+#                     ks, _ = kstest(ref_dist, 'norm', args=(m, np.sqrt(v)))
+#                 me = abs(m - ref_mean)/ref_mean
+#                 ve = abs(v - ref_var)/ref_var
+#                 print("{} : ({}, {}, {})".format(p, 100*me, 100*ve, ks), file=dest)
+                
 # Variance plot.
-empirical_vars = list(np.var(chol_empirical[nt]["GAMMA"]) for nt in n_tasks)
-fig = plt.figure(dpi=400)
-ax1 = fig.add_subplot(111)
-ax1.plot(n_tasks, empirical_vars, color='#E24A33', label="ACTUAL")
-ax1.plot(n_tasks, list(chol_boost[nt]["MC30"].var for nt in n_tasks), color='#FBC15E', label="MC30")
-ax1.plot(n_tasks, list(chol_boost[nt]["MC30-SCULLI"].var for nt in n_tasks), color='#8EBA42', label="MC30-S")
-ax1.plot(n_tasks, list(chol_boost[nt]["MC30-CorLCA"].var for nt in n_tasks), color='#988ED5', label="MC30-C")
-ax1.plot(n_tasks, list(np.var(chol_boost[nt]["MC30-MC"]) for nt in n_tasks), color='#348ABD', label="MC30-MC")
-# plt.yscale('log')
-ax1.set_xlabel("DAG SIZE", labelpad=5)
-ax1.set_ylabel("VARIANCE", labelpad=5)
-ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white') 
-plt.savefig('{}/chol_boost_var'.format(plot_path), bbox_inches='tight') 
-plt.close(fig) 
+d1, d2 = "NORMAL", "NORMAL"
+ks_stats = {d : [] for d in datapoints}
+ks_stats["CorLCA"] = []
+for nt in n_tasks:
+    ref_dist = chol_empirical[nt][d2]
+    for h in ["CorLCA"]:
+        m, v = chol_existing[nt][h].mu, chol_existing[nt][h].var
+        ks, _ = kstest(ref_dist, 'norm', args=(m, np.sqrt(v)))
+        ks_stats[h].append(ks)
+for s in [30, 100]:
+    fig = plt.figure(dpi=400)
+    ax1 = fig.add_subplot(111)
+    for nt in n_tasks:
+        ref_dist = chol_empirical[nt][d2]
+        for p in ["MC{}".format(s), "MC{}-S".format(s), "MC{}-C".format(s), "MC{}-MC".format(s)]:
+            if p.endswith("MC") or p in ["MC30", "MC100"]:
+                m, v = np.mean(chol_boost[nt][d1][p]), np.var(chol_boost[nt][d1][p])
+                ks, _ = ks_2samp(chol_boost[nt][d1][p], ref_dist)
+            else:
+                m, v = chol_boost[nt][d1][p].mu, chol_boost[nt][d1][p].var
+                ks, _ = kstest(ref_dist, 'norm', args=(m, np.sqrt(v)))
+            ks_stats[p].append(ks)
+        
+    ax1.plot(n_tasks, ks_stats[h], color='#E24A33', label="CorLCA")
+    ax1.plot(n_tasks, ks_stats["MC{}".format(s)], color='#FBC15E', label="MC")
+    ax1.plot(n_tasks, ks_stats["MC{}-S".format(s)], color='#8EBA42', label="MC-S")
+    ax1.plot(n_tasks, ks_stats["MC{}-C".format(s)], color='#988ED5', label="MC-C")
+    ax1.plot(n_tasks, ks_stats["MC{}-MC".format(s)], color='#348ABD', label="MC-MC")
+    plt.xscale('log')
+    ax1.set_xlabel("DAG SIZE", labelpad=5)
+    ax1.set_ylabel("KOLMOGOROV-SMIRNOV STATISTIC", labelpad=5)
+    if s == 30:
+        ax1.legend(handlelength=3, handletextpad=0.4, ncol=1, loc='best', fancybox=True, facecolor='white') 
+    plt.savefig('{}/chol_ks_{}SAMPLES'.format(plot_path, s), bbox_inches='tight') 
+    plt.close(fig) 
         
 # =============================================================================
 # TODO: histogram of MC distributions...

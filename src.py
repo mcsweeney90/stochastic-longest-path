@@ -797,7 +797,7 @@ class SDAG:
         return paths                 
     
     # @timeout_decorator.timeout(5, timeout_exception=StopIteration)    # Uncomment if using timeout version (and imports at top).
-    def dodin_longest_paths(self, epsilon=0.1, limit=None, correlations=True):
+    def dodin_critical_paths(self, epsilon=0.1, limit=None, correlations=True):
         """
         TODO.
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
@@ -863,7 +863,7 @@ class SDAG:
         # Return set of path candidates terminating at (single) exit task.        
         return candidates[self.top_sort[-1].ID] 
     
-    def average_longest_paths(self, K, average="mean"):
+    def static_critical_paths(self, K, weights="MEAN"):
         """
         Get the longest paths according to some average of the weights.
         TODO: filter set of candidates. 
@@ -888,12 +888,10 @@ class SDAG:
                         pth = pt + edge_weight + t 
                         candidates[t.ID].append(pth) 
                 # Sort paths according to average.    
-                if average == "mean":
+                if weights == "MEAN":
                     candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.mu)))
-                elif average == "var":
-                    candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.var)))
-                elif average == "mean+var":
-                    candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.mu + pth.length.var)))
+                elif weights == "UCB":
+                    candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:pth.length.mu + np.sqrt(pth.length.var))))
                 if len(parents) > 1:                    
                     candidates[t.ID] = candidates[t.ID][:K]                                     
         # Return set of path candidates terminating at (single) exit task.        

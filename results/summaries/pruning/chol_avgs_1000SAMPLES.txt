@@ -48,6 +48,20 @@ Average relative error in variance (%): 16.785546014644297
 Average KS statistic: 0.38937499999999997
 Average time reduction (%): 29.306391259289626
 ------------------------------------------------------
+------------------------------------------------------
+Heuristic = CorLCA
+Average relative error in mean (%): 0.13405168191316863
+Average relative error in variance (%): 58.453836738761204
+Average KS statistic: 0.47265696439658633
+Average time reduction (%): 96.78904298300085
+------------------------------------------------------
+------------------------------------------------------
+Heuristic = MC30
+Average relative error in mean (%): 0.0527362392931892
+Average relative error in variance (%): 21.017655215908924
+Average KS statistic: 0.40225705241372745
+Average time reduction (%): 96.89649905686338
+------------------------------------------------------
 
 
 
@@ -96,6 +110,20 @@ Average relative error in variance (%): 13.43139796335709
 Average KS statistic: 0.37650000000000006
 Average time reduction (%): 28.66752652112936
 ------------------------------------------------------
+------------------------------------------------------
+Heuristic = CorLCA
+Average relative error in mean (%): 0.1327391236839856
+Average relative error in variance (%): 60.54446150816854
+Average KS statistic: 0.4710154320152074
+Average time reduction (%): 97.15206685109327
+------------------------------------------------------
+------------------------------------------------------
+Heuristic = MC30
+Average relative error in mean (%): 0.06524242811048869
+Average relative error in variance (%): 21.753560349266195
+Average KS statistic: 0.39597016100732263
+Average time reduction (%): 97.24768945234428
+------------------------------------------------------
 
 
 
@@ -143,4 +171,18 @@ Average relative error in mean (%): 0.2741020113571839
 Average relative error in variance (%): 15.540108520958238
 Average KS statistic: 0.37050000000000005
 Average time reduction (%): 29.315798416306464
+------------------------------------------------------
+------------------------------------------------------
+Heuristic = CorLCA
+Average relative error in mean (%): 0.1326460279112876
+Average relative error in variance (%): 58.47156653739401
+Average KS statistic: 0.46844115433116496
+Average time reduction (%): 97.1068045092793
+------------------------------------------------------
+------------------------------------------------------
+Heuristic = MC30
+Average relative error in mean (%): 0.059196158350861894
+Average relative error in variance (%): 20.247803280739543
+Average KS statistic: 0.39210189274782536
+Average time reduction (%): 97.20406144598394
 ------------------------------------------------------
