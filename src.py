@@ -797,7 +797,7 @@ class SDAG:
         return paths                 
     
     # @timeout_decorator.timeout(5, timeout_exception=StopIteration)    # Uncomment if using timeout version (and imports at top).
-    def dodin_critical_paths(self, epsilon=0.1, limit=None, correlations=True):
+    def dodin_critical_paths(self, epsilon=0.1, K=None, correlations=True):
         """
         TODO.
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
@@ -820,10 +820,6 @@ class SDAG:
                 for p in parents:
                     paths_by_parent[p.ID] = []
                     edge_weight = self.graph[p][t]['weight'] 
-                    try:
-                        edge_weight.ID = (p.ID, t.ID)
-                    except AttributeError:
-                        pass
                     for pt in candidates[p.ID]:
                         pth = pt + edge_weight + t 
                         if pth.length.mu > max_path.length.mu:
@@ -832,13 +828,13 @@ class SDAG:
                         paths_by_parent[p.ID].append(pth) 
                 # Retain only non-dominated paths.
                 candidates[t.ID] = []
-                if limit is not None:
+                if K is not None:
                     probs = {}
                 for p in parents:                        
                     for pth in paths_by_parent[p.ID]:                         
                         if p.ID == max_parent:
                             candidates[t.ID].append(pth)
-                            if limit is not None:
+                            if K is not None:
                                 if pth == max_path:
                                     probs[pth] = float("inf")
                                 else:
@@ -854,19 +850,19 @@ class SDAG:
                             y = num/denom
                             if y > x:
                                 candidates[t.ID].append(pth)
-                                if limit is not None:
+                                if K is not None:
                                     probs[pth] = y
                 # If #candidates > limit, sort and retain only the greatest .
-                if limit is not None and len(candidates[t.ID]) > limit:
+                if K is not None and len(candidates[t.ID]) > K:
                     candidates[t.ID] = list(reversed(sorted(candidates[t.ID], key=lambda pth:probs[pth])))
-                    candidates[t.ID] = candidates[t.ID][:limit]                    
+                    candidates[t.ID] = candidates[t.ID][:K]                    
         # Return set of path candidates terminating at (single) exit task.        
         return candidates[self.top_sort[-1].ID] 
     
     def static_critical_paths(self, K, weights="MEAN"):
         """
         Get the longest paths according to some average of the weights.
-        TODO: filter set of candidates. 
+        TODO: really poor implementation. 
         """
         
         candidates = {}        
@@ -880,10 +876,10 @@ class SDAG:
                 candidates[t.ID] = []
                 for p in parents:
                     edge_weight = self.graph[p][t]['weight'] 
-                    try:
-                        edge_weight.ID = (p.ID, t.ID)
-                    except AttributeError:
-                        pass
+                    # try:
+                    #     edge_weight.ID = (p.ID, t.ID)
+                    # except AttributeError:
+                    #     pass
                     for pt in candidates[p.ID]:
                         pth = pt + edge_weight + t 
                         candidates[t.ID].append(pth) 
