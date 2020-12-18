@@ -4,11 +4,12 @@
 Functions and classes for working with stochastic directed acyclic graphs (SDAGs).
 """
 
-import dill
+import dill, random
 import networkx as nx
 import numpy as np
 from collections import defaultdict
 from scipy.stats import norm, skew, kurtosis
+from math import sqrt
 
 # Uncomment if using timeout version of dodin_longest_paths.
 # import time
@@ -22,13 +23,16 @@ class RV:
           e.g., addition and multiplication assume (either explicitly or implicitly) RV is Gaussian.
           (Addition/mult only done when RV represents a finish time/longest path estimate so is assumed to be
           at least roughly normal anyway.)
-        - ID attribute isn't really necessary but occasionally makes things useful (e.g., for I/O).
+        - ID attribute is often useful (e.g., for I/O).
+        - Doesn't check that self.mu and self.var are nonzero for gamma. Obviously shouldn't be but sometimes tempting
+          programmatically.
+        - Random.random faster than numpy for individual realizations.
     """
-    def __init__(self, mu=0.0, var=0.0, realization=None, ID=None): 
+    def __init__(self, mu=0.0, var=0.0, ID=None): 
         self.mu = mu
         self.var = var
+        self.sd = sqrt(var)
         self.ID = ID
-        self.realization = realization
     def __repr__(self):
         return "RV(mu = {}, var = {})".format(self.mu, self.var)
     # Overload addition operator.
@@ -53,88 +57,22 @@ class RV:
     __rtruediv__ = __truediv__ 
     def __floordiv__(self, c): 
         return RV(self.mu / c, self.var / (c * c))
-    __rfloordiv__ = __floordiv__ 
-    
+    __rfloordiv__ = __floordiv__     
     def reset(self):
         """Set all attributes except ID to their defaults."""
-        self.mu, self.var, self.realization = 0.0, 0.0, None
-        
-    def realize(self, static=False, dist="NORMAL", percentile=None):
-        """
-        Realize the RV from the specified distribution, according to the mean and expected value.
-        If static, set realization to the mean.
-        TODO: may add more distribution choices if they will be useful anywhere.
-        Notes: percentile parameter assumes normal distribution. 
-        """
+        self.mu, self.var, self.sd = 0.0, 0.0, 0.0    
+    def realize(self, dist, static=False):
         if static:
-            self.realization = self.mu 
-        elif dist == "NORMAL" or dist == "normal" or dist == "Normal" or dist == "Gaussian":    
-            if percentile is None:
-                r = np.random.normal(self.mu, np.sqrt(self.var))
-                if r < 0.0:
-                    r *= -1       
-            else:
-                r = norm.ppf(percentile, loc=self.mu, scale=np.sqrt(self.var))
-            self.realization = r
-        elif dist == "GAMMA" or dist == "gamma" or dist == "Gamma":
-            self.realization = np.random.gamma(shape=(self.mu**2 / self.var), scale=self.var/self.mu)          
-            # Need to be careful to make sure mu and var aren't zero (shouldn't be for a Gamma dist ofc but programmatically sometimes tempting.) 
-        elif dist == "UNIFORM" or dist == "uniform":
-            u = np.sqrt(3 * self.var)
-            r = np.random.uniform(-u, u)
-            if r + self.mu < 0:
-                r *= -1
-            self.realization = self.mu + r
-    
-    def clark_max(self, other, rho=0):
-        """
-        Returns a new RV representing the maximization of self and other whose mean and variance
-        are computed using Clark's equations for the first two moments of the maximization of two normal RVs.
-        
-        See:
-        'The greatest of a finite set of random variables,'
-        Charles E. Clark (1983).
-        """
-        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)     
-        b = (self.mu - other.mu) / a
-            
-        cdf_b = norm.cdf(b)
-        cdf_minus = norm.cdf(-b)
-        pdf_b = norm.pdf(b) 
-        
-        mu = self.mu * cdf_b + other.mu * cdf_minus + a * pdf_b      
-        var = (self.mu**2 + self.var) * cdf_b
-        var += (other.mu**2 + other.var) * cdf_minus
-        var += (self.mu + other.mu) * a * pdf_b
-        var -= mu**2         
-        return RV(mu, var)  # No ID set for new RV.
-    
-    def clark_min(self, other, rho=0):
-        """
-        Returns a new RV representing the minimization of self and other whose mean and variance
-        are computed using Canon and Jeannot's extension of Clark's equations for the first two moments of the 
-        maximization of two normal RVs.
-        
-        See:  
-        'Precise evaluation of the efficiency and robustness of stochastic DAG schedules,'
-        Canon and Jeannot (2009),        
-        and
-        'The greatest of a finite set of random variables,'
-        Charles E. Clark (1963).
-        """
-        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)
-        b = (self.mu - other.mu) / a
-            
-        cdf_b = norm.cdf(b)
-        cdf_minus = norm.cdf(-b)
-        pdf_b = norm.pdf(b) 
-        
-        mu = self.mu * cdf_minus + other.mu * cdf_b - a * pdf_b     
-        var = (self.mu**2 + self.var) * cdf_minus
-        var += (other.mu**2 + other.var) * cdf_b
-        var -= (self.mu + other.mu) * a * pdf_b
-        var -= mu**2         
-        return RV(mu, var)  
+            return self.mu 
+        elif dist in ["N", "NORMAL", "normal"]:    
+            r = random.gauss(self.mu, self.sd)    # Faster than numpy for individual realizations.         
+            return r if r > 0.0 else -r
+        elif dist in ["G", "GAMMA", "gamma"]:
+            return random.gammavariate(alpha=(self.mu**2 / self.var), beta=self.var/self.mu)      
+        elif dist in ["U", "UNIFORM", "uniform"]:
+            u = np.sqrt(3) * self.sd
+            r = self.mu + random.uniform(-u, u)                
+            return r if r > 0.0 else -r 
     
 class Path:
     """
@@ -167,70 +105,7 @@ class Path:
         return self.rep
     def get_rho(self, other):
         common_var = sum(self.members[w].var for w in self.members if w in other.members)             
-        return common_var / (np.sqrt(self.length.var)*np.sqrt(other.length.var))      
-            
-
-class CRV:
-    """
-    Canonical representation of a random variable.
-    TODO: takes too long, optimize. Add variance attribute?
-    """
-    def __init__(self, mu, alphas, ID=None):
-        self.mu = mu
-        self.alphas = alphas
-        self.var = None
-        self.ID = ID
-    def __repr__(self):
-        if self.var is None:
-            self.set_var()
-        return "CRV(mu = {}, var = {})".format(self.mu, self.var)
-    def __add__(self, other): 
-        if isinstance(other, float) or isinstance(other, int):
-            return CRV(self.mu + other, self.alphas)
-        new_alphas = defaultdict(float)
-        for k, v in self.alphas.items():
-            new_alphas[k] += v
-        for k, v in other.alphas.items():
-            new_alphas[k] += v
-        new_alphas = dict(new_alphas)
-        new_crv = CRV(self.mu + other.mu, new_alphas) 
-        new_crv.var = sum(v**2 for v in new_alphas.values())
-        return new_crv
-    __radd__ = __add__ # Other way around...
-    
-    def set_var(self):
-        self.var = sum(v**2 for v in self.alphas.values())
-    
-    def get_rho(self, other):
-        other_alphas = defaultdict(float, other.alphas)
-        dot_alphas = {}
-        for k, v in self.alphas.items():
-            dot_alphas[k] = self.alphas[k] * other_alphas[k] 
-        n = sum(dot_alphas.values())   
-        sd1 = np.sqrt(self.var)
-        sd2 = np.sqrt(other.var)
-        return n / (sd1 * sd2)
-    
-    def can_max(self, other):
-        # Calculate rho.
-        rho = self.get_rho(other)   
-        # Calculate a.
-        a = np.sqrt(self.var + other.var - 2 * np.sqrt(self.var) * np.sqrt(other.var) * rho)
-        # Calculate b and the integrands.
-        b = (self.mu - other.mu) / a         
-        Phi_b = norm.cdf(b)
-        Phi_minus = norm.cdf(-b)
-        # Calculate new mu and alphas.
-        new_mu = Phi_b * self.mu + Phi_minus * other.mu
-        new_alphas = defaultdict(float)
-        for k, v in self.alphas.items():
-            new_alphas[k] += Phi_b * v
-        for k, v in other.alphas.items():
-            new_alphas[k] += Phi_minus * v
-        new_alphas = dict(new_alphas) 
-        new_crv = CRV(new_mu, new_alphas)
-        new_crv.var = sum(v**2 for v in new_alphas.values())
-        return new_crv
+        return common_var / (np.sqrt(self.length.var)*np.sqrt(other.length.var))    
     
 class SDAG:
     """Represents a graph with stochastic node and edge weights."""
@@ -240,18 +115,19 @@ class SDAG:
         self.top_sort = list(nx.topological_sort(self.graph))    # Often saves time.  
         self.size = len(self.top_sort)
         
-    def set_weights(self, cov, dis_prob):
+    def set_random_weights(self, cov, dis_prob=0.1):
         """
         Used for setting weights for DAGs from the STG.
+        TODO: add weight attributes to nodes.
         """
         
         mubar = np.random.uniform(1, 100)        
         for t in self.top_sort:
             mu = np.random.gamma(shape=1.0, scale=mubar)
-            t.mu = mu
             eps = np.random.uniform(0.9, 1.1)
             sig = eps * cov * mu
-            t.var = sig**2
+            var = sig**2
+            self.graph.nodes[t]['weight'] = RV(mu, var)
             for p in self.graph.predecessors(t):
                 r = np.random.uniform(0, 1)
                 if r < dis_prob:
@@ -261,129 +137,83 @@ class SDAG:
                     eps = np.random.uniform(0.9, 1.1)
                     sig = eps * cov * mu
                     var = sig**2
-                    self.graph[p][t]['weight'] = RV(mu, var, ID=(p.ID, t.ID)) 
-        
-    def realize(self, static=False, dist="NORMAL", percentile=None, fixed=set()):  
-        """
-        Realize all cost RVs between node with index first and node with index last (inclusive).
-        Notes:
-            1. Doesn't allow costs to be realized from different distribution types but may extend in future.
-        TODO: better way to partially realize the DAG?
-        """
-                
-        for t in self.top_sort:
-            if t.ID not in fixed:               
-                t.realize(static=static, dist=dist, percentile=percentile)
-            for p in self.graph.predecessors(t):
-                if (p.ID, t.ID) not in fixed:  
-                    try:
-                        self.graph[p][t]['weight'].realize(static=static, dist=dist, percentile=percentile) 
-                    except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
-                        pass 
-                
-    def reset(self, fixed=set()):  
-        """
-        Realize all cost RVs between node with index first and node with index last (inclusive).
-        Notes:
-            1. Doesn't allow costs to be realized from different distribution types but may extend in future.
-        """                
-        for t in self.top_sort:
-            if t.ID not in fixed:
-                t.realization = None
-            for p in self.graph.predecessors(t):
-                if (p.ID, t.ID) not in fixed:
-                    try:
-                        self.graph[p][t]['weight'].realization = None 
-                    except AttributeError:  # Disjunctive edge weight is int/float (0/0.0). 
-                        pass
-                    
-    def real_longest_path(self, return_path=False):
-        """
-        Computes the realized longest path of the DAG. 
-        Notes:
-            - disjunctive edges make the code slightly uglier since can't just do start_time = max(parent realizations).
-        TODO: return_path is expensive because of all the path objects that are created - alternative approach?
-        """            
-        Z = {} 
-        if return_path:
-            paths = {} 
-        for t in self.top_sort:
-            start_length = 0.0
-            parents = list(self.graph.predecessors(t))
-            if return_path and not len(parents):
-                paths[t.ID] = Path() + t 
-            for p in parents:
-                st = Z[p.ID]
-                try:
-                    st += self.graph[p][t]['weight'].realization
-                except AttributeError: # Disjunctive edge.
-                    pass
-                start_length = max(start_length, st) 
-                if return_path and start_length == st:
-                    edge_weight = self.graph[p][t]['weight'] # To handle fact that edge RVs don't have an ID. Will fix but would have to re-run code.
-                    try:
-                        edge_weight.ID = (p.ID, t.ID)
-                    except AttributeError:
-                        pass
-                    paths[t.ID] = paths[p.ID] + edge_weight + t   
-            Z[t.ID] = t.realization + start_length  
-        if return_path:
-            return Z[self.top_sort[-1].ID], paths[self.top_sort[-1].ID]                                                     
-        return Z[self.top_sort[-1].ID]   # Assumes single exit task.  
+                    self.graph[p][t]['weight'] = RV(mu, var)
     
-    def monte_carlo(self, samples, dist="NORMAL", fixed={}, return_paths=False):
+    def monte_carlo(self, samples, dist="NORMAL", return_paths=False):
         """
-        Monte Carlo method to estimate the distribution of the longest path.  
-        """      
+        Monte Carlo method to estimate the distribution of the longest path. 
+        TODO: return paths.
+        """   
         
-        emp = [] 
-        if return_paths:
-            unique, paths = set(), []
+        E = []
         for _ in range(samples):
-            self.realize(dist=dist, fixed=fixed)
-            if return_paths:
-                lth, pth = self.real_longest_path(return_path=True)
-                check = pth.get_rep()
-                if check not in unique:
-                    paths.append(pth)
-                    unique.add(check) 
-            else:
-                lth = self.real_longest_path(return_path=False)
-            emp.append(lth)              
-        self.reset(fixed=fixed)
-        if return_paths:
-            return emp, paths
-        return emp  
+            L = {}
+            for t in self.top_sort:
+                w = self.graph.nodes[t]['weight'].realize(dist=dist) 
+                st = 0.0
+                parents = list(self.graph.predecessors(t))
+                for p in parents:
+                    pst = L[p]
+                    try:
+                        pst += self.graph[p][t]['weight'].realize(dist=dist)
+                    except AttributeError: # Disjunctive edge.
+                        pass
+                    st = max(st, pst)
+                L[t] = st + w
+            E.append(L[self.top_sort[-1]])  # Assumes single exit task.
+        # # Experimental.
+        # L = {}
+        # for t in self.top_sort:
+        #     m, s = self.graph.nodes[t]['weight'].mu, self.graph.nodes[t]['weight'].sd
+        #     w = np.random.normal(m, s, samples)
+        #     parents = list(self.graph.predecessors(t))
+        #     pmatrix = np.array(L[p] for p in parents)
+        #     to_add = np.zeros((samples, len(parents)))
+        #     for i, p in enumerate(parents):
+        #         try:
+        #             m, s = self.graph[p][t]['weight'].mu, self.graph[p][t]['weight'].sd
+        #             e = np.random.normal(m, s, samples)
+        #             to_add[i] = e
+        #         except AttributeError:
+        #             pass
+        #     pmatrix += to_add
+        #     st = np.amax(pmatrix)
+        #     L[t] = w + st
+        # return L[self.top_sort[-1]]
+                
+        return E          
     
-    def pert_cpm(self, variance=False):
+    def CPM(self, variance=False):
         """
         Returns the classic PERT-CPM bound on the expected value of the longest path.
         If variance == True, also returns the variance of this path to use as a rough estimate
         of the longest path variance.
         """
-        Z = {}       
+        C = {}       
         for t in self.top_sort:
-            start_length = 0.0
+            st = 0.0
             if variance:
                 v = 0.0
             for p in self.graph.predecessors(t):
-                st = Z[p.ID] if not variance else Z[p.ID].mu
+                pst = C[p] if not variance else C[p].mu
                 try:
-                    st += self.graph[p][t]['weight'].mu
+                    pst += self.graph[p][t]['weight'].mu
                 except AttributeError: # Disjunctive edge.
                     pass
-                start_length = max(start_length, st)  
-                if variance and start_length == st:
-                    v = Z[p.ID].var
+                st = max(st, pst)  
+                if variance and st == pst:
+                    v = C[p].var
                     try:
                         v += self.graph[p][t]['weight'].var
                     except AttributeError:
                         pass
+            m = self.graph.nodes[t]['weight'].mu
             if not variance:
-                Z[t.ID] = t.mu + start_length       
+                C[t] = m + st      
             else:
-                Z[t.ID] = RV(t.mu + start_length, t.var + v)                                    
-        return Z    
+                var = self.graph.nodes[t]['weight'].var
+                C[t] = RV(m + st, var + v)                                    
+        return C    
     
     def kamburowski(self):
         """
@@ -395,36 +225,37 @@ class SDAG:
         """
         lm, um, ls, us = {},{}, {}, {}
         for t in self.top_sort:
+            nw = self.graph.nodes[t]['weight']
             parents = list(self.graph.predecessors(t))
             # Entry task(s).
             if not parents:
-                lm[t.ID], um[t.ID] = t.mu, t.mu
-                ls[t.ID], us[t.ID] = t.var, t.var
+                lm[t], um[t] = nw.mu, nw.mu
+                ls[t], us[t] = nw.var, nw.var
                 continue
             # Lower bound on variance.
             if len(parents) == 1:
-                ls[t.ID] = ls[parents[0].ID] + t.var
+                ls[t] = ls[parents[0]] + nw.var
                 try:
-                    ls[t.ID] += self.graph[parents[0]][t]['weight'].var
+                    ls[t] += self.graph[parents[0]][t]['weight'].var
                 except AttributeError:
                     pass
             else:
-                ls[t.ID] = 0.0
+                ls[t] = 0.0
             # Upper bound on variance.
             v = 0.0
             for p in parents:
-                sv = us[p.ID] + t.var
+                sv = us[p] + nw.var
                 try:
                     sv += self.graph[p][t]['weight'].var
                 except AttributeError:
                     pass
                 v = max(v, sv)
-            us[t.ID] = v
+            us[t] = v
             # Lower bound on mean.
             Xunder = []
             for p in parents:
-                pmu = lm[p.ID] + t.mu
-                pvar = ls[p.ID] + t.var
+                pmu = lm[p] + nw.mu
+                pvar = ls[p] + nw.var
                 try:
                     pmu += self.graph[p][t]['weight'].mu
                     pvar += self.graph[p][t]['weight'].var
@@ -432,12 +263,12 @@ class SDAG:
                     pass
                 Xunder.append(RV(pmu, pvar))
             Xunder = list(sorted(Xunder, key=lambda x:x.var))
-            lm[t.ID] = funder(Xunder)
+            lm[t] = funder(Xunder)
             # Upper bound on mean.
             Xover = []
             for p in parents:
-                pmu = um[p.ID] + t.mu
-                pvar = us[p.ID] + t.var
+                pmu = um[p] + nw.mu
+                pvar = us[p] + nw.var
                 try:
                     pmu += self.graph[p][t]['weight'].mu
                     pvar += self.graph[p][t]['weight'].var
@@ -445,311 +276,164 @@ class SDAG:
                     pass
                 Xover.append(RV(pmu, pvar))
             Xover = list(sorted(Xover, key=lambda x:x.var))
-            um[t.ID] = fover(Xover)
+            um[t] = fover(Xover)
         
         return lm, um, ls, us      
 
-    def sculli(self, remaining=False):
+    def sculli(self, direction="downward"):
         """
         Sculli's method for estimating the makespan of a fixed-cost stochastic DAG.
         'The completion time of PERT networks,'
         Sculli (1983).    
         """
         
-        if remaining:
-            R = {}
+        L = {}
+        if direction == "downward":
+            for t in self.top_sort:
+                parents = list(self.graph.predecessors(t))
+                try:
+                    p = parents[0]
+                    m = self.graph[p][t]['weight'] + L[p] 
+                    for p in parents[1:]:
+                        m1 = self.graph[p][t]['weight'] + L[p]
+                        m = clark(m, m1, rho=0)
+                    L[t] = m + self.graph.nodes[t]['weight']
+                except IndexError:  # Entry task.
+                    L[t] = self.graph.nodes[t]['weight']  
+        elif direction == "upward":
             backward_traversal = list(reversed(self.top_sort)) 
             for t in backward_traversal:
                 children = list(self.graph.successors(t))
                 try:
-                    c = children[0]
-                    m = self.graph[t][c]['weight'] + c + R[c.ID] 
-                    for c in children[1:]:
-                        m1 = self.graph[t][c]['weight'] + c + R[c.ID]
-                        m = m.clark_max(m1, rho=0)
-                    R[t.ID] = m  
+                    s = children[0]
+                    m = self.graph[t][s]['weight'] + self.graph.nodes[s]['weight'] + L[s] 
+                    for s in children[1:]:
+                        m1 = self.graph[t][s]['weight'] + self.graph.nodes[s]['weight'] + L[s]
+                        m = clark(m, m1, rho=0)
+                    L[t] = m  
                 except IndexError:  # Entry task.
-                    R[t.ID] = 0.0        
-            return R            
-        
-        L = {}
-        for t in self.top_sort:
-            parents = list(self.graph.predecessors(t))
-            try:
-                p = parents[0]
-                m = self.graph[p][t]['weight'] + L[p.ID] 
-                for p in parents[1:]:
-                    m1 = self.graph[p][t]['weight'] + L[p.ID]
-                    m = m.clark_max(m1, rho=0)
-                L[t.ID] = m + t 
-            except IndexError:  # Entry task.
-                L[t.ID] = t        
-        return L   
+                    L[t] = 0.0   
+        return L
+            
     
-    def corLCA(self, remaining=False, return_correlation_info=False):
+    def corLCA(self, direction="downward", return_correlation_info=False):
         """
         CorLCA heuristic for estimating the makespan of a fixed-cost stochastic DAG.
         'Correlation-aware heuristics for evaluating the distribution of the longest path length of a DAG with random weights,' 
         Canon and Jeannot (2016).     
         Assumes single entry and exit tasks. 
-        This is a fast version that doesn't explicitly construct the correlation tree; see corLCA_with_tree for another version 
-        that does.
+        This is a fast version that doesn't explicitly construct the correlation tree.
+        TODO: make sure upward version works.
         """    
         
         # Dominant ancestors dict used instead of DiGraph for the common ancestor queries. 
-        # L represents longest path estimates (called Y in 2016 paper). V[task ID] = variance of longest path of dominant ancestors.
+        # L represents longest path estimates. V[task ID] = variance of longest path of dominant ancestors (used to estimate rho).
         dominant_ancestors, L, V = {}, {}, {}
         
-        if not remaining:      
+        if direction == "downward":      
             for t in self.top_sort:     # Traverse the DAG in topological order. 
+                nw = self.graph.nodes[t]['weight']
                 dom_parent = None 
                 for parent in self.graph.predecessors(t):
-                    # L_ij = path length up to (but not including) node t.
-                    L_ij = self.graph[parent][t]['weight'] + L[parent.ID]   
+                    pst = self.graph[parent][t]['weight'] + L[parent]   
                                         
                     # First parent.
                     if dom_parent is None:
                         dom_parent = parent 
-                        dom_parent_ancs = set(dominant_ancestors[dom_parent.ID])
-                        dom_parent_sd = V[dom_parent.ID]
+                        dom_parent_ancs = set(dominant_ancestors[dom_parent])
+                        dom_parent_sd = V[dom_parent]
                         try:
                             dom_parent_sd += self.graph[dom_parent][t]['weight'].var
                         except AttributeError:
                             pass
-                        dom_parent_sd = np.sqrt(dom_parent_sd) 
-                        eta = L_ij
+                        dom_parent_sd = sqrt(dom_parent_sd) 
+                        st = pst
                         
                     # At least two parents, so need to use Clark's equations to compute eta.
                     else:                    
                         # Find the lowest common ancestor of the dominant parent and the current parent.
-                        for a in reversed(dominant_ancestors[parent.ID]):
+                        for a in reversed(dominant_ancestors[parent]):
                             if a in dom_parent_ancs:
                                 lca = a
                                 break
                             
                         # Estimate the relevant correlation.
-                        parent_sd = V[parent.ID]
+                        parent_sd = V[parent]
                         try:
                             parent_sd += self.graph[parent][t]['weight'].var
                         except AttributeError:
                             pass
-                        parent_sd = np.sqrt(parent_sd) 
+                        parent_sd = sqrt(parent_sd) 
                         r = V[lca] / (dom_parent_sd * parent_sd)
-                        if r > 1:
-                            print("\nr = {}".format(r))
-                            print("task ID = {}".format(t.ID))
-                            print("Dom parent ID = {}".format(dom_parent.ID))
-                            print("Dom parent sd : {}".format(dom_parent_sd))
-                            print("Parent ID = {}".format(parent.ID))
-                            print("Parent sd : {}".format(parent_sd))
-                            print("LCA ID = {}".format(lca))
-                            print("LCA var = {}".format(V[lca]))
                             
                         # Find dominant parent for the maximization.
-                        if L_ij.mu > eta.mu: 
+                        if pst.mu > st.mu: 
                             dom_parent = parent
-                            dom_parent_ancs = set(dominant_ancestors[parent.ID])
+                            dom_parent_ancs = set(dominant_ancestors[parent])
                             dom_parent_sd = parent_sd
                         
                         # Compute eta.
-                        eta = eta.clark_max(L_ij, rho=r)  
+                        st = clark(st, pst, rho=r)  
                 
                 if dom_parent is None: # Entry task...
-                    L[t.ID] = RV(t.mu, t.var)  
-                    V[t.ID] = t.var
-                    dominant_ancestors[t.ID] = [t.ID]
+                    L[t] = nw  
+                    V[t] = nw.var
+                    dominant_ancestors[t] = [t]
                 else:
-                    L[t.ID] = t + eta 
-                    V[t.ID] = dom_parent_sd**2 + t.var
-                    dominant_ancestors[t.ID] = dominant_ancestors[dom_parent.ID] + [t.ID] 
-        else:
+                    L[t] = nw + st 
+                    V[t] = dom_parent_sd**2 + nw.var
+                    dominant_ancestors[t] = dominant_ancestors[dom_parent] + [t] 
+                    
+        elif direction == "upward":
             backward_traversal = list(reversed(self.top_sort)) 
             for t in backward_traversal:    
                 dom_child = None 
                 for child in self.graph.successors(t):
-                    L_ij = self.graph[t][child]['weight'] + L[child.ID] + child
+                    cw = self.graph.nodes[child]['weight']
+                    cst = self.graph[t][child]['weight'] + cw + L[child]  
                     if dom_child is None:
                         dom_child = child 
-                        dom_child_descs = set(dominant_ancestors[dom_child.ID])
-                        dom_child_sd = V[dom_child.ID] + dom_child.var
+                        dom_child_descs = set(dominant_ancestors[dom_child])
+                        dom_child_sd = V[dom_child] + self.graph.nodes[dom_child]['weight'].var
                         try:
                             dom_child_sd += self.graph[t][dom_child]['weight'].var
                         except AttributeError:
                             pass
-                        dom_child_sd = np.sqrt(dom_child_sd) 
-                        eta = L_ij
+                        dom_child_sd = sqrt(dom_child_sd) 
+                        st = cst
                     else: 
-                        for a in reversed(dominant_ancestors[child.ID]):
+                        for a in reversed(dominant_ancestors[child]):
                             if a in dom_child_descs:
                                 lca = a
                                 break
-                        child_sd = V[child.ID] + child.var
+                        child_sd = V[child] + self.graph.nodes[child]['weight'].var 
                         try:
                             child_sd += self.graph[t][child]['weight'].var
                         except AttributeError:
                             pass
-                        child_sd = np.sqrt(child_sd) 
+                        child_sd = sqrt(child_sd) 
                         # Find LCA task. TODO: don't like this, rewrite so not necessary.
                         for s in self.top_sort:
-                            if s.ID == lca:
-                                lca_var = s.var
+                            if s == lca:
+                                lca_var = self.graph.nodes[s]['weight'].var  
                                 break
                         r = (V[lca] + lca_var) / (dom_child_sd * child_sd) 
-                        if L_ij.mu > eta.mu: 
+                        if cst.mu > st.mu: 
                             dom_child = child
-                            dom_child_descs = set(dominant_ancestors[child.ID])
+                            dom_child_descs = set(dominant_ancestors[child])
                             dom_child_sd = child_sd
-                        eta = eta.clark_max(L_ij, rho=r)  
+                        st = clark(st, cst, rho=r)  
                 if dom_child is None: # Entry task...
-                    L[t.ID], V[t.ID] = 0.0, 0.0
-                    dominant_ancestors[t.ID] = [t.ID]
+                    L[t], V[t] = 0.0, 0.0
+                    dominant_ancestors[t] = [t]
                 else:
-                    L[t.ID] = eta 
-                    V[t.ID] = dom_child_sd**2 
-                    dominant_ancestors[t.ID] = dominant_ancestors[dom_child.ID] + [t.ID]            
+                    L[t] = st 
+                    V[t] = dom_child_sd**2 
+                    dominant_ancestors[t] = dominant_ancestors[dom_child] + [t]            
         
         if return_correlation_info:
             return L, dominant_ancestors, V
-        return L 
-
-    def corLCA_with_tree(self, remaining=False, return_correlation_info=False):
-        """
-        CorLCA heuristic for estimating the makespan of a fixed-cost stochastic DAG.
-        'Correlation-aware heuristics for evaluating the distribution of the longest path length of a DAG with random weights,' 
-        Canon and Jeannot (2016).     
-        Assumes single entry and exit tasks. 
-        This version explicitly constructs the correlation tree using a Networkx DiGraph, but is slower than the method above that doesn't.
-        """   
-                   
-        # Correlation tree.      
-        correlation_tree = nx.DiGraph()        
-        # L represents finish times (called Y in 2016 paper). C is an approximation to L for estimating rho values. 
-        L, C = {}, {} 
-        
-        if not remaining:              
-            for t in self.top_sort:     # Traverse the DAG in topological order. 
-                dom_parent = None 
-                for parent in self.graph.predecessors(t):    
-                    # L_ij = path length up to (but not including) node t.
-                    L_ij = self.graph[parent][t]['weight'] + L[parent.ID]         
-                    # Need to store C edge values to compute rho.
-                    C[(parent.ID, t.ID)] = self.graph[parent][t]['weight'] + C[parent.ID] 
-                                        
-                    # Only one parent.
-                    if dom_parent is None:
-                        dom_parent = parent 
-                        eta = L_ij                    
-                    # At least two parents, so need to use Clark's equations to compute eta.
-                    else:                    
-                        # Find the lowest common ancestor of the dominant parent and the current parent.
-                        get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_parent.ID, parent.ID)])
-                        lca = list(get_lca)[0][1]                    
-                            
-                        # Estimate the relevant correlation.
-                        r = C[lca].var / (np.sqrt(C[(dom_parent.ID, t.ID)].var) * np.sqrt(C[(parent.ID, t.ID)].var))
-                            
-                        # Find dominant parent for the maximization.
-                        # Assuming everything normal so it suffices to compare expected values.
-                        if L_ij.mu > eta.mu: 
-                            dom_parent = parent
-                        
-                        # Compute eta.
-                        eta = eta.clark_max(L_ij, rho=r)  
-                
-                if dom_parent is None: # Entry task...
-                    L[t.ID] = RV(t.mu, t.var)
-                    C[t.ID] = RV(t.mu, t.var)         
-                else:
-                    L[t.ID] = t + eta 
-                    C[t.ID] = t + self.graph[dom_parent][t]['weight'] + C[dom_parent.ID]
-                    # Add edge in correlation tree from the dominant parent to the current task.
-                    correlation_tree.add_edge(dom_parent.ID, t.ID) 
-                    
-        else:   # Work backward.
-            backward_traversal = list(reversed(self.top_sort)) 
-            for t in backward_traversal:
-                dom_child = None
-                for child in self.graph.successors(t):
-                    L_ij = self.graph[t][child]['weight'] + L[child.ID] + child
-                    C[(child.ID, t.ID)] = self.graph[t][child]['weight'] + C[child.ID] + child
-                    if dom_child is None:
-                        dom_child = child
-                        eta = L_ij
-                    else:
-                        get_lca = nx.algorithms.tree_all_pairs_lowest_common_ancestor(correlation_tree, pairs=[(dom_child.ID, child.ID)])
-                        lca = list(get_lca)[0][1] 
-                        for s in self.top_sort:
-                            if s.ID == lca:
-                                lca_var = s.var
-                                break
-                        r = (C[lca].var + lca_var)/ (np.sqrt(C[(dom_child.ID, t.ID)].var) * np.sqrt(C[(child.ID, t.ID)].var))
-                        if L_ij.mu > eta.mu: 
-                            dom_child = child
-                        eta = eta.clark_max(L_ij, rho=r) 
-                if dom_child is None:
-                    L[t.ID] = 0.0
-                    C[t.ID] = RV(0.0, 0.0)
-                else:
-                    L[t.ID] = eta
-                    C[t.ID] = C[(dom_child.ID, t.ID)]**2
-                    correlation_tree.add_edge(dom_child.ID, t.ID)
-            
-        if return_correlation_info:
-            return L, correlation_tree, C
-        return L
-    
-    def canonical(self):
-        """
-        Estimates the makespan distribution using the canonical method...
-        Assumes DAG has no edge weights and all costs are in canonical form.
-        TODO: take another look at this - did work but made a few changes to improve efficiency and haven't
-        thoroughly checked yet.
-        """
-        
-        # Convert to canonical form.
-        CG = nx.DiGraph() 
-        mapping = {} 
-        i = 0          
-        for t in self.top_sort:
-            i += 1
-            try:
-                n = mapping[t.ID]
-            except KeyError:
-                n = CRV(t.mu, {i: np.sqrt(t.var)}, ID=i) # TODO - check all these IDs work.
-                CG.add_node(n)
-                mapping[t.ID] = n
-                
-            children = list(self.graph.successors(t))
-            for c in children:
-                i += 1
-                m, s = self.graph[t][c]['weight'].mu, np.sqrt(self.graph[t][c]['weight'].var)
-                e = CRV(m, {i : s}, ID=i) # TODO.
-                CG.add_edge(n, e)
-                try:
-                    nc = mapping[c.ID]
-                    CG.add_edge(e, nc)
-                except KeyError:
-                    i += 1
-                    nc = CRV(c.mu, {i : np.sqrt(c.var)}, ID=i) # TODO.
-                    CG.add_edge(e, nc)
-                    mapping[c.ID] = nc
-                    
-        # Find longest path.
-        L = {}
-        new_top_sort = list(nx.topological_sort(CG)) 
-        for t in new_top_sort:
-            parents = list(self.graph.predecessors(t))
-            try:
-                p = parents[0]
-                m = L[p.ID] 
-                for p in parents[1:]:
-                    m1 = L[p.ID]
-                    m = m.can_max(m1)
-                L[t.ID] = m + t 
-            except IndexError:
-                L[t.ID] = t
-                    
-        return L   
+        return L     
     
     def bootstrap_confidence_intervals(self, samples, resamples, dist="NORMAL"):
         """TODO."""
@@ -791,15 +475,15 @@ class SDAG:
         for t in self.top_sort:
             parents = list(self.graph.predecessors(t))
             if not parents:
-                paths[t.ID] = 1
+                paths[t] = 1
             else:
-                paths[t.ID] = sum(paths[p.ID] for p in parents)                
+                paths[t] = sum(paths[p] for p in parents)                
         return paths                 
     
     # @timeout_decorator.timeout(5, timeout_exception=StopIteration)    # Uncomment if using timeout version (and imports at top).
     def dodin_critical_paths(self, epsilon=0.1, K=None, correlations=True):
         """
-        TODO.
+        TODO: update to reflect changes.
         Implementation is really poor atm since just proof of concept but will likely always be expensive...
         Is this really Dodin's algorithm in disguise?
         """
@@ -861,6 +545,7 @@ class SDAG:
     
     def static_critical_paths(self, K, weights="MEAN"):
         """
+        TODO: update to reflect changes.
         Get the longest paths according to some average of the weights.
         TODO: really poor implementation. 
         """
@@ -895,7 +580,7 @@ class SDAG:
     
     def get_static_node_criticalities(self, weights="MEAN"):
         """
-
+        TODO: update to reflect changes.
         Parameters
         ----------
         weights : TYPE, optional
@@ -955,7 +640,7 @@ class SDAG:
     
     def get_critical_subgraph(self, f=0.9, node_limit=None, weights="MEAN"):
         """
-        TODO.
+        TODO: update to reflect changes.
         f controls the number of nodes to retain.
         """
         
@@ -1025,7 +710,7 @@ class SDAG:
     
     def partially_realize(self, fraction, dist="NORMAL", percentile=None, return_info=False):
         """
-        TODO. Is this the best way to do this?
+        TODO: update to reflect changes.
         """
         # Realize entire DAG.
         self.realize(dist=dist, percentile=percentile)
@@ -1122,8 +807,36 @@ class SDAG:
     #     return F
     
 # =============================================================================
-# Assorted functions.
+# Functions.
 # =============================================================================
+
+def clark(r1, r2, rho=0, minimization=False):
+    """
+    Returns a new RV representing the maximization of self and other whose mean and variance
+    are computed using Clark's equations for the first two moments of the maximization of two normal RVs.
+    
+    See:
+    'The greatest of a finite set of random variables,'
+    Charles E. Clark (1983).
+    """
+    a = np.sqrt(r1.var + r2.var - 2 * r1.sd * r2.sd * rho)     
+    b = (r1.mu - r2.mu) / a            
+    cdf = norm.cdf(b)
+    mcdf = norm.cdf(-b)
+    pdf = norm.pdf(b)   
+    if minimization:
+        mu = r1.mu * mcdf + r2.mu * cdf - a * pdf 
+        var = (r1.mu**2 + r1.var) * mcdf
+        var += (r2.mu**2 + r2.var) * cdf
+        var -= (r1.mu + r2.mu) * a * pdf
+        var -= mu**2 
+    else:
+        mu = r1.mu * cdf + r2.mu * mcdf + a * pdf      
+        var = (r1.mu**2 + r1.var) * cdf
+        var += (r2.mu**2 + r2.var) * mcdf
+        var += (r1.mu + r2.mu) * a * pdf
+        var -= mu**2         
+    return RV(mu, var)   
 
 def summary_statistics(data):
     """Compute summary statistics for data."""
@@ -1194,7 +907,7 @@ def path_max(P, method="MC", samples=100):
     if method == "SCULLI" or method == "S":
         S = P[0].length
         for path in P[1:]:
-            S = S.clark_max(path.length)
+            S = clark(S, path.length)
         return S
     elif method == "CorLCA" or method == "C":
         dom_path = P[0]
@@ -1203,7 +916,7 @@ def path_max(P, method="MC", samples=100):
             r = path.get_rho(dom_path)
             if path.length.mu > C.mu:
                 dom_path = path
-            C = C.clark_max(path.length, rho=r)
+            C = clark(C, path.length, rho=r)
         return C
     elif method == "MC" or method == "mc" or method == "M":    
         # Construct vector of means.
@@ -1228,30 +941,6 @@ def path_max(P, method="MC", samples=100):
         dist = np.amax(N, axis=1)        
         return list(dist) # Note this is list rather than RV - make separate function?
     
-def PGS(G, frac=0.1, samples=30, weights="mean"):
-    """
-    Parameters
-    ----------
-    G : TYPE
-        DESCRIPTION.
-    frac : TYPE, optional
-        DESCRIPTION. The default is 0.1.
-    samples : TYPE, optional
-        DESCRIPTION. The default is 30.
-    weights : TYPE, optional
-        DESCRIPTION. The default is "mean".
-
-    Returns
-    -------
-    None.
-    """          
-    
-    # Get the subgraph.
-    H = G.get_critical_subgraph(frac=frac, weights=weights)   
-    # Do the simulation. 
-    emp = H.monte_carlo(samples=samples)
-    
-    return emp   
         
         
             
@@ -1260,43 +949,5 @@ def PGS(G, frac=0.1, samples=30, weights="mean"):
     
     
     
-# def RPM(S, path_reduction="MC", samples=30, epsilon=0.01, max_type="SCULLI"):
-#     """
-#     Parameters
-#     ----------
-#     S : TYPE
-#         DESCRIPTION.
-#     path_reduction : TYPE, optional
-#         DESCRIPTION. The default is "MC".
-#     samples : TYPE, optional
-#         DESCRIPTION. The default is 30.
-#     epsilon : TYPE, optional
-#         DESCRIPTION. The default is 0.01.
 
-#     Returns
-#     -------
-#     None.
-#     """          
-    
-#     # Identify the paths.
-#     candidates = S.get_longest_paths(samples=30)
-    
-#     # Compute their maximization.
-#     lp = candidates[0].length
-#     if max_type == "SCULLI":
-#         for path in candidates[1:]:
-#             lp = lp.clark_max(path.length)
-#     elif max_type == "CorLCA":
-#         dom_path = candidates[0]
-#         for path in candidates[1:]:
-#             r = path.get_rho(dom_path)
-#             if path.length.mu > lp.mu:
-#                 dom_path = path
-#             lp = lp.clark_max(path.length, rho=r)
-#     elif max_type == "CORDYN":
-#         for i, path in enumerate(candidates[1:]):
-#             r = path.get_max_rho(candidates[i + 1:]) # TODO.
-#             lp = lp.clark_max(path.length, rho=r)            
-#     return lp
-            
     
