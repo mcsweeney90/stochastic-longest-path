@@ -70,7 +70,7 @@ class RV:
         elif dist in ["G", "GAMMA", "gamma"]:
             return random.gammavariate(alpha=(self.mu**2 / self.var), beta=self.var/self.mu)      
         elif dist in ["U", "UNIFORM", "uniform"]:
-            u = np.sqrt(3) * self.sd
+            u = sqrt(3) * self.sd
             r = self.mu + random.uniform(-u, u)                
             return r if r > 0.0 else -r 
     
@@ -161,27 +161,68 @@ class SDAG:
                     st = max(st, pst)
                 L[t] = st + w
             E.append(L[self.top_sort[-1]])  # Assumes single exit task.
-        # # Experimental.
-        # L = {}
-        # for t in self.top_sort:
-        #     m, s = self.graph.nodes[t]['weight'].mu, self.graph.nodes[t]['weight'].sd
-        #     w = np.random.normal(m, s, samples)
-        #     parents = list(self.graph.predecessors(t))
-        #     pmatrix = np.array(L[p] for p in parents)
-        #     to_add = np.zeros((samples, len(parents)))
-        #     for i, p in enumerate(parents):
-        #         try:
-        #             m, s = self.graph[p][t]['weight'].mu, self.graph[p][t]['weight'].sd
-        #             e = np.random.normal(m, s, samples)
-        #             to_add[i] = e
-        #         except AttributeError:
-        #             pass
-        #     pmatrix += to_add
-        #     st = np.amax(pmatrix)
-        #     L[t] = w + st
-        # return L[self.top_sort[-1]]
+        return E
+    
+    def np_mc(self, samples, dist="NORMAL"):
+        """
+        Numpy version of MC.
+        TODO: - Memory limit assumes 16GB RAM, check Matt's machine.
+        TODO: no check if positive!
+        """
                 
-        return E          
+        x = self.size * samples
+        mem_limit = 1800000000
+        if x < mem_limit:        
+            L = {}
+            for t in self.top_sort:
+                m, s = self.graph.nodes[t]['weight'].mu, self.graph.nodes[t]['weight'].sd
+                if dist in ["N", "NORMAL", "normal"]:  
+                    w = np.random.normal(m, s, samples)
+                elif dist in ["G", "GAMMA", "gamma"]:
+                    v = self.graph.nodes[t]['weight'].var
+                    sh, sc = (m * m)/v, v/m
+                    w = np.random.gamma(sh, sc, samples)
+                elif dist in ["U", "UNIFORM", "uniform"]:
+                    u = sqrt(3) * s
+                    w = np.random.uniform(-u + m, u + m, samples) 
+                parents = list(self.graph.predecessors(t))
+                if not parents:
+                    L[t] = w 
+                    continue
+                pmatrix = []
+                for p in self.graph.predecessors(t):
+                    try:
+                        m, s = self.graph[p][t]['weight'].mu, self.graph[p][t]['weight'].sd
+                        if dist in ["N", "NORMAL", "normal"]: 
+                            e = np.random.normal(m, s, samples)
+                        elif dist in ["G", "GAMMA", "gamma"]:
+                            v = self.graph[p][t]['weight'].var
+                            sh, sc = (m * m)/v, v/m
+                            e = np.random.gamma(sh, sc, samples)
+                        elif dist in ["U", "UNIFORM", "uniform"]:
+                            u = sqrt(3) * s
+                            e = np.random.uniform(-u + m, u + m, samples)  
+                        pmatrix.append(np.add(L[p], e))
+                    except AttributeError:
+                        pmatrix.append(L[p])
+                st = np.amax(pmatrix, axis=0)
+                L[t] = np.add(w, st)
+            return L[self.top_sort[-1]] 
+        else:
+            E = []
+            mx_samples = mem_limit//self.size
+            runs = samples//mx_samples
+            # print(mx_samples, runs)
+            extra = samples % mx_samples
+            for _ in range(runs):
+                E += list(self.np_mc(samples=mx_samples, dist=dist))
+            E += list(self.np_mc(samples=extra, dist=dist))
+            return E
+             
+            
+                    
+                    
+                      
     
     def CPM(self, variance=False):
         """
