@@ -118,7 +118,6 @@ class SDAG:
     def set_random_weights(self, cov, dis_prob=0.1):
         """
         Used for setting weights for DAGs from the STG.
-        TODO: add weight attributes to nodes.
         """
         
         mubar = np.random.uniform(1, 100)        
@@ -217,12 +216,7 @@ class SDAG:
             for _ in range(runs):
                 E += list(self.np_mc(samples=mx_samples, dist=dist))
             E += list(self.np_mc(samples=extra, dist=dist))
-            return E
-             
-            
-                    
-                    
-                      
+            return E 
     
     def CPM(self, variance=False):
         """
@@ -860,10 +854,10 @@ def clark(r1, r2, rho=0, minimization=False):
     'The greatest of a finite set of random variables,'
     Charles E. Clark (1983).
     """
-    a = np.sqrt(r1.var + r2.var - 2 * r1.sd * r2.sd * rho)     
+    a = sqrt(r1.var + r2.var - 2 * r1.sd * r2.sd * rho)     
     b = (r1.mu - r2.mu) / a            
     cdf = norm.cdf(b)
-    mcdf = norm.cdf(-b)
+    mcdf = 1 - cdf 
     pdf = norm.pdf(b)   
     if minimization:
         mu = r1.mu * mcdf + r2.mu * cdf - a * pdf 
@@ -902,7 +896,8 @@ def h(mu1, var1, mu2, var2):
     """Helper function for Kamburowski method."""
     alpha = np.sqrt(var1 + var2)
     beta = (mu1 - mu2)/alpha
-    return mu1*norm.cdf(beta) + mu2*norm.cdf(-beta) + alpha*norm.pdf(beta)                
+    cdf_beta = norm.cdf(beta) 
+    return mu1*cdf_beta + mu2*(1-cdf_beta) + alpha*norm.pdf(beta)                
                 
 def funder(X):
     """
